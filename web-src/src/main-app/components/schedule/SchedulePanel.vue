@@ -1,7 +1,10 @@
 <template>
   <div class="schedule-panel card">
     <div class="card-content">
-      <span class="card-title primary-color-text">Schedule execution</span>
+      <span class="card-title primary-color-text">Scheduled Executions</span>
+      <ScheduleList class="existing-schedules"/>
+      <div class="schedule-divider"></div>
+      <span class="card-subtitle">Create New Schedule</span>
       <div class="schedule-type-panel">
         <p class="schedule-type-field">
           <label>
@@ -109,13 +112,14 @@ import '@/common/materializecss/imports/cards';
 import {repeatPeriodField, repeatTimeUnitField} from "@/main-app/components/schedule/schedulePanelFields";
 import ToggleDayButton from "@/main-app/components/schedule/ToggleDayButton";
 import PromisableButton from "@/common/components/PromisableButton";
+import ScheduleList from "@/main-app/components/schedule/ScheduleList";
 import {mapActions} from "vuex";
 import '@/common/materializecss/imports/toast'
 import {clearArray, isEmptyArray, isEmptyString} from "@/common/utils/common";
 
 export default {
   name: 'SchedulePanel',
-  components: {PromisableButton, ToggleDayButton, Combobox, Textfield, TimePicker, DatePicker},
+  components: {PromisableButton, ToggleDayButton, Combobox, Textfield, TimePicker, DatePicker, ScheduleList},
   props: {
     mobileView: {
       type: Boolean,
@@ -260,12 +264,29 @@ export default {
 
 .schedule-panel {
   font-size: 16px;
-  max-width: 320px;
+  max-width: 400px;
   width: 100%;
-  height: 480px;
+  max-height: 600px;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+}
+
+.existing-schedules {
+  margin-bottom: 12px;
+}
+
+.schedule-divider {
+  border-top: 1px solid var(--outline-color);
+  margin: 12px 0;
+}
+
+.card-subtitle {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--font-color-main);
+  display: block;
+  margin-bottom: 8px;
 }
 
 .schedule-panel .card-title {
@@ -413,7 +434,7 @@ export default {
 
 @media (max-height: calc(600px)) {
   .schedule-panel {
-    height: 340px;
+    max-height: 340px;
   }
 
   .schedule-panel .input-field.inline {

@@ -174,8 +174,94 @@ class ScheduleService:
 
         return path
 
+    def get_jobs(self, user: User = None, script_name: str = None):
+        """Get all scheduled jobs, optionally filtered by user and/or script name"""
+        jobs = []
+
+        for file in os.listdir(self._schedules_folder):
+            if not file.endswith('.json'):
+                continue
+
+            try:
+                job_path = os.path.join(self._schedules_folder, file)
+                content = file_utils.read_file(job_path)
+                job_json = custom_json.loads(content)
+                job = scheduling_job.from_dict(job_json)
+
+                # Filter by user if specified
+                if user is not None and job.user.user_id != user.user_id:
+                    continue
+
+                # Filter by script name if specified
+                if script_name is not None and job.script_name != script_name:
+                    continue
+
+                jobs.append(job)
+            except:
+                LOGGER.exception('Failed to parse schedule file: ' + file)
+
+        return jobs
+
+    def get_job(self, job_id: str, user: User = None):
+        """Get a specific job by ID, optionally verifying user ownership"""
+        for file in os.listdir(self._schedules_folder):
+            if not file.endswith('.json'):
+                continue
+
+            try:
+                job_path = os.path.join(self._schedules_folder, file)
+                content = file_utils.read_file(job_path)
+                job_json = custom_json.loads(content)
+
+                if str(job_json.get('id')) != str(job_id):
+                    continue
+
+                job = scheduling_job.from_dict(job_json)
+
+                # Verify user ownership if user is specified
+                if user is not None and job.user.user_id != user.user_id:
+                    raise AccessDeniedException(f'Access to schedule {job_id} is denied')
+
+                return job, job_path
+            except AccessDeniedException:
+                raise
+            except:
+                LOGGER.exception('Failed to parse schedule file: ' + file)
+
+        return None, None
+
+    def delete_job(self, job_id: str, user: User):
+        """Delete a scheduled job by ID"""
+        if user is None:
+            raise InvalidUserException('User id is missing')
+
+        job, job_path = self.get_job(job_id, user)
+
+        if job is None:
+            raise JobNotFoundException(f'Schedule {job_id} not found')
+
+        # Cancel the scheduled execution
+        self.scheduler.cancel(job_path)
+
+        # Delete the job file
+        os.remove(job_path)
+
+        LOGGER.info(f'Deleted schedule {job_id} for script {job.script_name} by user {user.get_audit_name()}')
+
+        return job
+
     def stop(self):
         self.scheduler.stop()
+
+
+class AccessDeniedException(Exception):
+    def __init__(self, message) -> None:
+        super().__init__(message)
+
+
+class JobNotFoundException(Exception):
+    def __init__(self, message) -> None:
+        super().__init__(message)
 
 
 class InvalidUserException(Exception):

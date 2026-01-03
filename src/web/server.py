@@ -33,7 +33,7 @@ from model.model_helper import is_empty, InvalidFileException, AccessProhibitedE
 from model.parameter_config import WrongParameterUsageException
 from model.script_config import InvalidValueException, ParameterNotFoundException
 from model.server_conf import ServerConfig, XSRF_PROTECTION_TOKEN, XSRF_PROTECTION_DISABLED, XSRF_PROTECTION_HEADER
-from scheduling.schedule_service import ScheduleService, UnavailableScriptException, InvalidScheduleException
+from scheduling.schedule_service import ScheduleService, UnavailableScriptException, InvalidScheduleException, AccessDeniedException, JobNotFoundException
 from utils import file_utils as file_utils
 from utils import tornado_utils, os_utils, env_utils, custom_json
 from utils.audit_utils import get_audit_name_from_request
@@ -753,6 +753,39 @@ class AddSchedule(StreamUploadRequestHandler):
         self.write(json.dumps({'id': id}))
 
 
+class GetSchedules(BaseRequestHandler):
+    @check_authorization
+    @inject_user
+    def get(self, user):
+        script_name = self.get_query_argument('script', default=None)
+
+        jobs = self.application.schedule_service.get_jobs(user=user, script_name=script_name)
+
+        schedules = []
+        for job in jobs:
+            schedule_data = job.as_serializable_dict()
+            # Add next execution time for display
+            next_time = job.schedule.get_next_time()
+            if next_time:
+                schedule_data['next_execution'] = next_time.isoformat()
+            schedules.append(schedule_data)
+
+        self.write(json.dumps({'schedules': schedules}))
+
+
+class DeleteSchedule(BaseRequestHandler):
+    @check_authorization
+    @inject_user
+    def delete(self, user, schedule_id):
+        try:
+            job = self.application.schedule_service.delete_job(schedule_id, user)
+            self.write(json.dumps({'deleted': schedule_id, 'script_name': job.script_name}))
+        except JobNotFoundException as e:
+            raise tornado.web.HTTPError(404, reason=str(e))
+        except AccessDeniedException as e:
+            raise tornado.web.HTTPError(403, reason=str(e))
+
+
 def pipe_output_to_http(output_stream, write_callback):
     class OutputToHttpListener:
         def on_next(self, output):
@@ -840,6 +873,8 @@ def init(server_config: ServerConfig,
                 (r'/history/execution_log/short', GetShortHistoryEntriesHandler),
                 (r'/history/execution_log/long/(.*)', GetLongHistoryEntryHandler),
                 (r'/schedule', AddSchedule),
+                (r'/schedules', GetSchedules),
+                (r'/schedules/([^/]+)', DeleteSchedule),
                 (r'/auth/info', AuthInfoHandler),
                 (r'/result_files/(.*)',
                  DownloadResultFile,
