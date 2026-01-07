@@ -73,18 +73,25 @@ def check_authorization(func, ):
         if authenticated and access_allowed:
             return func(self, *args, **kwargs)
 
+        # User is not authenticated
+        message = 'Not authenticated'
+        code = 401
+        LOGGER.warning('%s %s %s: user is not authenticated' % (code, self.request.method, request_path))
+
+        if isinstance(self, tornado.websocket.WebSocketHandler):
+            self.close(code=code, reason=message)
+            return
+
+        # For HTML files (except login.html), return 401 to enforce server-side auth
+        # This prevents unauthenticated users from seeing any HTML content
+        if isinstance(self, tornado.web.StaticFileHandler) and request_path.lower().endswith('.html'):
+            raise tornado.web.HTTPError(code, message)
+
         if not isinstance(self, tornado.web.StaticFileHandler):
-            message = 'Not authenticated'
-            code = 401
-            LOGGER.warning('%s %s %s: user is not authenticated' % (code, self.request.method, request_path))
-            if isinstance(self, tornado.websocket.WebSocketHandler):
-                self.close(code=code, reason=message)
-                return
-            else:
-                raise tornado.web.HTTPError(code, message)
+            raise tornado.web.HTTPError(code, message)
 
+        # For non-HTML static files (JS, CSS, images), redirect to login
         login_url += "?" + urlencode(dict(next=request_path))
-
         redirect_relative(login_url, self)
 
         return
@@ -101,23 +108,38 @@ def is_allowed_during_login(request_path, login_url, request_handler):
 
     if request_path == login_url:
         return True
-    request_path = remove_webpack_suffixes(request_path)
 
+    # Allow theme files
+    if request_path.startswith('/theme/'):
+        return True
+
+    # Allow font files (needed for login page)
+    if request_path.startswith('/fonts/'):
+        return True
+
+    # Allow Vite-built assets (login-*.js, login-*.css, etc.)
+    # These have hashed filenames like /assets/login-DCU7EOYu.js
+    if request_path.startswith('/assets/'):
+        filename = request_path.split('/')[-1]
+        # Allow login-related assets and shared dependencies
+        if filename.startswith('login-') or filename.startswith('main-') or filename.startswith('index-'):
+            return True
+        # Allow CSS files needed for login
+        if filename.endswith('.css'):
+            return True
+
+    # Legacy Vue 2 login resources (for backwards compatibility)
+    request_path_normalized = remove_webpack_suffixes(request_path)
     login_resources = ['/js/login.js',
                        '/js/login.js.map',
                        '/js/chunk-login-vendors.js',
                        '/js/chunk-login-vendors.js.map',
-                       '/favicon.ico',
                        '/css/login.css',
                        '/css/chunk-login-vendors.css',
-                       '/fonts/roboto-latin-500.woff2',
-                       '/fonts/roboto-latin-500.woff',
-                       '/fonts/roboto-latin-400.woff2',
-                       '/fonts/roboto-latin-400.woff',
                        '/img/titleBackground_login.jpg',
                        '/img/gitlab-icon-rgb.png']
 
-    return (request_path in login_resources) or (request_path.startswith('/theme/'))
+    return request_path_normalized in login_resources
 
 
 def remove_webpack_suffixes(request_path):

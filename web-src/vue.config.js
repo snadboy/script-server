@@ -1,5 +1,12 @@
 const webpack = require('webpack');
 
+// Generate build timestamp in format: MMDD-HHMM (e.g., 0103-1430)
+const buildTime = new Date();
+const buildTimestamp = String(buildTime.getMonth() + 1).padStart(2, '0') +
+    String(buildTime.getDate()).padStart(2, '0') + '-' +
+    String(buildTime.getHours()).padStart(2, '0') +
+    String(buildTime.getMinutes()).padStart(2, '0');
+
 module.exports = {
     // don't set absolute paths, otherwise reverse proxies with a custom path won't work
     publicPath: '',
@@ -50,7 +57,13 @@ module.exports = {
         }
     },
 
-    configureWebpack: {},
+    configureWebpack: {
+        plugins: [
+            new webpack.DefinePlugin({
+                'process.env.VUE_APP_BUILD_TIMESTAMP': JSON.stringify(buildTimestamp)
+            })
+        ]
+    },
 
     chainWebpack: config => {
         const options = module.exports;

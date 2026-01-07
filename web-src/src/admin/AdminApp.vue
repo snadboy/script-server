@@ -5,14 +5,20 @@
         <a class="btn-flat left home-button" href="index.html">
           <i class="material-icons">home</i>
         </a>
-        <ul ref="tabs" class="tabs tabs-fixed-width">
+        <ul ref="tabs" class="tabs tabs-fixed-width tabs-3">
           <li class="tab">
             <router-link to="/logs">Logs</router-link>
           </li>
           <li class="tab">
             <router-link to="/scripts">Scripts</router-link>
           </li>
+          <li class="tab">
+            <router-link to="/users">Users</router-link>
+          </li>
         </ul>
+        <div class="header-actions">
+          <ThemeToggle />
+        </div>
       </div>
       <div v-if="subheader" class="subheader">{{ subheader }}</div>
     </div>
@@ -28,6 +34,7 @@ import scriptConfig from './store/script-config-module';
 import scripts from './store/scripts-module';
 import File_upload from '@/common/components/file_upload'
 import authModule from '@/common/store/auth';
+import ThemeToggle from '@/common/components/ThemeToggle';
 
 Vue.use(Vuex);
 
@@ -59,7 +66,7 @@ const store = new Vuex.Store({
 
 export default {
   name: 'AdminApp',
-  components: {File_upload},
+  components: {File_upload, ThemeToggle},
   store,
 
   mounted() {
@@ -116,6 +123,10 @@ export default {
   background: none;
 }
 
+.tabs.tabs-fixed-width.tabs-3 {
+  max-width: 40em;
+}
+
 .tabs.tabs-fixed-width .tab a {
   font-size: 1em;
   font-weight: 500;
@@ -148,5 +159,16 @@ export default {
 .home-button i {
   font-size: 1.8em;
   line-height: 1.8em;
+}
+
+.header-actions {
+  margin-left: auto;
+  margin-right: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.header-actions >>> .theme-button i {
+  color: var(--font-on-primary-color-dark-main) !important;
 }
 </style>

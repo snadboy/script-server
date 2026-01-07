@@ -786,6 +786,164 @@ class DeleteSchedule(BaseRequestHandler):
             raise tornado.web.HTTPError(403, reason=str(e))
 
 
+# User Management Handlers
+class GetUsersHandler(BaseRequestHandler):
+    @requires_admin_rights
+    def get(self):
+        user_mgmt = self.application.user_management
+        if user_mgmt is None:
+            raise tornado.web.HTTPError(503, 'User management not available')
+
+        users = user_mgmt.get_users()
+        self.write(json.dumps({'users': users}))
+
+
+class AddUserHandler(BaseRequestHandler):
+    @requires_admin_rights
+    def post(self):
+        user_mgmt = self.application.user_management
+        if user_mgmt is None:
+            raise tornado.web.HTTPError(503, 'User management not available')
+
+        try:
+            body = json.loads(self.request.body.decode('utf-8'))
+            username = body.get('username')
+            password = body.get('password')
+            is_admin = body.get('is_admin', False)
+
+            user_mgmt.add_user(username, password, is_admin)
+            self.write(json.dumps({'success': True, 'username': username}))
+
+        except ValueError as e:
+            raise tornado.web.HTTPError(400, reason=str(e))
+        except RuntimeError as e:
+            raise tornado.web.HTTPError(500, reason=str(e))
+
+
+class DeleteUserHandler(BaseRequestHandler):
+    @requires_admin_rights
+    def delete(self, username):
+        user_mgmt = self.application.user_management
+        if user_mgmt is None:
+            raise tornado.web.HTTPError(503, 'User management not available')
+
+        try:
+            user_mgmt.delete_user(username)
+            self.write(json.dumps({'success': True, 'deleted': username}))
+
+        except ValueError as e:
+            raise tornado.web.HTTPError(400, reason=str(e))
+
+
+class UpdateUserPasswordHandler(BaseRequestHandler):
+    @requires_admin_rights
+    def post(self, username):
+        user_mgmt = self.application.user_management
+        if user_mgmt is None:
+            raise tornado.web.HTTPError(503, 'User management not available')
+
+        try:
+            body = json.loads(self.request.body.decode('utf-8'))
+            password = body.get('password')
+
+            user_mgmt.update_user_password(username, password)
+
+            # Clear default password marker if this user had the default password
+            auth_init = self.application.auth_initializer
+            if auth_init:
+                default_user = auth_init.get_default_password_user()
+                if default_user == username:
+                    auth_init.clear_default_password_marker()
+
+            self.write(json.dumps({'success': True, 'username': username}))
+
+        except ValueError as e:
+            raise tornado.web.HTTPError(400, reason=str(e))
+        except RuntimeError as e:
+            raise tornado.web.HTTPError(500, reason=str(e))
+
+
+class UpdateUserRolesHandler(BaseRequestHandler):
+    @requires_admin_rights
+    def post(self, username):
+        user_mgmt = self.application.user_management
+        if user_mgmt is None:
+            raise tornado.web.HTTPError(503, 'User management not available')
+
+        try:
+            body = json.loads(self.request.body.decode('utf-8'))
+            is_admin = body.get('is_admin', False)
+            is_code_editor = body.get('is_code_editor', False)
+
+            user_mgmt.update_user_roles(username, is_admin, is_code_editor)
+            self.write(json.dumps({'success': True, 'username': username}))
+
+        except ValueError as e:
+            raise tornado.web.HTTPError(400, reason=str(e))
+
+
+class AuthStatusHandler(BaseRequestHandler):
+    @requires_admin_rights
+    def get(self):
+        user_mgmt = self.application.user_management
+        if user_mgmt is None:
+            raise tornado.web.HTTPError(503, 'User management not available')
+
+        status = user_mgmt.get_auth_status()
+        self.write(json.dumps(status))
+
+
+class EnableAuthHandler(BaseRequestHandler):
+    @requires_admin_rights
+    def post(self):
+        user_mgmt = self.application.user_management
+        if user_mgmt is None:
+            raise tornado.web.HTTPError(503, 'User management not available')
+
+        try:
+            user_mgmt.enable_auth()
+            self.write(json.dumps({
+                'success': True,
+                'message': 'Authentication enabled. Server restart required.'
+            }))
+        except ValueError as e:
+            raise tornado.web.HTTPError(400, reason=str(e))
+        except Exception as e:
+            raise tornado.web.HTTPError(500, reason=str(e))
+
+
+class DisableAuthHandler(BaseRequestHandler):
+    @requires_admin_rights
+    def post(self):
+        user_mgmt = self.application.user_management
+        if user_mgmt is None:
+            raise tornado.web.HTTPError(503, 'User management not available')
+
+        try:
+            user_mgmt.disable_auth()
+            self.write(json.dumps({
+                'success': True,
+                'message': 'Authentication disabled. Server restart required.'
+            }))
+        except Exception as e:
+            raise tornado.web.HTTPError(500, reason=str(e))
+
+
+class DefaultPasswordStatusHandler(BaseRequestHandler):
+    """Check if default password is still in use (for warning banner)."""
+    @check_authorization
+    def get(self):
+        auth_init = self.application.auth_initializer
+        if auth_init is None:
+            self.write(json.dumps({'using_default_password': False}))
+            return
+
+        self.write(json.dumps({
+            'using_default_password': auth_init.is_using_default_password(),
+            'default_user': auth_init.get_default_password_user()
+        }))
+
+
 def pipe_output_to_http(output_stream, write_callback):
     class OutputToHttpListener:
         def on_next(self, output):
@@ -843,6 +1001,7 @@ def init(server_config: ServerConfig,
          server_version,
          conf_folder,
          *,
+         auth_initializer=None,
          start_server=True):
     ssl_context = None
     if server_config.is_ssl():
@@ -882,6 +1041,16 @@ def init(server_config: ServerConfig,
                 (r'/admin/scripts', AdminUpdateScriptEndpoint),
                 (r'/admin/scripts/([^/]+)', AdminScriptEndpoint),
                 (r'/admin/scripts/([^/]*)/code', AdminGetScriptCodeEndpoint),
+                # User management endpoints
+                (r'/admin/users', GetUsersHandler),
+                (r'/admin/users/add', AddUserHandler),
+                (r'/admin/users/([^/]+)', DeleteUserHandler),
+                (r'/admin/users/([^/]+)/password', UpdateUserPasswordHandler),
+                (r'/admin/users/([^/]+)/roles', UpdateUserRolesHandler),
+                (r'/admin/auth/status', AuthStatusHandler),
+                (r'/admin/auth/enable', EnableAuthHandler),
+                (r'/admin/auth/disable', DisableAuthHandler),
+                (r'/admin/auth/default-password-status', DefaultPasswordStatusHandler),
                 (r"/", ProxiedRedirectHandler, {"url": "/index.html"})]
 
     if auth.is_enabled():
@@ -919,6 +1088,13 @@ def init(server_config: ServerConfig,
     application.alerts_service = alerts_service
     application.identification = identification
     application.max_request_size_mb = server_config.max_request_size_mb
+
+    # Initialize user management service
+    from auth.user_management import UserManagementService
+    htpasswd_path = os.path.join(conf_folder, 'htpasswd')
+    conf_json_path = os.path.join(conf_folder, 'conf.json')
+    application.user_management = UserManagementService(htpasswd_path, conf_json_path)
+    application.auth_initializer = auth_initializer
 
     if os_utils.is_win() and env_utils.is_min_version('3.8'):
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())

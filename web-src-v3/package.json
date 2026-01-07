@@ -1,0 +1,34 @@
+{
+  "name": "script-server-frontend",
+  "version": "2.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx --fix"
+  },
+  "dependencies": {
+    "vue": "^3.4.21",
+    "vue-router": "^4.3.0",
+    "pinia": "^2.1.7",
+    "@vueuse/core": "^10.9.0",
+    "axios": "^1.6.8",
+    "dompurify": "^3.0.9",
+    "@headlessui/vue": "^1.7.19"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
+    "typescript": "^5.4.2",
+    "vite": "^5.2.6",
+    "vue-tsc": "^2.0.7",
+    "tailwindcss": "^3.4.1",
+    "postcss": "^8.4.35",
+    "autoprefixer": "^10.4.18",
+    "vitest": "^1.4.0",
+    "@vue/test-utils": "^2.4.5",
+    "@types/dompurify": "^3.0.5"
+  }
+}

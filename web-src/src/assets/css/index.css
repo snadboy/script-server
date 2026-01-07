@@ -172,3 +172,16 @@ h6.header {
     padding-left: 50px;
     background-image: url('../authentik_icon.png');
 }
+
+/* Theme toggle on login page */
+#theme-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: var(--primary-color);
+    z-index: 1000;
+}
+
+#theme-toggle i {
+    color: var(--font-on-primary-color-main);
+}

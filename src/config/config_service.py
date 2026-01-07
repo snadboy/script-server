@@ -276,9 +276,14 @@ class ConfigService:
     def _visit_script_configs(self, visitor):
         configs_dir = self._script_configs_folder
 
+        # Directories to exclude from script scanning (venv contains 500+ JSON discovery cache files)
+        excluded_dirs = {'venv', 'backups', '__pycache__', '.git', 'node_modules', 'lib', 'lib64'}
+
         files = []
         # Read config file from within directories too
         for _root, _dirs, _files in os.walk(configs_dir, topdown=True):
+            # Modify _dirs in-place to prevent walking into excluded directories
+            _dirs[:] = [d for d in _dirs if d not in excluded_dirs]
             for name in _files:
                 files.append(os.path.join(_root, name))
 

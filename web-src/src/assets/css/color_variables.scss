@@ -53,11 +53,12 @@ $datepicker-year: var(--font-on-primary-color-medium);
 $datepicker-disabled-day-color: var(--font-color-disabled);
 
 $switch-track-checked-bg: var(--primary-color-dark-color);
-$collection-active-color: var(--primary-color);
-$collection-active-bg-color: var(--focus-color);
+$collection-active-color: var(--font-on-primary-color-main);
+$collection-active-bg-color: var(--primary-color);
 $collection-bg-color: transparent;
 $collection-hover-bg-color: var(--hover-color);
 $collection-border-color: var(--separator-color);
+$collection-link-color: var(--font-color-main);
 $progress-bar-track-color: transparent;
 $off-black: var(--font-color-main);
 

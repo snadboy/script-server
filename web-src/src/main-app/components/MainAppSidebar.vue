@@ -1,15 +1,18 @@
 <template>
   <div class="main-app-sidebar">
     <div class="list-header">
-      <router-link :class="{
-                    'header-gt-15-chars' : serverName && serverName.length >= 15,
-                   'header-gt-18-chars' : serverName && serverName.length >= 18,
-                   'header-gt-21-chars' : serverName && serverName.length >= 21
-      }" :title="versionString"
-                   class="header server-header"
-                   to="/">
-        {{ serverName || 'Script server' }}
-      </router-link>
+      <div class="header-container">
+        <router-link :class="{
+                      'header-gt-15-chars' : serverName && serverName.length >= 15,
+                     'header-gt-18-chars' : serverName && serverName.length >= 18,
+                     'header-gt-21-chars' : serverName && serverName.length >= 21
+        }" :title="versionString"
+                     class="header server-header"
+                     to="/">
+          {{ serverName || 'Script server' }}
+        </router-link>
+        <div class="fork-version"><strong>snadboy-fork</strong> v1.0.0 <span class="build-number">build {{ buildTimestamp }}</span></div>
+      </div>
 
       <SearchPanel v-model="searchText"/>
 
@@ -34,9 +37,10 @@
       History
     </router-link>
 
-    <div v-if="authEnabled" class="logout-panel bottom-panel">
-      <span>{{ username }}</span>
-      <a class="btn-icon-flat waves-effect logout-button waves-circle" @click="logout">
+    <div class="logout-panel bottom-panel">
+      <ThemeToggle />
+      <span v-if="authEnabled" class="username">{{ username }}</span>
+      <a v-if="authEnabled" class="btn-icon-flat waves-effect logout-button waves-circle" @click="logout">
         <i class="material-icons primary-color-text">power_settings_new</i>
       </a>
     </div>
@@ -47,12 +51,14 @@
 import {mapActions, mapState} from 'vuex';
 import ScriptsList from './scripts/ScriptsList'
 import SearchPanel from './SearchPanel';
+import ThemeToggle from '@/common/components/ThemeToggle';
 
 export default {
   name: 'MainAppSidebar',
   components: {
     SearchPanel,
-    ScriptsList
+    ScriptsList,
+    ThemeToggle
   },
 
   data() {
@@ -70,7 +76,10 @@ export default {
       adminUser: 'admin',
       username: 'username',
       authEnabled: 'enabled'
-    })
+    }),
+    buildTimestamp() {
+      return process.env.VUE_APP_BUILD_TIMESTAMP || 'dev';
+    }
   },
 
   methods: {
@@ -122,6 +131,23 @@ export default {
   font-size: 1.2rem;
 }
 
+.header-container {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.fork-version {
+  font-size: 0.85rem;
+  color: var(--font-color-main);
+  margin-left: 1.2rem;
+  margin-top: -0.3rem;
+}
+
+.fork-version .build-number {
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
 .main-app-sidebar {
   height: 100%;
 
@@ -168,6 +194,10 @@ export default {
 
 .logout-button {
   margin-left: 4px;
+}
+
+.username {
+  margin-left: 8px;
 }
 
 </style>

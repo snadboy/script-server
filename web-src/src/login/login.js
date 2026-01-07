@@ -3,7 +3,30 @@ import '@/common/materializecss/imports/cards';
 import '@/common/materializecss/imports/input-fields';
 import '@/common/style_imports';
 import '@/common/style_imports.js';
+import {initTheme, cycleTheme, getThemePreference, getThemeIcon} from '@/common/utils/theme';
 import {axiosInstance} from '@/common/utils/axios_utils'
+
+// Initialize theme early
+initTheme();
+
+// Setup theme toggle button
+function setupThemeToggle() {
+    const button = document.getElementById('theme-toggle');
+    const icon = document.getElementById('theme-icon');
+    if (button && icon) {
+        icon.textContent = getThemeIcon(getThemePreference());
+        button.onclick = function() {
+            const newTheme = cycleTheme();
+            icon.textContent = getThemeIcon(newTheme);
+        };
+    }
+}
+// Run after DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupThemeToggle);
+} else {
+    setupThemeToggle();
+}
 import {
     addClass,
     contains,

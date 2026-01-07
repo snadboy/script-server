@@ -6,6 +6,7 @@ import os
 import sys
 
 import migrations.migrate
+from auth.auth_initialization import initialize_auth
 from auth.authorization import create_group_provider, Authorizer
 from communications.alerts_service import AlertsService
 from config.config_service import ConfigService
@@ -78,12 +79,16 @@ def main():
         logging.config.dictConfig(log_config)
 
     server_version = tool_utils.get_server_version(project_path)
-    logging.info('Starting Script Server' + (', v' + server_version if server_version else ' (custom version)'))
+    fork_version = 'snadboy-fork-v1.0.0-schedule-list'
+    logging.info(f'Starting Script Server ({fork_version})' + (', v' + server_version if server_version else ''))
 
     file_utils.prepare_folder(CONFIG_FOLDER)
     file_utils.prepare_folder(TEMP_FOLDER)
 
     migrations.migrate.migrate(TEMP_FOLDER, CONFIG_FOLDER, SERVER_CONF_PATH, LOG_FOLDER)
+
+    # Initialize authentication (creates default admin if no users exist)
+    auth_initializer = initialize_auth(CONFIG_FOLDER)
 
     server_config = server_conf.from_json(SERVER_CONF_PATH, TEMP_FOLDER)
 
@@ -151,7 +156,8 @@ def main():
         file_download_feature,
         secret,
         server_version,
-        CONFIG_FOLDER)
+        CONFIG_FOLDER,
+        auth_initializer=auth_initializer)
 
 
 if __name__ == '__main__':
