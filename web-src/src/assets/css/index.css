@@ -50,6 +50,7 @@ h6.header {
 
 #login-body {
     height: 100vh;
+    background-color: var(--surface-color);
 }
 
 #login-panel {

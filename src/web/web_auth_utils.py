@@ -82,10 +82,11 @@ def check_authorization(func, ):
             self.close(code=code, reason=message)
             return
 
-        # For HTML files (except login.html), return 401 to enforce server-side auth
-        # This prevents unauthenticated users from seeing any HTML content
+        # For HTML files (except login.html), redirect to login page
         if isinstance(self, tornado.web.StaticFileHandler) and request_path.lower().endswith('.html'):
-            raise tornado.web.HTTPError(code, message)
+            login_url += "?" + urlencode(dict(next=request_path))
+            redirect_relative(login_url, self)
+            return
 
         if not isinstance(self, tornado.web.StaticFileHandler):
             raise tornado.web.HTTPError(code, message)

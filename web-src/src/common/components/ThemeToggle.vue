@@ -4,7 +4,7 @@
         class="btn-icon-flat waves-effect waves-circle theme-button"
         :title="'Theme: ' + themeLabel + ' (click to change)'"
         @click="cycle">
-      <i class="material-icons primary-color-text">{{ icon }}</i>
+      <i class="material-icons">{{ icon }}</i>
     </button>
   </div>
 </template>
@@ -48,13 +48,13 @@ export default {
 };
 </script>
 
-<style scoped>
+<style>
 .theme-toggle {
   display: inline-flex;
   align-items: center;
 }
 
-.theme-button {
+.theme-toggle .theme-button {
   width: 36px;
   height: 36px;
   padding: 0;
@@ -67,7 +67,15 @@ export default {
   cursor: pointer;
 }
 
-.theme-button i {
+.theme-toggle .theme-button i {
   font-size: 22px;
+  color: var(--font-color-main);
+}
+
+/* On dark backgrounds (admin header, primary-color areas) */
+.primary-color-dark .theme-toggle .theme-button i,
+.primary-color .theme-toggle .theme-button i,
+.page-title .theme-toggle .theme-button i {
+  color: rgba(255, 255, 255, 0.87);
 }
 </style>

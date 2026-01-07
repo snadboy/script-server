@@ -102,12 +102,12 @@ export function cycleTheme() {
 export function getThemeIcon(theme) {
     switch (theme) {
         case 'light':
-            return 'light_mode';
+            return 'brightness_high';  // sun icon
         case 'dark':
-            return 'dark_mode';
+            return 'brightness_3';      // moon icon
         case 'system':
         default:
-            return 'contrast';
+            return 'brightness_auto';   // auto brightness icon
     }
 }
 
