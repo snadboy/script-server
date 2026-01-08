@@ -1,7 +1,7 @@
 <template>
   <div class="scheduled-page">
       <!-- Running Scripts Section -->
-      <section class="section running-section">
+      <section class="running-section">
         <h6 class="section-title">
           <i class="material-icons">play_circle_filled</i>
           Running
@@ -36,7 +36,7 @@
       </section>
 
       <!-- Scheduled Scripts Section -->
-      <section class="section scheduled-section">
+      <section class="scheduled-section">
         <h6 class="section-title">
           <i class="material-icons">schedule</i>
           Scheduled
@@ -308,8 +308,34 @@ export default {
   height: 100%;
   overflow-y: auto;
   background: var(--background-color);
-  padding: 16px;
   padding-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Running Section */
+.running-section {
+  padding: 16px;
+  flex-shrink: 0;
+}
+
+/* Scheduled Section */
+.scheduled-section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.scheduled-section .section-title {
+  padding: 0 16px;
+  margin-bottom: 8px;
+}
+
+.scheduled-section .loading-state,
+.scheduled-section .empty-state,
+.scheduled-section .schedule-list {
+  margin: 0 16px;
 }
 
 /* Search container */
@@ -318,6 +344,7 @@ export default {
   flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 12px;
+  padding: 0 16px;
 }
 
 .search-panel {
@@ -361,10 +388,6 @@ export default {
   border-radius: var(--radius-sm);
   background: var(--background-color);
   color: var(--font-color-main);
-}
-
-.section {
-  margin-bottom: 16px;
 }
 
 .section-title {
