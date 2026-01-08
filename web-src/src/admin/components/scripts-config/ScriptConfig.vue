@@ -177,9 +177,7 @@ export default {
 
 <style scoped>
 .script-config {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+  display: block;
 }
 
 .script-config >>> h5 {
@@ -189,22 +187,15 @@ export default {
 }
 
 .script-config .script-config-content {
-  padding-top: 1.5em;
-  flex: 1 1 0;
-  min-height: 0;
-  overflow-y: auto;
-}
-
-.script-config .script-config-content .container {
-  height: 100%;
+  padding: 1.5em 0;
 }
 
 footer.page-footer {
   padding-top: 0;
-
-  flex: 0 0 0;
-
   display: flex;
+  position: sticky;
+  bottom: 0;
+  background: var(--primary-color-dark-color);
 }
 
 .script-config >>> footer.page-footer a.btn-flat {

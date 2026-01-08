@@ -36,7 +36,7 @@ export default {
 .admin-layout {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  min-height: 100vh;
   background: var(--background-color);
 }
 
@@ -82,8 +82,8 @@ export default {
 }
 
 .admin-content {
-  flex: 1;
+  flex: 1 1 auto;
   overflow-y: auto;
-  min-height: 0;
+  /* Let content determine height, remove flex shrinking */
 }
 </style>
