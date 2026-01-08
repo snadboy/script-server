@@ -9,7 +9,9 @@
       <div class="header-spacer"></div>
     </div>
     <div class="admin-content">
-      <router-view/>
+      <transition name="fade" mode="out-in">
+        <router-view/>
+      </transition>
     </div>
   </div>
 </template>

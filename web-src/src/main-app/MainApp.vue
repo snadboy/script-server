@@ -14,7 +14,9 @@
           <router-view name="header"/>
         </template>
         <template v-slot:content>
-          <router-view/>
+          <transition name="fade" mode="out-in">
+            <router-view/>
+          </transition>
         </template>
       </AppLayout>
     </template>

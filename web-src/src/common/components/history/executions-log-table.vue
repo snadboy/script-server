@@ -79,9 +79,9 @@
     </div>
 
     <!-- Mobile: Card view -->
-    <div class="mobile-cards" v-if="!loading">
+    <transition-group name="card-list" tag="div" class="mobile-cards" v-if="!loading">
       <div v-for="row in filteredRows" :key="'card-' + row.id"
-           class="execution-card"
+           class="execution-card card-elevated"
            @click="rowClick(row)">
         <div class="card-header">
           <span class="card-script">{{ row.script }}</span>
@@ -117,9 +117,14 @@
           </div>
         </div>
       </div>
-    </div>
+    </transition-group>
 
-    <p v-if="loading" class="loading-text">History will appear here</p>
+    <transition name="fade">
+      <div v-if="loading" class="loading-container">
+        <div class="loading-spinner spinner"></div>
+        <p class="loading-text">Loading history...</p>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -368,11 +373,28 @@ export default {
   width: 15%;
 }
 
+/* Loading state */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--separator-color);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  margin-bottom: 16px;
+}
+
 .loading-text {
   color: var(--font-color-medium);
-  font-size: 1.2em;
+  font-size: 14px;
   text-align: center;
-  margin-top: 1em;
 }
 
 .executions-log-table .sorted:after {
@@ -620,5 +642,32 @@ export default {
     margin: 0 -16px;
     padding: 0 16px;
   }
+}
+
+/* Card list transition animations */
+.card-list-enter-active,
+.card-list-leave-active {
+  transition: all var(--transition-normal);
+}
+
+.card-list-enter,
+.card-list-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.card-list-move {
+  transition: transform var(--transition-normal);
+}
+
+/* Fade transition */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity var(--transition-normal);
+}
+
+.fade-enter,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
