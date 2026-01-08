@@ -20,6 +20,7 @@
         <th class="user-column" :class="showSort('user')" @click="sortBy('user')">User</th>
         <th class="script-column" :class="showSort('script')" @click="sortBy('script')">Script</th>
         <th class="status-column" :class="showSort('fullStatus')" @click="sortBy('fullStatus')">Status</th>
+        <th class="params-header-column"></th>
       </tr>
       </thead>
       <tbody v-if="!loading">
@@ -29,6 +30,35 @@
         <td>{{ row.user }}</td>
         <td>{{ row.script }}</td>
         <td>{{ row.fullStatus }}</td>
+        <td class="params-column">
+          <button v-if="hasParams(row)"
+                  class="btn-flat waves-effect params-btn"
+                  :class="{ active: expandedParams === row.id }"
+                  @click.stop="toggleParams(row.id)"
+                  title="Show parameters">
+            <i class="material-icons">tune</i>
+          </button>
+        </td>
+      </tr>
+      <tr v-if="expandedParams" v-for="row in filteredRows" :key="'params-' + row.id" v-show="expandedParams === row.id" class="params-row">
+        <td colspan="6">
+          <div class="params-panel">
+            <table class="params-table">
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(value, name) in row.parameterValues" :key="name">
+                  <td class="param-name">{{ name }}</td>
+                  <td class="param-value">{{ formatParamValue(value) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </td>
       </tr>
       </tbody>
     </table>
@@ -54,7 +84,8 @@ export default {
     return {
       searchText: '',
       sortColumn: 'id',
-      ascending: false
+      ascending: false,
+      expandedParams: null
     }
   },
 
@@ -82,6 +113,27 @@ export default {
         this.$refs.searchField.focus();
       });
     },
+
+    hasParams(row) {
+      return row.parameterValues && Object.keys(row.parameterValues).length > 0;
+    },
+
+    toggleParams(rowId) {
+      this.expandedParams = this.expandedParams === rowId ? null : rowId;
+    },
+
+    formatParamValue(value) {
+      if (value === null || value === undefined) {
+        return '(empty)';
+      }
+      if (Array.isArray(value)) {
+        return value.join(', ');
+      }
+      if (typeof value === 'boolean') {
+        return value ? 'Yes' : 'No';
+      }
+      return String(value);
+    }
   },
 
   computed: {
@@ -207,5 +259,72 @@ export default {
 
 .search-button {
   align-self: center;
+}
+
+.params-header-column,
+.params-column {
+  width: 48px;
+  text-align: center;
+}
+
+.params-btn {
+  padding: 4px 8px;
+  min-width: auto;
+  line-height: 1;
+}
+
+.params-btn i {
+  color: var(--font-color-medium);
+  font-size: 20px;
+}
+
+.params-btn:hover i,
+.params-btn.active i {
+  color: var(--primary-color);
+}
+
+.params-row {
+  cursor: default;
+}
+
+.params-row:hover {
+  background-color: inherit !important;
+}
+
+.params-panel {
+  padding: 8px 16px;
+  background-color: var(--background-color-high-emphasis);
+  border-radius: 4px;
+  margin: 4px 0;
+}
+
+.params-table {
+  width: 100%;
+  font-size: 13px;
+  border-collapse: collapse;
+}
+
+.params-table th,
+.params-table td {
+  text-align: left;
+  padding: 4px 8px;
+}
+
+.params-table th {
+  color: var(--font-color-medium);
+  font-weight: 500;
+  border-bottom: 1px solid var(--separator-color);
+}
+
+.params-table .param-name {
+  font-weight: 500;
+  color: var(--font-color-main);
+  white-space: nowrap;
+  width: 30%;
+}
+
+.params-table .param-value {
+  color: var(--font-color-medium);
+  word-break: break-word;
 }
 </style>

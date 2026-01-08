@@ -13,25 +13,54 @@
       No scheduled executions
     </div>
     <div v-else class="schedule-items">
-      <div v-for="schedule in schedules" :key="schedule.id" class="schedule-item">
-        <div class="schedule-info">
-          <div class="schedule-time">
-            <i class="material-icons">schedule</i>
-            <span>{{ formatNextExecution(schedule) }}</span>
+      <div v-for="schedule in schedules" :key="schedule.id" class="schedule-item-wrapper">
+        <div class="schedule-item">
+          <div class="schedule-info">
+            <div class="schedule-time">
+              <i class="material-icons">schedule</i>
+              <span>{{ formatNextExecution(schedule) }}</span>
+            </div>
+            <div class="schedule-details">
+              <span v-if="schedule.schedule.repeatable" class="schedule-repeat">
+                Every {{ schedule.schedule.repeat_period }} {{ schedule.schedule.repeat_unit }}
+              </span>
+              <span v-else class="schedule-once">One-time</span>
+            </div>
           </div>
-          <div class="schedule-details">
-            <span v-if="schedule.schedule.repeatable" class="schedule-repeat">
-              Every {{ schedule.schedule.repeat_period }} {{ schedule.schedule.repeat_unit }}
-            </span>
-            <span v-else class="schedule-once">One-time</span>
+          <div class="schedule-actions">
+            <button v-if="hasParameters(schedule)"
+                    class="btn-flat waves-effect params-btn"
+                    :class="{ active: expandedParams === schedule.id }"
+                    @click="toggleParams(schedule.id)"
+                    title="Show parameters">
+              <i class="material-icons">tune</i>
+            </button>
+            <button class="btn-flat waves-effect delete-btn"
+                    :disabled="deleting === schedule.id"
+                    @click="confirmDelete(schedule)">
+              <i v-if="deleting === schedule.id" class="material-icons rotating">refresh</i>
+              <i v-else class="material-icons">delete</i>
+            </button>
           </div>
         </div>
-        <button class="btn-flat waves-effect delete-btn"
-                :disabled="deleting === schedule.id"
-                @click="confirmDelete(schedule)">
-          <i v-if="deleting === schedule.id" class="material-icons rotating">refresh</i>
-          <i v-else class="material-icons">delete</i>
-        </button>
+        <div v-if="expandedParams === schedule.id" class="params-panel">
+          <div class="params-table-wrapper">
+            <table class="params-table">
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(value, name) in schedule.parameter_values" :key="name">
+                  <td class="param-name">{{ name }}</td>
+                  <td class="param-value">{{ formatParamValue(value) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -45,7 +74,8 @@ export default {
 
   data() {
     return {
-      deleting: null
+      deleting: null,
+      expandedParams: null
     };
   },
 
@@ -74,6 +104,27 @@ export default {
       }
       const date = new Date(schedule.next_execution);
       return date.toLocaleString();
+    },
+
+    hasParameters(schedule) {
+      return schedule.parameter_values && Object.keys(schedule.parameter_values).length > 0;
+    },
+
+    toggleParams(scheduleId) {
+      this.expandedParams = this.expandedParams === scheduleId ? null : scheduleId;
+    },
+
+    formatParamValue(value) {
+      if (value === null || value === undefined) {
+        return '(empty)';
+      }
+      if (Array.isArray(value)) {
+        return value.join(', ');
+      }
+      if (typeof value === 'boolean') {
+        return value ? 'Yes' : 'No';
+      }
+      return String(value);
     },
 
     confirmDelete(schedule) {
@@ -118,13 +169,23 @@ export default {
   gap: 8px;
 }
 
+.schedule-item-wrapper {
+  background-color: var(--background-color-level-4dp);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
 .schedule-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  background-color: var(--background-color-level-2dp);
-  border-radius: 4px;
+}
+
+.schedule-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .schedule-info {
@@ -179,5 +240,62 @@ export default {
 @keyframes rotate {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+.params-btn {
+  padding: 4px 8px;
+  min-width: auto;
+}
+
+.params-btn i {
+  color: var(--font-color-medium);
+}
+
+.params-btn:hover i,
+.params-btn.active i {
+  color: var(--primary-color);
+}
+
+.params-panel {
+  border-top: 1px solid var(--separator-color);
+  padding: 8px 12px;
+  background-color: var(--background-color-high-emphasis);
+}
+
+.params-table-wrapper {
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.params-table {
+  width: 100%;
+  font-size: 12px;
+  border-collapse: collapse;
+}
+
+.params-table th,
+.params-table td {
+  text-align: left;
+  padding: 4px 8px;
+}
+
+.params-table th {
+  color: var(--font-color-medium);
+  font-weight: 500;
+  border-bottom: 1px solid var(--separator-color);
+  position: sticky;
+  top: 0;
+  background-color: var(--background-color-high-emphasis);
+}
+
+.params-table .param-name {
+  font-weight: 500;
+  color: var(--font-color-main);
+  white-space: nowrap;
+}
+
+.params-table .param-value {
+  color: var(--font-color-medium);
+  word-break: break-word;
 }
 </style>

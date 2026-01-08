@@ -172,7 +172,8 @@ export default {
         this.includeScript = config['include'];
         this.outputFormat = config['output_format'];
 
-        this.schedulingEnabled = config.scheduling?.enabled === true
+        // Default scheduling enabled to true for new scripts
+        this.schedulingEnabled = this.isNew ? true : (config.scheduling?.enabled === true)
         this.schedulingAutoCleanupDisabled = !isEmptyArray(config['output_files'])
         this.schedulingAutoCleanup = this.schedulingAutoCleanupDisabled ? false : config.scheduling?.['auto_cleanup']
 

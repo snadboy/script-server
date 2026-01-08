@@ -3,24 +3,8 @@
     <ScriptLoadingText v-if="loading && !scriptConfig" :loading="loading" :script="selectedScript"/>
     <p v-show="scriptDescription" class="script-description" v-html="formattedDescription"/>
     <ScriptParametersView ref="parametersView"/>
-    <div class="actions-panel">
-      <button :disabled="!enableExecuteButton || scheduleMode"
-              class="button-execute btn"
-              v-bind:class="{ disabled: !enableExecuteButton }"
-              @click="executeScript">
-        Execute
-      </button>
-      <button :disabled="!enableStopButton"
-              class="button-stop btn"
-              v-bind:class="{
-                    disabled: !enableStopButton,
-                    'red lighten-1': !killEnabled,
-                    'red darken-3': killEnabled}"
-              @click="stopScript">
-        {{ stopButtonLabel }}
-      </button>
-      <div v-if="schedulable" class="button-gap"></div>
-      <ScheduleButton v-if="schedulable" :disabled="!enableScheduleButton" @click="openSchedule"/>
+    <div v-if="schedulable" class="actions-panel">
+      <ScheduleButton :disabled="!enableScheduleButton" @click="openSchedule"/>
     </div>
     <LogPanel v-show="showLog && !hasErrors && !hideExecutionControls" ref="logPanel" :outputFormat="outputFormat"/>
     <LogPanel v-if="preloadOutput && !showLog && !hasErrors && !hideExecutionControls"
@@ -114,7 +98,7 @@ export default {
     ...mapState('executions', {
       currentExecutor: 'currentExecutor'
     }),
-    ...mapState('scripts', ['selectedScript']),
+    ...mapState('scripts', ['selectedScript', 'pendingAutoExecute']),
 
     hasErrors: function () {
       return !isNull(this.shownErrors) && (this.shownErrors.length > 0);
@@ -418,7 +402,7 @@ export default {
 
     scriptConfig: {
       immediate: true,
-      handler() {
+      handler(newConfig) {
         this.shownErrors = []
 
         this.$nextTick(() => {
@@ -433,6 +417,12 @@ export default {
           const paramHeight = this.$refs.parametersView.$el.clientHeight;
 
           this.scriptConfigComponentsHeight = paramHeight + otherElemsHeight;
+
+          // Auto-execute if pending (from inline execute button in sidebar)
+          if (this.pendingAutoExecute && newConfig && this.enableExecuteButton) {
+            this.$store.commit('scripts/SET_PENDING_AUTO_EXECUTE', false);
+            this.executeScript();
+          }
         })
       }
     },
@@ -441,6 +431,16 @@ export default {
       handler(newStatus) {
         if (newStatus === STATUS_FINISHED) {
           this.$store.dispatch('executions/' + this.currentExecutor.state.id + '/cleanup');
+        }
+      }
+    },
+
+    // Watch for auto-execute flag (from sidebar inline execute button)
+    pendingAutoExecute: {
+      handler(newValue) {
+        if (newValue && this.scriptConfig && this.enableExecuteButton) {
+          this.$store.commit('scripts/SET_PENDING_AUTO_EXECUTE', false);
+          this.executeScript();
         }
       }
     }
@@ -480,22 +480,7 @@ export default {
   display: flex;
 }
 
-.actions-panel > .button-gap {
-  flex: 3 1 1px;
-}
-
-.button-execute {
-  flex: 4 1 312px;
-}
-
-.button-stop {
-  margin-left: 16px;
-  flex: 1 1 104px;
-  color: var(--font-on-primary-color-main)
-}
-
 .schedule-button {
-  margin-left: 32px;
   flex: 1 0 auto;
 }
 

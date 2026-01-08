@@ -5,6 +5,46 @@
       <ScheduleList class="existing-schedules"/>
       <div class="schedule-divider"></div>
       <span class="card-subtitle">Create New Schedule</span>
+
+      <div v-if="hasParameters" class="schedule-parameters-section">
+        <span class="parameters-label">Parameters</span>
+        <div class="params-table-wrapper">
+          <table class="params-table">
+            <thead>
+              <tr>
+                <th>Parameter</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="param in parameters" :key="param.name">
+                <td class="param-name">{{ param.name }}</td>
+                <td class="param-value">
+                  <input v-if="!param.withoutValue && param.type !== 'list' && param.type !== 'multiselect'"
+                         type="text"
+                         :value="getParamValue(param.name)"
+                         @input="setParamValue(param.name, $event.target.value)"
+                         class="param-input"/>
+                  <label v-else-if="param.withoutValue">
+                    <input type="checkbox"
+                           :checked="getParamValue(param.name)"
+                           @change="setParamValue(param.name, $event.target.checked)"
+                           class="filled-in"/>
+                    <span></span>
+                  </label>
+                  <select v-else-if="param.type === 'list'"
+                          :value="getParamValue(param.name)"
+                          @change="setParamValue(param.name, $event.target.value)"
+                          class="param-select">
+                    <option v-for="opt in param.values" :key="opt" :value="opt">{{ opt }}</option>
+                  </select>
+                  <span v-else class="param-display">{{ getParamValue(param.name) }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
       <div class="schedule-type-panel">
         <p class="schedule-type-field">
           <label>
@@ -89,6 +129,10 @@
         </div>
       </div>
     </div>
+    <div v-if="errors.length > 0 || apiError" class="schedule-errors">
+      <span v-for="(error, index) in errors" :key="'err-'+index" class="error-message">{{ error }}</span>
+      <span v-if="apiError" class="error-message">{{ apiError }}</span>
+    </div>
     <div class="schedule-panel-buttons card-action">
       <a class="waves-effect btn-flat" @click="close">
         Cancel
@@ -113,7 +157,7 @@ import {repeatPeriodField, repeatTimeUnitField} from "@/main-app/components/sche
 import ToggleDayButton from "@/main-app/components/schedule/ToggleDayButton";
 import PromisableButton from "@/common/components/PromisableButton";
 import ScheduleList from "@/main-app/components/schedule/ScheduleList";
-import {mapActions} from "vuex";
+import {mapActions, mapState} from "vuex";
 import '@/common/materializecss/imports/toast'
 import {clearArray, isEmptyArray, isEmptyString} from "@/common/utils/common";
 
@@ -157,7 +201,8 @@ export default {
 
       repeatPeriodField,
       repeatTimeUnitField,
-      errors: []
+      errors: [],
+      apiError: null
     }
   },
   mounted: function () {
@@ -168,13 +213,33 @@ export default {
 
   methods: {
     ...mapActions('scriptSchedule', ['schedule']),
+    ...mapActions('scriptSetup', ['setParameterValue']),
+
+    getParamValue(paramName) {
+      return this.parameterValues ? this.parameterValues[paramName] : '';
+    },
+
+    setParamValue(paramName, value) {
+      this.setParameterValue({ parameterName: paramName, value: value });
+    },
 
     runScheduleAction() {
+      this.apiError = null;
       const scheduleSetup = this.buildScheduleSetup();
       return this.schedule({scheduleSetup})
           .then(({data: response}) => {
             M.toast({html: 'Scheduled #' + response['id']});
             this.close();
+          })
+          .catch((e) => {
+            if (e.response && e.response.data) {
+              this.apiError = e.response.data;
+            } else if (e.userMessage) {
+              this.apiError = e.userMessage;
+            } else {
+              this.apiError = 'Failed to schedule';
+            }
+            throw e;
           });
     },
 
@@ -233,6 +298,17 @@ export default {
   },
 
   computed: {
+    ...mapState('scriptConfig', {
+      parameters: 'parameters'
+    }),
+    ...mapState('scriptSetup', {
+      parameterValues: 'parameterValues'
+    }),
+
+    hasParameters() {
+      return this.parameters && this.parameters.length > 0;
+    },
+
     weekdaysError() {
       if (this.oneTimeSchedule || this.repeatTimeUnit !== 'weeks') {
         return null;
@@ -430,6 +506,96 @@ export default {
   .toggle-day-button {
     margin-right: 4px;
   }
+}
+
+.schedule-parameters-section {
+  margin: 16px 0;
+  padding: 12px;
+  background-color: var(--background-color-high-emphasis);
+  border-radius: 4px;
+}
+
+.schedule-parameters-section .parameters-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--font-color-medium);
+  display: block;
+  margin-bottom: 8px;
+}
+
+.schedule-parameters-section .params-table-wrapper {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.schedule-parameters-section .params-table {
+  width: 100%;
+  font-size: 13px;
+  border-collapse: collapse;
+}
+
+.schedule-parameters-section .params-table th,
+.schedule-parameters-section .params-table td {
+  text-align: left;
+  padding: 6px 8px;
+  vertical-align: middle;
+}
+
+.schedule-parameters-section .params-table th {
+  color: var(--font-color-medium);
+  font-weight: 500;
+  border-bottom: 1px solid var(--separator-color);
+  position: sticky;
+  top: 0;
+  background-color: var(--background-color-high-emphasis);
+}
+
+.schedule-parameters-section .params-table .param-name {
+  font-weight: 500;
+  color: var(--font-color-main);
+  white-space: nowrap;
+  width: 40%;
+}
+
+.schedule-parameters-section .params-table .param-value {
+  width: 60%;
+}
+
+.schedule-parameters-section .param-input,
+.schedule-parameters-section .param-select {
+  width: 100%;
+  padding: 4px 8px;
+  border: 1px solid var(--separator-color);
+  border-radius: 4px;
+  background-color: var(--background-color);
+  color: var(--font-color-main);
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.schedule-parameters-section .param-input:focus,
+.schedule-parameters-section .param-select:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+.schedule-parameters-section .param-value label {
+  display: flex;
+  align-items: center;
+  height: 24px;
+}
+
+.schedule-errors {
+  padding: 8px 16px;
+  background-color: rgba(244, 67, 54, 0.1);
+  border-left: 3px solid #F44336;
+  margin: 8px 0;
+}
+
+.schedule-errors .error-message {
+  display: block;
+  color: #F44336;
+  font-size: 14px;
 }
 
 @media (max-height: calc(600px)) {

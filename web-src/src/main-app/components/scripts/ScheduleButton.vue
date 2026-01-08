@@ -46,10 +46,16 @@ export default {
 <style scoped>
 .schedule-button {
   box-shadow: none;
-  color: var(--primary-color);
-  border: 1px solid var(--outline-color);
+  color: #ffffff !important;
+  background-color: var(--primary-color);
+  border: none;
   padding-left: 16px;
   padding-right: 16px;
+}
+
+.schedule-button span,
+.schedule-button i {
+  color: #ffffff !important;
 }
 
 .schedule-button[disabled] {

@@ -3,24 +3,14 @@
     <div class="page-title primary-color-dark">
       <div class="main-header">
         <a class="btn-flat left home-button" href="index.html">
-          <i class="material-icons">home</i>
+          <i class="material-icons">arrow_back</i>
+          <span class="back-label">Back</span>
         </a>
-        <ul ref="tabs" class="tabs tabs-fixed-width tabs-3">
-          <li class="tab">
-            <router-link to="/logs">Logs</router-link>
-          </li>
-          <li class="tab">
-            <router-link to="/scripts">Scripts</router-link>
-          </li>
-          <li class="tab">
-            <router-link to="/users">Users</router-link>
-          </li>
-        </ul>
+        <div class="page-label">{{ pageLabel }}</div>
         <div class="header-actions">
           <ThemeToggle />
         </div>
       </div>
-      <div v-if="subheader" class="subheader">{{ subheader }}</div>
     </div>
     <router-view class="page-content"/>
   </div>
@@ -29,7 +19,7 @@
 <script>
 import executions from '@/common/store/executions-module';
 import Vue from 'vue';
-import Vuex, {mapActions, mapState} from 'vuex';
+import Vuex, {mapActions} from 'vuex';
 import scriptConfig from './store/script-config-module';
 import scripts from './store/scripts-module';
 import File_upload from '@/common/components/file_upload'
@@ -39,28 +29,11 @@ import ThemeToggle from '@/common/components/ThemeToggle';
 Vue.use(Vuex);
 
 const store = new Vuex.Store({
-  state: {
-    subheader: null
-  },
   modules: {
     'history': executions(),
     scripts: scripts,
     scriptConfig: scriptConfig,
     auth: authModule
-  },
-  actions: {
-    setSubheader({commit}, subheader) {
-      commit('SET_SUBHEADER', subheader);
-    }
-  },
-  mutations: {
-    SET_SUBHEADER(state, subheader) {
-      if (subheader) {
-        state.subheader = subheader;
-      } else {
-        state.subheader = null;
-      }
-    }
   }
 });
 
@@ -70,24 +43,23 @@ export default {
   store,
 
   mounted() {
-    M.Tabs.init(this.$refs.tabs, {});
-
     this.init()
   },
 
   computed: {
-    ...mapState(['subheader'])
+    pageLabel() {
+      const path = this.$route.path;
+      if (path.startsWith('/scripts/new')) return 'Add Script';
+      if (path.startsWith('/scripts/')) return 'Edit Script';
+      if (path.startsWith('/scripts')) return 'Scripts';
+      if (path.startsWith('/users')) return 'Users';
+      if (path.startsWith('/logs')) return 'Logs';
+      return 'Admin';
+    }
   },
 
   methods: {
-    ...mapActions(['setSubheader']),
     ...mapActions('auth', ['init'])
-  },
-
-  watch: {
-    $route() {
-      this.setSubheader(null);
-    }
   }
 }
 </script>
@@ -116,33 +88,15 @@ export default {
 
 .main-header {
   display: flex;
+  align-items: center;
+  height: 48px;
 }
 
-.tabs.tabs-fixed-width {
-  max-width: 30em;
-  background: none;
-}
-
-.tabs.tabs-fixed-width.tabs-3 {
-  max-width: 40em;
-}
-
-.tabs.tabs-fixed-width .tab a {
-  font-size: 1em;
+.page-label {
+  font-size: 1.25em;
   font-weight: 500;
-  letter-spacing: 1px;
-}
-
-.subheader {
-  font-size: 1em;
-  font-weight: 400;
-
-  text-transform: uppercase;
-  text-align: center;
   color: var(--font-on-primary-color-dark-main);
-
-  margin-top: 0.8em;
-  margin-bottom: 0.8em;
+  margin-left: 8px;
 }
 
 .page-content {
@@ -152,13 +106,20 @@ export default {
 
 .home-button {
   height: 100%;
-  padding-left: 20px;
-  padding-right: 20px;
+  padding-left: 16px;
+  padding-right: 16px;
+  display: flex;
+  align-items: center;
+  color: var(--font-on-primary-color-dark-main);
 }
 
 .home-button i {
-  font-size: 1.8em;
-  line-height: 1.8em;
+  font-size: 1.5em;
+}
+
+.back-label {
+  margin-left: 4px;
+  font-size: 1em;
 }
 
 .header-actions {

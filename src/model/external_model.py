@@ -91,7 +91,8 @@ def _translate_history_entry(entry, running):
         'user': entry.user_name,
         'script': entry.script_name,
         'status': running_flag_to_status(running),
-        'exitCode': entry.exit_code
+        'exitCode': entry.exit_code,
+        'parameterValues': entry.parameter_values
     }
 
 

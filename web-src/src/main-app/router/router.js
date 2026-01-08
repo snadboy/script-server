@@ -30,7 +30,11 @@ const router = new VueRouter({
         },
         {
             path: '',
-            component: AppWelcomePanel
+            components: {
+                default: AppHistoryPanel,
+                header: AppHistoryHeader
+            },
+            children: executionRouterChildren
         }
     ]
 });

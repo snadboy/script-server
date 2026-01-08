@@ -43,14 +43,74 @@ export default {
     }
   },
 
+  data() {
+    return {
+      allowNavigation: false
+    }
+  },
+
   methods: {
-    ...mapActions('scriptConfig', ['init', 'save', 'deleteScript'])
+    ...mapActions('scriptConfig', {
+      initConfig: 'init',
+      saveConfig: 'save',
+      deleteConfig: 'deleteScript'
+    }),
+
+    init(scriptName) {
+      return this.initConfig(scriptName);
+    },
+
+    save() {
+      return this.saveConfig().then(() => {
+        this.allowNavigation = true;
+      });
+    },
+
+    deleteScript() {
+      const confirmed = window.confirm('Are you sure you want to delete this script?');
+      if (!confirmed) {
+        return Promise.reject({ userMessage: 'Cancelled' });
+      }
+      return this.deleteConfig().then(() => {
+        this.allowNavigation = true;
+      });
+    },
+
+    checkDirty() {
+      const original = this.$store.state.scriptConfig.originalConfigJson;
+      // If original not yet captured, not dirty
+      if (!original) {
+        return false;
+      }
+      const current = JSON.stringify(this.scriptConfig);
+      const isDirty = original !== current;
+      this.$store.commit('scriptConfig/SET_DIRTY', isDirty);
+      return isDirty;
+    },
+
+    captureOriginal() {
+      // Delay capture to allow form to fully initialize
+      setTimeout(() => {
+        if (this.scriptConfig) {
+          this.$store.commit('scriptConfig/CAPTURE_ORIGINAL');
+        }
+      }, 100);
+    },
+
+    handleBeforeUnload(e) {
+      if (this.checkDirty()) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    }
   },
 
   computed: {
     ...mapState('scriptConfig', {
       scriptConfig: 'scriptConfig',
-      loadingError: 'error'
+      loadingError: 'error',
+      isDirty: 'isDirty'
     }),
     NEW_SCRIPT() {
       return NEW_SCRIPT;
@@ -61,8 +121,49 @@ export default {
     scriptName: {
       immediate: true,
       handler(scriptName) {
+        this.allowNavigation = false;
         this.init(scriptName);
       }
+    },
+    scriptConfig: {
+      deep: true,
+      handler(newVal, oldVal) {
+        if (this.scriptConfig) {
+          // If config just loaded (oldVal was null), capture original after form initializes
+          if (!oldVal && newVal) {
+            this.captureOriginal();
+          } else {
+            this.checkDirty();
+          }
+        }
+      }
+    }
+  },
+
+  mounted() {
+    window.addEventListener('beforeunload', this.handleBeforeUnload);
+  },
+
+  beforeDestroy() {
+    window.removeEventListener('beforeunload', this.handleBeforeUnload);
+  },
+
+  beforeRouteLeave(to, from, next) {
+    if (this.allowNavigation) {
+      next();
+      return;
+    }
+
+    if (this.checkDirty()) {
+      const confirmed = window.confirm('You have unsaved changes. Discard changes and leave?');
+      if (confirmed) {
+        this.$store.commit('scriptConfig/SET_DIRTY', false);
+        next();
+      } else {
+        next(false);
+      }
+    } else {
+      next();
     }
   }
 }

@@ -7,6 +7,25 @@
       <readonly-field :value="fullStatus" class="readonly-field" title="Status"/>
       <readonly-field :value="command" class="long readonly-field" title="Command"/>
     </div>
+    <div v-if="hasParameters" class="parameters-section">
+      <h6 class="parameters-title">Parameters</h6>
+      <div class="params-table-wrapper">
+        <table class="params-table">
+          <thead>
+            <tr>
+              <th>Parameter</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(value, name) in parameterValues" :key="name">
+              <td class="param-name">{{ name }}</td>
+              <td class="param-value">{{ formatParamValue(value) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
     <log-panel ref="logPanel" :autoscrollEnabled="false" :output-format="outputFormat" class="log-panel"/>
   </div>
 </template>
@@ -32,6 +51,7 @@ export default {
       fullStatus: '',
       command: '',
       outputFormat: '',
+      parameterValues: null,
       mounted: false
     };
   },
@@ -66,6 +86,7 @@ export default {
         this.fullStatus = selectedExecution.fullStatus;
         this.command = selectedExecution.command;
         this.outputFormat = selectedExecution.outputFormat;
+        this.parameterValues = selectedExecution.parameterValues;
         this.setLog(selectedExecution.log);
 
       } else {
@@ -74,14 +95,32 @@ export default {
         this.startTime = '';
         this.fullStatus = '';
         this.command = '';
-        this.outputFormat = null
+        this.outputFormat = null;
+        this.parameterValues = null;
         this.setLog('');
       }
+    },
+
+    formatParamValue(value) {
+      if (value === null || value === undefined) {
+        return '(empty)';
+      }
+      if (Array.isArray(value)) {
+        return value.join(', ');
+      }
+      if (typeof value === 'boolean') {
+        return value ? 'Yes' : 'No';
+      }
+      return String(value);
     }
   },
 
   computed: {
-    ...mapState('history', ['selectedExecution'])
+    ...mapState('history', ['selectedExecution']),
+
+    hasParameters() {
+      return this.parameterValues && Object.keys(this.parameterValues).length > 0;
+    }
   },
 
   mounted() {
@@ -128,5 +167,57 @@ export default {
 
 .log-panel {
   margin-top: 4px;
+}
+
+.parameters-section {
+  margin: 16px 0;
+  padding: 12px;
+  background-color: var(--background-color-high-emphasis);
+  border-radius: 4px;
+}
+
+.parameters-title {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--font-color-main);
+}
+
+.params-table-wrapper {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.params-table {
+  width: 100%;
+  font-size: 13px;
+  border-collapse: collapse;
+}
+
+.params-table th,
+.params-table td {
+  text-align: left;
+  padding: 6px 8px;
+}
+
+.params-table th {
+  color: var(--font-color-medium);
+  font-weight: 500;
+  border-bottom: 1px solid var(--separator-color);
+  position: sticky;
+  top: 0;
+  background-color: var(--background-color-high-emphasis);
+}
+
+.params-table .param-name {
+  font-weight: 500;
+  color: var(--font-color-main);
+  white-space: nowrap;
+  width: 30%;
+}
+
+.params-table .param-value {
+  color: var(--font-color-medium);
+  word-break: break-word;
 }
 </style>

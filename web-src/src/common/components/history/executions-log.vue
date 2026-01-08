@@ -32,8 +32,9 @@ export default {
     ...mapActions('history', ['init']),
 
     goToLog(execution_entry) {
+      // Always use /history/ prefix to avoid conflict with /:scriptName route
       this.$router.push({
-        path: this.$router.history.current.path + '/' + execution_entry.id
+        path: '/history/' + execution_entry.id
       });
     }
   },

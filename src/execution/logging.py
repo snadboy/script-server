@@ -107,6 +107,7 @@ class HistoryEntry:
         self.output_format = None
         self.id = None
         self.exit_code = None
+        self.parameter_values = None
 
 
 class ExecutionLoggingService:
@@ -162,6 +163,17 @@ class ExecutionLoggingService:
         output_logger.write_line('start_time:' + str(start_time_millis))
         output_logger.write_line('command:' + command)
         output_logger.write_line('output_format:' + script_config.output_format)
+
+        # Store parameter values as JSON
+        import json
+        param_values_dict = {}
+        for name, wrapper in parameter_value_wrappers.items():
+            if hasattr(wrapper, 'user_value'):
+                param_values_dict[name] = wrapper.user_value
+            else:
+                param_values_dict[name] = str(wrapper)
+        output_logger.write_line('parameter_values:' + json.dumps(param_values_dict))
+
         output_logger.write_line(OUTPUT_STARTED_MARKER)
         output_logger.start()
 
@@ -331,6 +343,17 @@ class ExecutionLoggingService:
         start_time = parameters.get('start_time')
         if start_time:
             entry.start_time = ms_to_datetime(int(start_time))
+
+        # Parse parameter values JSON
+        import json
+        param_values_str = parameters.get('parameter_values')
+        if param_values_str:
+            try:
+                entry.parameter_values = json.loads(param_values_str)
+            except json.JSONDecodeError:
+                entry.parameter_values = None
+        else:
+            entry.parameter_values = None
 
         return entry
 

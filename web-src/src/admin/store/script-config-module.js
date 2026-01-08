@@ -35,7 +35,9 @@ export default {
         scriptConfig: null,
         scriptFilename: null,
         error: null,
-        new: false
+        new: false,
+        originalConfigJson: null,
+        isDirty: false
     },
     namespaced: true,
     actions: {
@@ -66,6 +68,7 @@ export default {
 
             return axiosAction('admin/scripts', formData)
                 .then(() => {
+                    commit('MARK_CLEAN');
                     if (oldName === newName) {
                         dispatch('init', newName);
                     } else {
@@ -113,6 +116,8 @@ export default {
             state.scriptConfig = config;
             state.scriptFilename = filename;
             state.new = false;
+            state.originalConfigJson = null;  // Will be captured after form initializes
+            state.isDirty = false;
         },
 
         SET_LOAD_ERROR(state, error) {
@@ -127,6 +132,22 @@ export default {
             state.new = true;
             state.scriptFilename = null;
             state.error = null;
+            state.originalConfigJson = null;  // Will be captured after form initializes
+            state.isDirty = false;
+        },
+
+        CAPTURE_ORIGINAL(state) {
+            state.originalConfigJson = JSON.stringify(state.scriptConfig);
+            state.isDirty = false;
+        },
+
+        SET_DIRTY(state, isDirty) {
+            state.isDirty = isDirty;
+        },
+
+        MARK_CLEAN(state) {
+            state.originalConfigJson = JSON.stringify(state.scriptConfig);
+            state.isDirty = false;
         }
     }
 }

@@ -1,29 +1,35 @@
 <template>
-  <router-link :to="'/' + descriptor.hash"
-               class="collection-item waves-effect script-list-item"
-               :class="{ active: descriptor.active, 'parsing-failed': descriptor.parsingFailed}"
-               :title="descriptor.parsingFailed ? 'Failed to parse config file' : ''">
-    {{ descriptor.name }}
+  <div class="script-list-item-container">
+    <router-link :to="'/' + descriptor.hash"
+                 class="collection-item waves-effect script-list-item"
+                 :class="{ active: descriptor.active, 'parsing-failed': descriptor.parsingFailed}"
+                 :title="descriptor.parsingFailed ? 'Failed to parse config file' : ''">
+      {{ descriptor.name }}
 
-    <div :class="descriptor.state" class="menu-item-state">
-      <i class="material-icons check-icon">check</i>
-      <i class="material-icons failed-icon">priority_high</i>
-      <div class="preloader-wrapper active">
-        <div class="spinner-layer">
-          <div class="circle-clipper left">
-            <div class="circle"></div>
-          </div>
-          <div class="gap-patch">
-            <div class="circle"></div>
-          </div>
-          <div class="circle-clipper right">
-            <div class="circle"></div>
+      <div :class="descriptor.state" class="menu-item-state">
+        <i class="material-icons check-icon">check</i>
+        <i class="material-icons failed-icon">priority_high</i>
+        <div class="preloader-wrapper active">
+          <div class="spinner-layer">
+            <div class="circle-clipper left">
+              <div class="circle"></div>
+            </div>
+            <div class="gap-patch">
+              <div class="circle"></div>
+            </div>
+            <div class="circle-clipper right">
+              <div class="circle"></div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </router-link>
+    </router-link>
 
+    <ScriptInlineActions
+        v-if="descriptor.active"
+        :script-name="descriptor.name"
+        :parsing-failed="descriptor.parsingFailed"/>
+  </div>
 </template>
 
 <script>
@@ -31,9 +37,13 @@ import '@/common/materializecss/imports/spinner'
 import {forEachKeyValue} from '@/common/utils/common';
 import {mapState} from 'vuex';
 import {scriptNameToHash} from '../../utils/model_helper';
+import ScriptInlineActions from './ScriptInlineActions';
 
 export default {
   name: 'ScriptListItem',
+  components: {
+    ScriptInlineActions
+  },
   props: {
     script: {
       type: Object,

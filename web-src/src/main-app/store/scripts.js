@@ -10,7 +10,8 @@ export default {
     state: {
         scripts: [],
         selectedScript: null,
-        predefinedParameters: null
+        predefinedParameters: null,
+        pendingAutoExecute: false
     },
 
     actions: {
@@ -76,6 +77,10 @@ export default {
         SELECT_SCRIPT(state, {selectedScript, predefinedParameters}) {
             state.selectedScript = selectedScript;
             state.predefinedParameters = predefinedParameters;
+        },
+
+        SET_PENDING_AUTO_EXECUTE(state, value) {
+            state.pendingAutoExecute = value;
         }
     }
 }
