@@ -1,21 +1,43 @@
 <template>
   <div class="scheduled-page">
     <div class="container">
+      <!-- Search and Sort -->
+      <div class="search-container">
+        <div class="search-panel">
+          <input ref="searchField" autocomplete="off" class="search-field"
+                 name="searchField"
+                 placeholder="Search scripts or users..."
+                 v-model="searchText">
+          <input :alt="isClearSearchButton ? 'Clear search' : 'Search'" :src="searchImage"
+               class="search-button"
+               type="image"
+               @click="searchIconClickHandler">
+        </div>
+        <div class="sort-dropdown">
+          <select v-model="sortOption" class="sort-select">
+            <option value="next-asc">Next run (soonest)</option>
+            <option value="next-desc">Next run (latest)</option>
+            <option value="script-asc">Script A-Z</option>
+            <option value="user-asc">User A-Z</option>
+          </select>
+        </div>
+      </div>
+
       <!-- Running Scripts Section -->
       <section class="section running-section">
         <h5 class="section-title">
           <i class="material-icons">play_circle_filled</i>
           Running
-          <span v-if="runningExecutions.length" class="badge">{{ runningExecutions.length }}</span>
+          <span v-if="filteredRunningExecutions.length" class="badge">{{ filteredRunningExecutions.length }}</span>
         </h5>
         <div v-if="executionsLoading" class="loading-state">
           <div class="spinner"></div>
         </div>
-        <div v-else-if="runningExecutions.length === 0" class="empty-state">
-          <p>No scripts currently running</p>
+        <div v-else-if="filteredRunningExecutions.length === 0" class="empty-state">
+          <p>{{ searchText ? 'No running scripts match your search' : 'No scripts currently running' }}</p>
         </div>
         <div v-else class="running-list">
-          <div v-for="execution in runningExecutions" :key="execution.id"
+          <div v-for="execution in filteredRunningExecutions" :key="execution.id"
                class="execution-card card-elevated"
                @click="viewExecution(execution)">
             <div class="card-header">
@@ -41,16 +63,16 @@
         <h5 class="section-title">
           <i class="material-icons">schedule</i>
           Scheduled
-          <span v-if="schedules.length" class="badge">{{ schedules.length }}</span>
+          <span v-if="filteredSchedules.length" class="badge">{{ filteredSchedules.length }}</span>
         </h5>
         <div v-if="schedulesLoading" class="loading-state">
           <div class="spinner"></div>
         </div>
-        <div v-else-if="schedules.length === 0" class="empty-state">
-          <p>No scheduled executions</p>
+        <div v-else-if="filteredSchedules.length === 0" class="empty-state">
+          <p>{{ searchText ? 'No schedules match your search' : 'No scheduled executions' }}</p>
         </div>
         <div v-else class="schedule-list">
-          <div v-for="schedule in sortedSchedules" :key="schedule.id" class="schedule-card card-elevated">
+          <div v-for="schedule in filteredSchedules" :key="schedule.id" class="schedule-card card-elevated">
             <div class="card-header">
               <span class="script-name">{{ schedule.script_name }}</span>
               <span v-if="schedule.schedule.repeatable" class="repeat-badge">
@@ -116,6 +138,8 @@
 
 <script>
 import {mapState, mapActions} from 'vuex';
+import ClearIcon from '@/assets/clear.png';
+import SearchIcon from '@/assets/search.png';
 
 export default {
   name: 'ScheduledPage',
@@ -123,7 +147,9 @@ export default {
   data() {
     return {
       expandedParams: null,
-      deleting: null
+      deleting: null,
+      searchText: '',
+      sortOption: 'next-asc'
     };
   },
 
@@ -137,6 +163,14 @@ export default {
       schedulesLoading: 'loading'
     }),
 
+    isClearSearchButton() {
+      return this.searchText !== '';
+    },
+
+    searchImage() {
+      return this.isClearSearchButton ? ClearIcon : SearchIcon;
+    },
+
     runningExecutions() {
       if (!this.executions) return [];
       return this.executions.filter(e =>
@@ -144,12 +178,50 @@ export default {
       );
     },
 
-    sortedSchedules() {
-      if (!this.schedules) return [];
-      return [...this.schedules].sort((a, b) => {
-        const timeA = a.next_execution ? new Date(a.next_execution).getTime() : Infinity;
-        const timeB = b.next_execution ? new Date(b.next_execution).getTime() : Infinity;
-        return timeA - timeB;
+    filteredRunningExecutions() {
+      const searchText = (this.searchText || '').trim().toLowerCase();
+      if (!searchText) return this.runningExecutions;
+      return this.runningExecutions.filter(e =>
+        e.script.toLowerCase().includes(searchText) ||
+        e.user.toLowerCase().includes(searchText)
+      );
+    },
+
+    filteredSchedules() {
+      let result = this.schedules ? [...this.schedules] : [];
+
+      // Filter by search text
+      const searchText = (this.searchText || '').trim().toLowerCase();
+      if (searchText) {
+        result = result.filter(s =>
+          s.script_name.toLowerCase().includes(searchText) ||
+          s.user.toLowerCase().includes(searchText)
+        );
+      }
+
+      // Sort
+      const [sortField, sortDir] = this.sortOption.split('-');
+      const ascending = sortDir === 'asc';
+
+      return result.sort((a, b) => {
+        if (sortField === 'next') {
+          const timeA = a.next_execution ? new Date(a.next_execution).getTime() : Infinity;
+          const timeB = b.next_execution ? new Date(b.next_execution).getTime() : Infinity;
+          return ascending ? timeA - timeB : timeB - timeA;
+        } else if (sortField === 'script') {
+          const nameA = a.script_name.toLowerCase();
+          const nameB = b.script_name.toLowerCase();
+          if (nameA > nameB) return ascending ? 1 : -1;
+          if (nameA < nameB) return ascending ? -1 : 1;
+          return 0;
+        } else if (sortField === 'user') {
+          const userA = a.user.toLowerCase();
+          const userB = b.user.toLowerCase();
+          if (userA > userB) return ascending ? 1 : -1;
+          if (userA < userB) return ascending ? -1 : 1;
+          return 0;
+        }
+        return 0;
       });
     }
   },
@@ -160,6 +232,15 @@ export default {
 
   methods: {
     ...mapActions('allSchedules', ['fetchAllSchedules', 'deleteSchedule']),
+
+    searchIconClickHandler() {
+      if (this.searchText !== '') {
+        this.searchText = '';
+      }
+      this.$nextTick(() => {
+        this.$refs.searchField.focus();
+      });
+    },
 
     formatNextExecution(schedule) {
       if (!schedule.next_execution) {
@@ -229,6 +310,57 @@ export default {
 <style scoped>
 .scheduled-page {
   padding: 16px 0;
+}
+
+/* Search container */
+.search-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.search-panel {
+  display: flex;
+  flex: 1;
+  min-width: 200px;
+}
+
+.search-field {
+  flex: 1;
+  min-height: 40px;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid var(--separator-color);
+  border-radius: var(--radius-sm);
+  background: var(--background-color);
+  color: var(--font-color-main);
+}
+
+.search-field:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+.search-button {
+  align-self: center;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 8px;
+}
+
+.sort-dropdown {
+  flex-shrink: 0;
+}
+
+.sort-select {
+  min-height: 40px;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid var(--separator-color);
+  border-radius: var(--radius-sm);
+  background: var(--background-color);
+  color: var(--font-color-main);
 }
 
 .section {
@@ -485,6 +617,18 @@ export default {
 
 /* Responsive */
 @media screen and (max-width: 600px) {
+  .search-container {
+    flex-direction: column;
+  }
+
+  .sort-dropdown {
+    width: 100%;
+  }
+
+  .sort-select {
+    width: 100%;
+  }
+
   .card-header {
     flex-direction: column;
     align-items: flex-start;
