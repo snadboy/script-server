@@ -58,7 +58,7 @@ export default {
   align-items: center;
   height: 48px;
   width: 100%;
-  border-top: 1px solid var(--separator-color);
+  border-bottom: 1px solid var(--separator-color);
   flex-shrink: 0;
   background: var(--background-color);
 }

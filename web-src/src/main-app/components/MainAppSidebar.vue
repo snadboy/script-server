@@ -17,9 +17,9 @@
       <SearchPanel v-model="searchText"/>
     </div>
 
-    <ScriptsList :search-text="searchText"/>
-
     <SidebarBottomNav />
+
+    <ScriptsList :search-text="searchText"/>
 
     <div class="logout-panel bottom-panel">
       <ThemeToggle />
