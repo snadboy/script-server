@@ -13,3 +13,4 @@ import '@/assets/css/materializecss/material-textfield.css';
 import '@/assets/css/materializecss/material-checkboxes.css';
 import '@/assets/css/materializecss/material-waves.css';
 import '@/assets/css/shared.css';
+import '@/assets/css/tailwind.css';

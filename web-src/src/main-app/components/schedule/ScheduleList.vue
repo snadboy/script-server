@@ -37,7 +37,8 @@
             </button>
             <button class="btn-flat waves-effect delete-btn"
                     :disabled="deleting === schedule.id"
-                    @click="confirmDelete(schedule)">
+                    @click="confirmDelete(schedule)"
+                    title="Delete scheduled execution">
               <i v-if="deleting === schedule.id" class="material-icons rotating">refresh</i>
               <i v-else class="material-icons">delete</i>
             </button>
@@ -269,7 +270,7 @@ export default {
 
 .params-table {
   width: 100%;
-  font-size: 12px;
+  font-size: 13px;
   border-collapse: collapse;
 }
 

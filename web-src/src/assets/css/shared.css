@@ -477,3 +477,94 @@ table.highlight > tbody > tr:hover {
     background-color: var(--hover-color);
 }
 
+/* ==========================================
+   ACCESSIBILITY: Visible Focus States
+   ========================================== */
+
+/* Global focus-visible outline for all interactive elements */
+*:focus-visible {
+    outline: 2px solid var(--primary-color) !important;
+    outline-offset: 2px !important;
+}
+
+/* Ensure buttons have visible focus */
+.btn:focus-visible,
+.btn-flat:focus-visible,
+.btn-large:focus-visible,
+.btn-small:focus-visible,
+button:focus-visible {
+    outline: 2px solid var(--primary-color) !important;
+    outline-offset: 2px !important;
+}
+
+/* Links focus state */
+a:focus-visible {
+    outline: 2px solid var(--primary-color) !important;
+    outline-offset: 2px !important;
+}
+
+/* Form inputs focus state - enhanced visibility */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid var(--primary-color) !important;
+    outline-offset: 2px !important;
+}
+
+/* Collection items focus */
+.collection-item:focus-visible {
+    outline: 2px solid var(--primary-color) !important;
+    outline-offset: -2px !important;
+    background-color: var(--focus-color) !important;
+}
+
+/* Table row focus for keyboard navigation */
+tr:focus-visible {
+    outline: 2px solid var(--primary-color) !important;
+    outline-offset: -2px !important;
+}
+
+/* Icon buttons focus */
+.material-icons:focus-visible,
+[class*="btn-icon"]:focus-visible {
+    outline: 2px solid var(--primary-color) !important;
+    outline-offset: 2px !important;
+    border-radius: 50%;
+}
+
+/* ==========================================
+   TYPOGRAPHY: Improved Readability
+   ========================================== */
+
+/* Increase medium text contrast for accessibility */
+.font-color-medium,
+.text-medium {
+    color: var(--font-color-medium);
+}
+
+/* Ensure minimum font size for readability */
+body {
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* ==========================================
+   TOUCH TARGETS: Minimum Size for Mobile
+   ========================================== */
+
+@media (pointer: coarse) {
+    /* Ensure buttons are at least 44x44px on touch devices */
+    .btn,
+    .btn-flat,
+    .btn-icon-flat,
+    button {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* Increase tap area for icon buttons */
+    .material-icons {
+        padding: 8px;
+    }
+}
+

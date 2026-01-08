@@ -51,6 +51,7 @@
     "sass": "^1.55.0",
     "sass-loader": "^10.3.1",
     "sinon": "^7.5.0",
+    "tailwindcss": "npm:@tailwindcss/postcss7-compat@^2.2.17",
     "vue-cli-plugin-unit-karmajs": "git+https://git@github.com/bugy/vue-cli-plugin-unit-karmajs.git",
     "vue-template-compiler": "^2.7.10"
   },

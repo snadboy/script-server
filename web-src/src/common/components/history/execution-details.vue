@@ -190,7 +190,7 @@ export default {
 
 .params-table {
   width: 100%;
-  font-size: 13px;
+  font-size: 14px;
   border-collapse: collapse;
 }
 

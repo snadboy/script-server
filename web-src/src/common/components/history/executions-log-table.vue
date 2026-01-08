@@ -194,8 +194,14 @@ export default {
 </script>
 
 <style scoped>
+/* Improved font size for readability */
+.executions-log-table {
+  font-size: 14px;
+}
+
 .executions-log-table th  {
   cursor: pointer;
+  font-weight: 500;
 }
 
 .executions-log-table tbody > tr {
@@ -302,7 +308,7 @@ export default {
 
 .params-table {
   width: 100%;
-  font-size: 13px;
+  font-size: 14px;
   border-collapse: collapse;
 }
 

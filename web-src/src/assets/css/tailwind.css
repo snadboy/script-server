@@ -1,0 +1,115 @@
+/* Tailwind CSS */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom component classes built on Tailwind */
+@layer components {
+  /* Button base styles */
+  .btn-tw {
+    @apply px-4 py-2 rounded font-medium;
+    transition: background-color 0.2s, color 0.2s;
+  }
+
+  .btn-tw-primary {
+    @apply btn-tw bg-primary;
+    color: var(--font-on-primary-color-main);
+  }
+
+  .btn-tw-primary:hover {
+    background-color: var(--primary-color-raised-hover-solid);
+  }
+
+  .btn-tw-flat {
+    @apply btn-tw bg-transparent;
+    color: var(--font-color-main);
+  }
+
+  .btn-tw-flat:hover {
+    background-color: var(--hover-color);
+  }
+
+  /* Card styles */
+  .card-tw {
+    @apply rounded-lg shadow p-4;
+    background-color: var(--background-color);
+  }
+
+  /* Table styles */
+  .table-tw {
+    @apply w-full text-sm;
+  }
+
+  .table-tw th {
+    @apply text-left p-3 font-medium;
+    color: var(--font-color-medium);
+    border-bottom: 1px solid var(--separator-color);
+  }
+
+  .table-tw td {
+    @apply p-3;
+    border-bottom: 1px solid var(--separator-color);
+  }
+
+  .table-tw tbody tr:hover {
+    background-color: var(--hover-color);
+  }
+
+  /* Form input styles */
+  .input-tw {
+    @apply w-full px-3 py-2 rounded;
+    border: 1px solid var(--separator-color);
+    background-color: var(--background-color);
+    color: var(--font-color-main);
+  }
+
+  .input-tw:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px var(--primary-color);
+  }
+
+  .input-tw-error {
+    border-color: var(--error-color);
+  }
+
+  .input-tw-error:focus {
+    box-shadow: 0 0 0 2px var(--error-color);
+  }
+
+  /* Icon button */
+  .btn-icon-tw {
+    @apply p-2 rounded-full;
+    transition: background-color 0.2s;
+  }
+
+  .btn-icon-tw:hover {
+    background-color: var(--hover-color);
+  }
+}
+
+/* Global focus state improvements - using CSS, not @apply */
+*:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* Improve button focus visibility */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* Interactive element minimum touch target */
+@media (pointer: coarse) {
+  button,
+  a,
+  [role="button"],
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
