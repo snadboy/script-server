@@ -1,43 +1,21 @@
 <template>
   <div class="scheduled-page">
-      <!-- Search and Sort -->
-      <div class="search-container">
-        <div class="search-panel">
-          <input ref="searchField" autocomplete="off" class="search-field"
-                 name="searchField"
-                 placeholder="Search scripts or users..."
-                 v-model="searchText">
-          <input :alt="isClearSearchButton ? 'Clear search' : 'Search'" :src="searchImage"
-               class="search-button"
-               type="image"
-               @click="searchIconClickHandler">
-        </div>
-        <div class="sort-dropdown">
-          <select v-model="sortOption" class="sort-select">
-            <option value="next-asc">Next run (soonest)</option>
-            <option value="next-desc">Next run (latest)</option>
-            <option value="script-asc">Script A-Z</option>
-            <option value="user-asc">User A-Z</option>
-          </select>
-        </div>
-      </div>
-
       <!-- Running Scripts Section -->
       <section class="section running-section">
         <h6 class="section-title">
           <i class="material-icons">play_circle_filled</i>
           Running
-          <span v-if="filteredRunningExecutions.length" class="badge">{{ filteredRunningExecutions.length }}</span>
+          <span v-if="runningExecutions.length" class="badge">{{ runningExecutions.length }}</span>
         </h6>
         <div v-if="executionsLoading" class="loading-state">
           <div class="spinner"></div>
         </div>
-        <div v-else-if="filteredRunningExecutions.length === 0" class="empty-state">
-          <p>{{ searchText ? 'No running scripts match your search' : 'No scripts currently running' }}</p>
+        <div v-else-if="runningExecutions.length === 0" class="empty-state">
+          <p>No scripts currently running</p>
         </div>
         <div v-else class="running-list">
-          <div v-for="execution in filteredRunningExecutions" :key="execution.id"
-               class="execution-card card-elevated"
+          <div v-for="execution in runningExecutions" :key="execution.id"
+               class="execution-card"
                @click="viewExecution(execution)">
             <div class="card-header">
               <span class="script-name">{{ execution.script }}</span>
@@ -62,8 +40,28 @@
         <h6 class="section-title">
           <i class="material-icons">schedule</i>
           Scheduled
-          <span v-if="filteredSchedules.length" class="badge">{{ filteredSchedules.length }}</span>
         </h6>
+        <!-- Search and Sort -->
+        <div class="search-container">
+          <div class="search-panel">
+            <input ref="searchField" autocomplete="off" class="search-field"
+                   name="searchField"
+                   placeholder="Search scripts or users..."
+                   v-model="searchText">
+            <input :alt="isClearSearchButton ? 'Clear search' : 'Search'" :src="searchImage"
+                 class="search-button"
+                 type="image"
+                 @click="searchIconClickHandler">
+          </div>
+          <div class="sort-dropdown">
+            <select v-model="sortOption" class="sort-select">
+              <option value="next-asc">Next run (soonest)</option>
+              <option value="next-desc">Next run (latest)</option>
+              <option value="script-asc">Script A-Z</option>
+              <option value="user-asc">User A-Z</option>
+            </select>
+          </div>
+        </div>
         <div v-if="schedulesLoading" class="loading-state">
           <div class="spinner"></div>
         </div>
@@ -319,7 +317,7 @@ export default {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .search-panel {
