@@ -25,11 +25,11 @@
 
       <!-- Running Scripts Section -->
       <section class="section running-section">
-        <h5 class="section-title">
+        <h6 class="section-title">
           <i class="material-icons">play_circle_filled</i>
           Running
           <span v-if="filteredRunningExecutions.length" class="badge">{{ filteredRunningExecutions.length }}</span>
-        </h5>
+        </h6>
         <div v-if="executionsLoading" class="loading-state">
           <div class="spinner"></div>
         </div>
@@ -60,11 +60,11 @@
 
       <!-- Scheduled Scripts Section -->
       <section class="section scheduled-section">
-        <h5 class="section-title">
+        <h6 class="section-title">
           <i class="material-icons">schedule</i>
           Scheduled
           <span v-if="filteredSchedules.length" class="badge">{{ filteredSchedules.length }}</span>
-        </h5>
+        </h6>
         <div v-if="schedulesLoading" class="loading-state">
           <div class="spinner"></div>
         </div>
@@ -371,14 +371,14 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 0 0 16px 0;
-  font-size: 18px;
+  margin: 0 0 12px 0;
+  font-size: 14px;
   font-weight: 500;
   color: var(--font-color-main);
 }
 
 .section-title i {
-  font-size: 24px;
+  font-size: 20px;
   color: var(--primary-color);
 }
 
@@ -387,7 +387,7 @@ export default {
   color: white;
   padding: 2px 8px;
   border-radius: 12px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
 }
 
@@ -411,7 +411,7 @@ export default {
 }
 
 .empty-state {
-  padding: 24px;
+  padding: 16px;
   text-align: center;
   color: var(--font-color-medium);
   background: var(--background-color-slight-emphasis);
@@ -420,6 +420,7 @@ export default {
 
 .empty-state p {
   margin: 0;
+  font-size: 13px;
 }
 
 /* Card styling */
