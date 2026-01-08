@@ -1,6 +1,6 @@
 <template>
-  <div class="scheduled-header primary-color-dark">
-    <h5 class="header">Scheduled Executions</h5>
+  <div class="main-content-header">
+    <h3 class="header">Scheduled</h3>
   </div>
 </template>
 
@@ -11,14 +11,21 @@ export default {
 </script>
 
 <style scoped>
-.scheduled-header {
-  padding: 0 1rem;
+.main-content-header {
+  padding: 0;
+  height: 56px;
   display: flex;
   align-items: center;
 }
 
-.scheduled-header .header {
-  color: var(--font-on-primary-color-dark-main);
-  margin: 0;
+.main-content-header h3 {
+  padding: 0;
+  display: inline;
+}
+
+.main-content-header h3 {
+  color: var(--font-color-main);
+  line-height: 1.3em;
+  font-size: 1.3em;
 }
 </style>
