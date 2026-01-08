@@ -1,16 +1,23 @@
 <template xmlns:v-slot="http://www.w3.org/1999/XSL/Transform">
   <div id="main-app">
-    <AppLayout ref="appLayout" :loading="pageLoading">
-      <template v-slot:sidebar>
-        <MainAppSidebar/>
-      </template>
-      <template v-slot:header>
-        <router-view name="header"/>
-      </template>
-      <template v-slot:content>
-        <router-view/>
-      </template>
-    </AppLayout>
+    <!-- Admin pages use a different layout -->
+    <template v-if="isAdminRoute">
+      <router-view/>
+    </template>
+    <!-- Regular pages use AppLayout with sidebar -->
+    <template v-else>
+      <AppLayout ref="appLayout" :loading="pageLoading">
+        <template v-slot:sidebar>
+          <MainAppSidebar/>
+        </template>
+        <template v-slot:header>
+          <router-view name="header"/>
+        </template>
+        <template v-slot:content>
+          <router-view/>
+        </template>
+      </AppLayout>
+    </template>
     <DocumentTitleManager/>
     <FaviconManager/>
   </div>
@@ -43,7 +50,10 @@ export default {
     })
   },
   computed: {
-    ...mapState('page', ['pageLoading'])
+    ...mapState('page', ['pageLoading']),
+    isAdminRoute() {
+      return this.$route.path.startsWith('/admin');
+    }
   },
 
   created() {
@@ -52,10 +62,20 @@ export default {
 
   mounted() {
     const currentPath = this.$router.currentRoute.path;
-    this.$refs.appLayout.setSidebarVisibility(isEmptyString(currentPath) || (currentPath === '/'));
+    if (this.$refs.appLayout) {
+      this.$refs.appLayout.setSidebarVisibility(isEmptyString(currentPath) || (currentPath === '/'));
+    }
 
     this.$router.afterEach((to) => {
-      this.$refs.appLayout.setSidebarVisibility(false);
+      // Don't manipulate sidebar for admin routes
+      if (!to.path.startsWith('/admin') && this.$refs.appLayout) {
+        // Only collapse sidebar on narrow screens (mobile/tablet)
+        // On desktop (> 992px), keep sidebar visible
+        const isNarrowScreen = window.innerWidth <= 992;
+        if (isNarrowScreen) {
+          this.$refs.appLayout.setSidebarVisibility(false);
+        }
+      }
     });
   }
 }

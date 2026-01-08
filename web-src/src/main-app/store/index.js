@@ -14,6 +14,10 @@ import scriptSetupModule from './scriptSetup';
 import serverConfigModule from './serverConfig';
 import {axiosInstance} from '@/common/utils/axios_utils';
 
+// Admin store modules
+import adminScriptsModule from '@/admin/store/scripts-module';
+import adminScriptConfigModule from '@/admin/store/script-config-module';
+
 
 Vue.use(Vuex);
 
@@ -27,7 +31,10 @@ const store = new Vuex.Store({
         auth: authModule,
         history: historyModule(),
         page: pageModule,
-        scriptSchedule: scheduleModule
+        scriptSchedule: scheduleModule,
+        // Admin modules (namespaced for admin pages)
+        adminScripts: adminScriptsModule,
+        adminScriptConfig: adminScriptConfigModule
     },
     actions: {
         init({dispatch}) {

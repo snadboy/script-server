@@ -50,7 +50,7 @@ export default {
   },
 
   methods: {
-    ...mapActions('scriptConfig', {
+    ...mapActions('adminScriptConfig', {
       initConfig: 'init',
       saveConfig: 'save',
       deleteConfig: 'deleteScript'
@@ -61,8 +61,11 @@ export default {
     },
 
     save() {
-      return this.saveConfig().then(() => {
+      return this.saveConfig().then((result) => {
         this.allowNavigation = true;
+        if (result && result.navigate) {
+          this.$router.push(result.path);
+        }
       });
     },
 
@@ -71,20 +74,23 @@ export default {
       if (!confirmed) {
         return Promise.reject({ userMessage: 'Cancelled' });
       }
-      return this.deleteConfig().then(() => {
+      return this.deleteConfig().then((result) => {
         this.allowNavigation = true;
+        if (result && result.navigate) {
+          this.$router.push(result.path);
+        }
       });
     },
 
     checkDirty() {
-      const original = this.$store.state.scriptConfig.originalConfigJson;
+      const original = this.$store.state.adminScriptConfig.originalConfigJson;
       // If original not yet captured, not dirty
       if (!original) {
         return false;
       }
       const current = JSON.stringify(this.scriptConfig);
       const isDirty = original !== current;
-      this.$store.commit('scriptConfig/SET_DIRTY', isDirty);
+      this.$store.commit('adminScriptConfig/SET_DIRTY', isDirty);
       return isDirty;
     },
 
@@ -92,7 +98,7 @@ export default {
       // Delay capture to allow form to fully initialize
       setTimeout(() => {
         if (this.scriptConfig) {
-          this.$store.commit('scriptConfig/CAPTURE_ORIGINAL');
+          this.$store.commit('adminScriptConfig/CAPTURE_ORIGINAL');
         }
       }, 100);
     },
@@ -107,7 +113,7 @@ export default {
   },
 
   computed: {
-    ...mapState('scriptConfig', {
+    ...mapState('adminScriptConfig', {
       scriptConfig: 'scriptConfig',
       loadingError: 'error',
       isDirty: 'isDirty'
@@ -157,7 +163,7 @@ export default {
     if (this.checkDirty()) {
       const confirmed = window.confirm('You have unsaved changes. Discard changes and leave?');
       if (confirmed) {
-        this.$store.commit('scriptConfig/SET_DIRTY', false);
+        this.$store.commit('adminScriptConfig/SET_DIRTY', false);
         next();
       } else {
         next(false);

@@ -2,7 +2,6 @@ import {UPLOAD_MODE} from '@/admin/components/scripts-config/script-edit/ScriptE
 import {axiosInstance} from '@/common/utils/axios_utils';
 import {contains, forEachKeyValue, isEmptyArray, isEmptyValue} from '@/common/utils/common';
 import clone from 'lodash/clone';
-import router from '../router/router'
 
 const allowedEmptyValuesInParam = ['name'];
 
@@ -58,7 +57,7 @@ export default {
                 });
         },
 
-        save({dispatch, state}) {
+        save({dispatch, commit, state}) {
             const oldName = state.scriptName;
             const newName = state.scriptConfig.name;
 
@@ -71,10 +70,10 @@ export default {
                     commit('MARK_CLEAN');
                     if (oldName === newName) {
                         dispatch('init', newName);
+                        return {navigate: false};
                     } else {
-                        router.push({
-                            path: `/scripts/${encodeURIComponent(newName)}`
-                        });
+                        // Return navigation info for component to handle
+                        return {navigate: true, path: `/admin/scripts/${encodeURIComponent(newName)}`};
                     }
                 })
                 .catch(e => {
@@ -90,9 +89,8 @@ export default {
 
             return axiosInstance.delete(`admin/scripts/${encodeURIComponent(oldName)}`)
                 .then(() => {
-                    router.push({
-                        path: `/scripts/`
-                    });
+                    // Return navigation info for component to handle
+                    return {navigate: true, path: '/admin/scripts'};
                 })
                 .catch(e => {
                     if (e.response.status === 422) {

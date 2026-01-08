@@ -8,19 +8,21 @@
       <span class="nav-label">History</span>
     </router-link>
 
-    <a v-if="adminUser"
+    <router-link v-if="adminUser"
        class="nav-tab waves-effect"
-       href="admin.html#/scripts/new">
+       to="/admin/scripts/_new"
+       :class="{ active: isAddScriptActive }">
       <i class="material-icons">add_circle_outline</i>
       <span class="nav-label">Add Script</span>
-    </a>
+    </router-link>
 
-    <a v-if="adminUser"
+    <router-link v-if="adminUser"
        class="nav-tab waves-effect"
-       href="admin.html#/users">
+       to="/admin/users"
+       :class="{ active: isUsersActive }">
       <i class="material-icons">people</i>
       <span class="nav-label">Users</span>
-    </a>
+    </router-link>
   </div>
 </template>
 
@@ -37,6 +39,12 @@ export default {
     isHistoryActive() {
       // Active when on root path or history path
       return this.$route.path === '/' || this.$route.path === '/history';
+    },
+    isAddScriptActive() {
+      return this.$route.path.includes('/admin/scripts');
+    },
+    isUsersActive() {
+      return this.$route.path.includes('/admin/users');
     }
   }
 }

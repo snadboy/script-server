@@ -1,4 +1,5 @@
 import '@/common/style_imports'
+import '@/common/materializecss/imports/tabs'  // Required for admin pages
 import {initTheme} from '@/common/utils/theme';
 import {forEachKeyValue} from '@/common/utils/common';
 import Vue from 'vue'

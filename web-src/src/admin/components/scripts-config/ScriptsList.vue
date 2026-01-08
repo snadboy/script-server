@@ -42,7 +42,7 @@ export default {
   },
 
   computed: {
-    ...mapState('scripts', {
+    ...mapState('adminScripts', {
       scripts: state => {
         return state.scripts
             ? state.scripts.map(s => ({
@@ -61,7 +61,7 @@ export default {
   },
 
   methods: {
-    ...mapActions('scripts', ['init'])
+    ...mapActions('adminScripts', ['init'])
   }
 }
 </script>
