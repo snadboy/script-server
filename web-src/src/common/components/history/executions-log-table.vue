@@ -24,42 +24,44 @@
       </tr>
       </thead>
       <tbody v-if="!loading">
-      <tr v-for="row in filteredRows" :key="row.id" @click="rowClick(row)">
-        <td>{{ row.id }}</td>
-        <td>{{ row.startTimeString }}</td>
-        <td>{{ row.user }}</td>
-        <td>{{ row.script }}</td>
-        <td>{{ row.fullStatus }}</td>
-        <td class="params-column">
-          <button v-if="hasParams(row)"
-                  class="btn-flat waves-effect params-btn"
-                  :class="{ active: expandedParams === row.id }"
-                  @click.stop="toggleParams(row.id)"
-                  title="Show parameters">
-            <i class="material-icons">tune</i>
-          </button>
-        </td>
-      </tr>
-      <tr v-if="expandedParams" v-for="row in filteredRows" :key="'params-' + row.id" v-show="expandedParams === row.id" class="params-row">
-        <td colspan="6">
-          <div class="params-panel">
-            <table class="params-table">
-              <thead>
-                <tr>
-                  <th>Parameter</th>
-                  <th>Value</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(value, name) in row.parameterValues" :key="name">
-                  <td class="param-name">{{ name }}</td>
-                  <td class="param-value">{{ formatParamValue(value) }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </td>
-      </tr>
+      <template v-for="row in filteredRows">
+        <tr :key="row.id" @click="rowClick(row)">
+          <td>{{ row.id }}</td>
+          <td>{{ row.startTimeString }}</td>
+          <td>{{ row.user }}</td>
+          <td>{{ row.script }}</td>
+          <td>{{ row.fullStatus }}</td>
+          <td class="params-column">
+            <button v-if="hasParams(row)"
+                    class="btn-flat waves-effect params-btn"
+                    :class="{ active: expandedParams === row.id }"
+                    @click.stop="toggleParams(row.id)"
+                    title="Show parameters">
+              <i class="material-icons">tune</i>
+            </button>
+          </td>
+        </tr>
+        <tr v-if="expandedParams === row.id" :key="'params-' + row.id" class="params-row">
+          <td colspan="6">
+            <div class="params-panel">
+              <table class="params-table">
+                <thead>
+                  <tr>
+                    <th>Parameter</th>
+                    <th>Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(value, name) in row.parameterValues" :key="name">
+                    <td class="param-name">{{ name }}</td>
+                    <td class="param-value">{{ formatParamValue(value) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </td>
+        </tr>
+      </template>
       </tbody>
     </table>
     <p v-if="loading" class="loading-text">History will appear here</p>
