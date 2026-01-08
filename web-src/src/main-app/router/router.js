@@ -4,6 +4,8 @@ import VueRouter from 'vue-router';
 import AppWelcomePanel from '../components/AppWelcomePanel';
 import AppHistoryHeader from '../components/history/AppHistoryHeader';
 import AppHistoryPanel from '../components/history/AppHistoryPanel';
+import ScheduledPage from '../components/scheduled/ScheduledPage';
+import ScheduledHeader from '../components/scheduled/ScheduledHeader';
 import MainAppContent from '../components/scripts/MainAppContent';
 import ScriptHeader from '../components/scripts/ScriptHeader';
 
@@ -54,6 +56,13 @@ const router = new VueRouter({
                 header: AppHistoryHeader
             },
             children: executionRouterChildren
+        },
+        {
+            path: '/scheduled',
+            components: {
+                default: ScheduledPage,
+                header: ScheduledHeader
+            }
         },
         {
             path: '/:scriptName',

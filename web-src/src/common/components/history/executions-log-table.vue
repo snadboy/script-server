@@ -11,8 +11,7 @@
              type="image"
              @click="searchIconClickHandler">
       </div>
-      <!-- Mobile sort dropdown -->
-      <div class="mobile-sort">
+      <div class="sort-dropdown">
         <select v-model="mobileSortOption" class="sort-select">
           <option value="id-desc">Newest first</option>
           <option value="id-asc">Oldest first</option>
@@ -22,76 +21,16 @@
       </div>
     </div>
 
-    <!-- Desktop/Tablet: Table view with horizontal scroll -->
-    <div class="table-wrapper">
-      <table class="highlight striped desktop-table">
-        <thead>
-        <tr>
-          <th class="id-column" :class="showSort('id')" @click="sortBy('id')">ID</th>
-          <th class="start_time-column" :class="showSort('startTimeString')" @click="sortBy('startTimeString')">Start Time</th>
-          <th class="user-column" :class="showSort('user')" @click="sortBy('user')">User</th>
-          <th class="script-column" :class="showSort('script')" @click="sortBy('script')">Script</th>
-          <th class="status-column" :class="showSort('fullStatus')" @click="sortBy('fullStatus')">Status</th>
-          <th class="params-header-column"></th>
-        </tr>
-        </thead>
-        <tbody v-if="!loading">
-        <template v-for="row in filteredRows">
-          <tr :key="row.id" @click="rowClick(row)">
-            <td>{{ row.id }}</td>
-            <td>{{ row.startTimeString }}</td>
-            <td>{{ row.user }}</td>
-            <td>{{ row.script }}</td>
-            <td>{{ row.fullStatus }}</td>
-            <td class="params-column">
-              <button v-if="hasParams(row)"
-                      class="btn-flat waves-effect params-btn"
-                      :class="{ active: expandedParams === row.id }"
-                      @click.stop="toggleParams(row.id)"
-                      title="Show parameters">
-                <i class="material-icons">tune</i>
-              </button>
-            </td>
-          </tr>
-          <tr v-if="expandedParams === row.id" :key="'params-' + row.id" class="params-row">
-            <td colspan="6">
-              <div class="params-panel">
-                <table class="params-table">
-                  <thead>
-                    <tr>
-                      <th>Parameter</th>
-                      <th>Value</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="(value, name) in row.parameterValues" :key="name">
-                      <td class="param-name">{{ name }}</td>
-                      <td class="param-value">{{ formatParamValue(value) }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </td>
-          </tr>
-        </template>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Mobile: Card view -->
-    <transition-group name="card-list" tag="div" class="mobile-cards" v-if="!loading">
+    <!-- Card view for all screen sizes -->
+    <transition-group name="card-list" tag="div" class="execution-cards" v-if="!loading">
       <div v-for="row in filteredRows" :key="'card-' + row.id"
-           class="execution-card card-elevated"
+           class="execution-card"
            @click="rowClick(row)">
         <div class="card-header">
           <span class="card-script">{{ row.script }}</span>
           <span class="card-status" :class="getStatusClass(row.fullStatus)">{{ row.fullStatus }}</span>
         </div>
         <div class="card-body">
-          <div class="card-row">
-            <span class="card-label">ID:</span>
-            <span class="card-value">{{ row.id }}</span>
-          </div>
           <div class="card-row">
             <span class="card-label">User:</span>
             <span class="card-value">{{ row.user }}</span>
@@ -101,21 +40,33 @@
             <span class="card-value">{{ row.startTimeString }}</span>
           </div>
         </div>
-        <div class="card-actions" v-if="hasParams(row)">
-          <button class="btn-flat waves-effect params-btn"
+        <div class="card-actions">
+          <button v-if="hasParams(row)"
+                  class="btn-flat waves-effect params-btn"
                   :class="{ active: expandedParams === row.id }"
                   @click.stop="toggleParams(row.id)"
                   title="Show parameters">
             <i class="material-icons">tune</i>
-            <span>Parameters</span>
           </button>
         </div>
-        <div v-if="expandedParams === row.id" class="card-params">
-          <div v-for="(value, name) in row.parameterValues" :key="name" class="param-row">
-            <span class="param-name">{{ name }}:</span>
-            <span class="param-value">{{ formatParamValue(value) }}</span>
+        <transition name="expand">
+          <div v-if="expandedParams === row.id" class="card-params">
+            <table class="params-table">
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(value, name) in row.parameterValues" :key="name">
+                  <td class="param-name">{{ name }}</td>
+                  <td class="param-value">{{ formatParamValue(value) }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-        </div>
+        </transition>
       </div>
     </transition-group>
 
@@ -278,6 +229,7 @@ export default {
 /* Base styles */
 .executions-log-table {
   font-size: 14px;
+  padding: 0 16px;
 }
 
 /* Search container */
@@ -296,81 +248,39 @@ export default {
 
 .search-field {
   flex: 1;
-  min-height: 44px;
-  padding: 8px 12px;
-  font-size: 14px;
-}
-
-.search-button {
-  align-self: center;
-  min-width: 44px;
-  min-height: 44px;
-  padding: 10px;
-}
-
-/* Mobile sort dropdown - hidden on desktop */
-.mobile-sort {
-  display: none;
-}
-
-.sort-select {
-  min-height: 44px;
+  min-height: 40px;
   padding: 8px 12px;
   font-size: 14px;
   border: 1px solid var(--separator-color);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background: var(--background-color);
   color: var(--font-color-main);
 }
 
-/* Table wrapper for horizontal scroll on tablet */
-.table-wrapper {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  /* Scroll shadow indicators */
-  background:
-    linear-gradient(to right, var(--background-color) 30%, transparent),
-    linear-gradient(to left, var(--background-color) 30%, transparent),
-    linear-gradient(to right, rgba(0,0,0,0.15), transparent 15px),
-    linear-gradient(to left, rgba(0,0,0,0.15), transparent 15px);
-  background-position: left, right, left, right;
-  background-repeat: no-repeat;
-  background-size: 40px 100%, 40px 100%, 15px 100%, 15px 100%;
-  background-attachment: local, local, scroll, scroll;
+.search-field:focus {
+  border-color: var(--primary-color);
+  outline: none;
 }
 
-/* Desktop table */
-.desktop-table {
-  min-width: 600px;
+.search-button {
+  align-self: center;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 8px;
 }
 
-.executions-log-table th {
-  cursor: pointer;
-  font-weight: 500;
+.sort-dropdown {
+  flex-shrink: 0;
 }
 
-.executions-log-table tbody > tr {
-  cursor: pointer;
-}
-
-.executions-log-table .id-column {
-  width: 10%;
-}
-
-.executions-log-table .start_time-column {
-  width: 25%;
-}
-
-.executions-log-table .user-column {
-  width: 20%;
-}
-
-.executions-log-table .script-column {
-  width: 25%;
-}
-
-.executions-log-table .status-column {
-  width: 15%;
+.sort-select {
+  min-height: 40px;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid var(--separator-color);
+  border-radius: var(--radius-sm);
+  background: var(--background-color);
+  color: var(--font-color-main);
 }
 
 /* Loading state */
@@ -389,6 +299,11 @@ export default {
   border-top-color: var(--primary-color);
   border-radius: 50%;
   margin-bottom: 16px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .loading-text {
@@ -397,51 +312,111 @@ export default {
   text-align: center;
 }
 
-.executions-log-table .sorted:after {
-  display: inline-block;
-  vertical-align: middle;
-  width: 0;
-  height: 0;
-  margin-left: 5px;
-  content: "";
+/* Card list */
+.execution-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.executions-log-table .sorted.asc:after {
-  border-left: 4px solid transparent;
-  border-right: 4px solid transparent;
-  border-bottom: 4px solid var(--font-color-main);
+.execution-card {
+  background: var(--background-color-level-4dp);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+  box-shadow: var(--shadow-sm);
 }
 
-.executions-log-table .sorted.desc:after {
-  border-left: 4px solid transparent;
-  border-right: 4px solid transparent;
-  border-top: 4px solid var(--font-color-main);
+.execution-card:hover {
+  box-shadow: var(--shadow-md);
 }
 
-.params-header-column,
-.params-column {
-  width: 48px;
-  text-align: center;
+.execution-card:active {
+  transform: scale(0.995);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--separator-color);
+}
+
+.card-script {
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--font-color-main);
+}
+
+.card-status {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+  background: var(--background-color-high-emphasis);
+  color: var(--font-color-medium);
+}
+
+.card-status.status-success {
+  background: var(--success-color-light);
+  color: var(--success-color);
+}
+
+.card-status.status-error {
+  background: var(--error-color-light);
+  color: var(--error-color);
+}
+
+.card-status.status-running {
+  background: var(--info-color-light);
+  color: var(--info-color);
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+}
+
+.card-row {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.card-label {
+  color: var(--font-color-medium);
+  min-width: 45px;
+}
+
+.card-value {
+  color: var(--font-color-main);
+}
+
+.card-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 6px 10px;
+  border-top: 1px solid var(--separator-color);
 }
 
 .params-btn {
-  padding: 8px;
-  min-width: 44px;
-  min-height: 44px;
-  line-height: 1;
+  padding: 6px 10px;
+  min-width: auto;
+  border-radius: var(--radius-sm);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
 }
 
 .params-btn i {
+  font-size: 18px;
   color: var(--font-color-medium);
-  font-size: 20px;
-}
-
-.params-btn span {
-  display: none;
 }
 
 .params-btn:hover i,
@@ -449,24 +424,16 @@ export default {
   color: var(--primary-color);
 }
 
-.params-row {
-  cursor: default;
-}
-
-.params-row:hover {
-  background-color: inherit !important;
-}
-
-.params-panel {
-  padding: 8px 16px;
-  background-color: var(--background-color-high-emphasis);
-  border-radius: 4px;
-  margin: 4px 0;
+/* Parameters panel */
+.card-params {
+  padding: 10px 14px;
+  background: var(--background-color-high-emphasis);
+  border-top: 1px solid var(--separator-color);
 }
 
 .params-table {
   width: 100%;
-  font-size: 14px;
+  font-size: 12px;
   border-collapse: collapse;
 }
 
@@ -494,153 +461,22 @@ export default {
   word-break: break-word;
 }
 
-/* Mobile cards - hidden on desktop */
-.mobile-cards {
-  display: none;
-}
-
-.execution-card {
-  background: var(--background-color-level-4dp);
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin-bottom: 12px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.execution-card:hover {
-  background: var(--hover-color);
-}
-
-.execution-card:active {
-  background: var(--background-color-high-emphasis);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.card-script {
-  font-weight: 500;
-  font-size: 16px;
-  color: var(--font-color-main);
-}
-
-.card-status {
-  font-size: 12px;
-  padding: 2px 8px;
-  border-radius: 12px;
-  background: var(--background-color-high-emphasis);
-  color: var(--font-color-medium);
-}
-
-.card-status.status-success {
-  background: rgba(76, 175, 80, 0.2);
-  color: #4caf50;
-}
-
-.card-status.status-error {
-  background: rgba(244, 67, 54, 0.2);
-  color: #f44336;
-}
-
-.card-status.status-running {
-  background: rgba(33, 150, 243, 0.2);
-  color: #2196f3;
-}
-
-.card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.card-row {
-  display: flex;
-  font-size: 13px;
-}
-
-.card-label {
-  color: var(--font-color-medium);
-  width: 50px;
-  flex-shrink: 0;
-}
-
-.card-value {
-  color: var(--font-color-main);
-}
-
-.card-actions {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--separator-color);
-}
-
-.card-actions .params-btn {
-  width: 100%;
-  justify-content: center;
-}
-
-.card-actions .params-btn span {
-  display: inline;
-  margin-left: 4px;
-}
-
-.card-params {
-  margin-top: 8px;
-  padding: 8px;
-  background: var(--background-color-high-emphasis);
-  border-radius: 4px;
-}
-
-.card-params .param-row {
-  display: flex;
-  gap: 8px;
-  padding: 4px 0;
-  font-size: 13px;
-}
-
-.card-params .param-name {
-  color: var(--font-color-medium);
-  flex-shrink: 0;
-}
-
-.card-params .param-value {
-  color: var(--font-color-main);
-  word-break: break-word;
-}
-
-/* Responsive: Mobile (< 768px) - Show cards, hide table */
-@media screen and (max-width: 767px) {
-  .table-wrapper {
-    display: none;
-  }
-
-  .mobile-cards {
-    display: block;
-  }
-
-  .mobile-sort {
-    display: block;
+/* Responsive */
+@media screen and (max-width: 480px) {
+  .executions-log-table {
+    padding: 0 12px;
   }
 
   .search-container {
+    flex-direction: column;
+  }
+
+  .sort-dropdown {
     width: 100%;
   }
 
-  .search-panel {
-    flex: 1;
-  }
-}
-
-/* Responsive: Tablet (768px - 992px) - Show table with scroll */
-@media screen and (min-width: 768px) and (max-width: 992px) {
-  .table-wrapper {
-    margin: 0 -16px;
-    padding: 0 16px;
+  .sort-select {
+    width: 100%;
   }
 }
 
@@ -658,6 +494,19 @@ export default {
 
 .card-list-move {
   transition: transform var(--transition-normal);
+}
+
+/* Expand transition */
+.expand-enter-active,
+.expand-leave-active {
+  transition: all var(--transition-normal);
+  overflow: hidden;
+}
+
+.expand-enter,
+.expand-leave-to {
+  opacity: 0;
+  max-height: 0;
 }
 
 /* Fade transition */

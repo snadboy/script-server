@@ -8,6 +8,14 @@
       <span class="nav-label">History</span>
     </router-link>
 
+    <router-link
+        class="nav-tab waves-effect"
+        to="/scheduled"
+        :class="{ active: isScheduledActive }">
+      <i class="material-icons">schedule</i>
+      <span class="nav-label">Scheduled</span>
+    </router-link>
+
     <router-link v-if="adminUser"
        class="nav-tab waves-effect"
        to="/admin/scripts/_new"
@@ -39,6 +47,9 @@ export default {
     isHistoryActive() {
       // Active when on root path or history path
       return this.$route.path === '/' || this.$route.path === '/history';
+    },
+    isScheduledActive() {
+      return this.$route.path === '/scheduled';
     },
     isAddScriptActive() {
       return this.$route.path.includes('/admin/scripts');
