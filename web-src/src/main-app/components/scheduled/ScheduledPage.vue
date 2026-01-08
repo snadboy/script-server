@@ -41,7 +41,7 @@
           <i class="material-icons">schedule</i>
           Scheduled
         </h6>
-        <!-- Search and Sort -->
+        <!-- Search -->
         <div class="search-container">
           <div class="search-panel">
             <input ref="searchField" autocomplete="off" class="search-field"
@@ -52,14 +52,6 @@
                  class="search-button"
                  type="image"
                  @click="searchIconClickHandler">
-          </div>
-          <div class="sort-dropdown">
-            <select v-model="sortOption" class="sort-select">
-              <option value="next-asc">Next run (soonest)</option>
-              <option value="next-desc">Next run (latest)</option>
-              <option value="script-asc">Script A-Z</option>
-              <option value="user-asc">User A-Z</option>
-            </select>
           </div>
         </div>
         <div v-if="schedulesLoading" class="loading-state">
@@ -89,7 +81,7 @@
               </div>
               <div class="card-row">
                 <span class="label">User:</span>
-                <span class="value">{{ schedule.user }}</span>
+                <span class="value">{{ getUserName(schedule.user) }}</span>
               </div>
             </div>
             <div class="card-actions">
@@ -144,8 +136,7 @@ export default {
     return {
       expandedParams: null,
       deleting: null,
-      searchText: '',
-      sortOption: 'next-asc'
+      searchText: ''
     };
   },
 
@@ -189,35 +180,19 @@ export default {
       // Filter by search text
       const searchText = (this.searchText || '').trim().toLowerCase();
       if (searchText) {
-        result = result.filter(s =>
-          s.script_name.toLowerCase().includes(searchText) ||
-          s.user.toLowerCase().includes(searchText)
-        );
+        result = result.filter(s => {
+          const scriptMatch = s.script_name.toLowerCase().includes(searchText);
+          const userName = this.getUserName(s.user).toLowerCase();
+          const userMatch = userName.includes(searchText);
+          return scriptMatch || userMatch;
+        });
       }
 
-      // Sort
-      const [sortField, sortDir] = this.sortOption.split('-');
-      const ascending = sortDir === 'asc';
-
+      // Sort by next execution time (soonest first)
       return result.sort((a, b) => {
-        if (sortField === 'next') {
-          const timeA = a.next_execution ? new Date(a.next_execution).getTime() : Infinity;
-          const timeB = b.next_execution ? new Date(b.next_execution).getTime() : Infinity;
-          return ascending ? timeA - timeB : timeB - timeA;
-        } else if (sortField === 'script') {
-          const nameA = a.script_name.toLowerCase();
-          const nameB = b.script_name.toLowerCase();
-          if (nameA > nameB) return ascending ? 1 : -1;
-          if (nameA < nameB) return ascending ? -1 : 1;
-          return 0;
-        } else if (sortField === 'user') {
-          const userA = a.user.toLowerCase();
-          const userB = b.user.toLowerCase();
-          if (userA > userB) return ascending ? 1 : -1;
-          if (userA < userB) return ascending ? -1 : 1;
-          return 0;
-        }
-        return 0;
+        const timeA = a.next_execution ? new Date(a.next_execution).getTime() : Infinity;
+        const timeB = b.next_execution ? new Date(b.next_execution).getTime() : Infinity;
+        return timeA - timeB;
       });
     }
   },
@@ -236,6 +211,17 @@ export default {
       this.$nextTick(() => {
         this.$refs.searchField.focus();
       });
+    },
+
+    getUserName(user) {
+      if (!user) return 'Unknown';
+      if (typeof user === 'string') return user;
+      // Handle object format with user_id or audit_names
+      if (user.user_id) return user.user_id;
+      if (user.audit_names && user.audit_names.auth_username) {
+        return user.audit_names.auth_username;
+      }
+      return 'Unknown';
     },
 
     formatNextExecution(schedule) {
