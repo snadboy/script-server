@@ -1,6 +1,5 @@
 <template>
   <div class="scheduled-page">
-    <div class="container">
       <!-- Search and Sort -->
       <div class="search-container">
         <div class="search-panel">
@@ -132,7 +131,6 @@
           </div>
         </div>
       </section>
-    </div>
   </div>
 </template>
 
@@ -309,7 +307,11 @@ export default {
 
 <style scoped>
 .scheduled-page {
-  padding: 16px 0;
+  height: 100%;
+  overflow-y: auto;
+  background: var(--background-color);
+  padding: 16px;
+  padding-bottom: 12px;
 }
 
 /* Search container */
@@ -317,7 +319,7 @@ export default {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .search-panel {
@@ -364,7 +366,7 @@ export default {
 }
 
 .section {
-  margin-bottom: 32px;
+  margin-bottom: 16px;
 }
 
 .section-title {
@@ -428,7 +430,7 @@ export default {
 .schedule-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .execution-card,
@@ -438,6 +440,7 @@ export default {
   overflow: hidden;
   cursor: pointer;
   transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+  box-shadow: var(--shadow-md);
 }
 
 .execution-card:hover,
@@ -458,20 +461,20 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 10px 14px;
   border-bottom: 1px solid var(--separator-color);
 }
 
 .script-name {
   font-weight: 500;
-  font-size: 15px;
+  font-size: 14px;
   color: var(--font-color-main);
 }
 
 .status-badge,
 .repeat-badge,
 .once-badge {
-  font-size: 11px;
+  font-size: 10px;
   padding: 2px 8px;
   border-radius: 12px;
   text-transform: uppercase;
@@ -502,14 +505,14 @@ export default {
 }
 
 .card-body {
-  padding: 12px 16px;
+  padding: 10px 14px;
 }
 
 .card-row {
   display: flex;
   gap: 8px;
-  margin-bottom: 4px;
-  font-size: 13px;
+  margin-bottom: 2px;
+  font-size: 12px;
 }
 
 .card-row:last-child {
@@ -518,7 +521,7 @@ export default {
 
 .card-row .label {
   color: var(--font-color-medium);
-  min-width: 70px;
+  min-width: 55px;
 }
 
 .card-row .value {
