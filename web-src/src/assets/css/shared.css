@@ -533,6 +533,101 @@ tr:focus-visible {
 }
 
 /* ==========================================
+   INLINE VALIDATION: Visual Feedback
+   ========================================== */
+
+/* Error state for input fields */
+.input-field.textfield[data-error]:not([data-error=""]) input,
+.input-field[data-error]:not([data-error=""]) input,
+input.invalid,
+input:invalid:not(:placeholder-shown) {
+    border-bottom-color: var(--error-color) !important;
+    box-shadow: 0 1px 0 0 var(--error-color) !important;
+}
+
+/* Error message display below input */
+.input-field.textfield[data-error]:not([data-error=""])::after,
+.input-field[data-error]:not([data-error=""])::after {
+    content: attr(data-error);
+    display: block;
+    position: absolute;
+    bottom: -18px;
+    left: 0;
+    font-size: 12px;
+    color: var(--error-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+/* Error label color */
+.input-field.textfield[data-error]:not([data-error=""]) label,
+.input-field[data-error]:not([data-error=""]) label {
+    color: var(--error-color) !important;
+}
+
+/* Required field indicator */
+.input-field.textfield input[required] + label::after,
+.input-field input[required] + label::after {
+    content: " *";
+    color: var(--error-color);
+}
+
+/* Add spacing for error message */
+.input-field.textfield[data-error]:not([data-error=""]),
+.input-field[data-error]:not([data-error=""]) {
+    margin-bottom: 24px;
+}
+
+/* Success state for valid required inputs */
+.input-field.textfield input:valid:not(:placeholder-shown),
+input:valid:required:not(:placeholder-shown) {
+    border-bottom-color: var(--primary-color);
+}
+
+/* Error styling for select elements */
+.input-field.error .select-wrapper input.select-dropdown,
+.select-wrapper.invalid input.select-dropdown {
+    border-bottom-color: var(--error-color) !important;
+}
+
+/* Error border for custom inputs */
+.param-input.error,
+.param-select.error,
+input.error,
+select.error,
+textarea.error {
+    border-color: var(--error-color) !important;
+}
+
+/* Inline error text helper */
+.input-error,
+.field-error,
+.validation-error {
+    display: block;
+    font-size: 12px;
+    color: var(--error-color);
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+/* Warning state */
+.input-field.warning input,
+input.warning {
+    border-bottom-color: #FF9800 !important;
+    box-shadow: 0 1px 0 0 #FF9800 !important;
+}
+
+.input-warning,
+.field-warning {
+    display: block;
+    font-size: 12px;
+    color: #FF9800;
+    margin-top: 4px;
+}
+
+/* ==========================================
    TYPOGRAPHY: Improved Readability
    ========================================== */
 
@@ -557,14 +652,86 @@ body {
     .btn,
     .btn-flat,
     .btn-icon-flat,
-    button {
+    button:not(.toggle-day-button) {
         min-height: 44px;
         min-width: 44px;
     }
 
     /* Increase tap area for icon buttons */
-    .material-icons {
+    .material-icons:not(.no-touch-expand) {
         padding: 8px;
+    }
+
+    /* Collection items need larger touch targets */
+    .collection-item {
+        min-height: 48px;
+        padding-top: 12px;
+        padding-bottom: 12px;
+    }
+
+    /* Table rows need larger touch targets */
+    table tbody tr {
+        min-height: 48px;
+    }
+
+    table tbody td {
+        padding-top: 12px;
+        padding-bottom: 12px;
+    }
+
+    /* Checkbox and radio button labels need larger touch area */
+    [type="checkbox"] + span:not(.lever),
+    [type="radio"] + span {
+        padding-left: 35px;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    /* Dropdown items */
+    .dropdown-content li {
+        min-height: 44px;
+    }
+
+    .dropdown-content li > a,
+    .dropdown-content li > span {
+        padding: 12px 16px;
+    }
+
+    /* Links in navigation */
+    nav a,
+    .sidenav li > a {
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+    }
+
+    /* Chips */
+    .chip {
+        min-height: 36px;
+        padding: 8px 12px;
+    }
+}
+
+/* Always ensure clickable icons have adequate touch area */
+.icon-button,
+.btn-icon,
+a.material-icons,
+button .material-icons {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    min-height: 40px;
+    cursor: pointer;
+}
+
+@media (pointer: coarse) {
+    .icon-button,
+    .btn-icon,
+    a.material-icons {
+        min-width: 44px;
+        min-height: 44px;
     }
 }
 

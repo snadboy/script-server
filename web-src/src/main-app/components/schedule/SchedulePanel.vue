@@ -122,8 +122,7 @@
             <ToggleDayButton v-for="day in weekDays"
                              :key="day.day"
                              v-model="day.active"
-                             :text="day.day.charAt(0)"
-                             :title="day.day"/>
+                             :full-name="day.day"/>
           </div>
           <div v-if="weekdaysError" class="weekdays-error">{{ weekdaysError }}</div>
         </div>
@@ -404,12 +403,12 @@ export default {
   color: var(--font-color-main);
 }
 
-.toggle-day-button {
-  display: inline-block;
-  margin-right: 8px;
+.repeat-weekday-panel >>> .toggle-day-button {
+  margin-right: 4px;
+  margin-bottom: 4px;
 }
 
-.toggle-day-button:last-child {
+.repeat-weekday-panel >>> .toggle-day-button:last-child {
   margin-right: 0;
 }
 
@@ -480,14 +479,16 @@ export default {
 
 .schedule-panel .repeat-weekday-panel {
   margin-bottom: 16px;
-  padding-bottom: 8px;
-  width: fit-content;
-  height: 36px;
+  padding: 8px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
   box-sizing: border-box;
 }
 
 .schedule-panel .repeat-weekday-panel.error {
-  border-bottom: 1px solid #F44336;
+  border-bottom: 2px solid #F44336;
+  padding-bottom: 6px;
 }
 
 .repeat-weeks-panel {
@@ -503,8 +504,8 @@ export default {
 }
 
 @media (max-width: 320px) {
-  .toggle-day-button {
-    margin-right: 4px;
+  .schedule-panel .repeat-weekday-panel {
+    gap: 2px;
   }
 }
 
