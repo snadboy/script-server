@@ -3,9 +3,6 @@
     <ScriptLoadingText v-if="loading && !scriptConfig" :loading="loading" :script="selectedScript"/>
     <p v-show="scriptDescription" class="script-description" v-html="formattedDescription"/>
     <ScriptParametersView ref="parametersView"/>
-    <div v-if="schedulable" class="actions-panel">
-      <ScheduleButton :disabled="!enableScheduleButton" @click="openSchedule"/>
-    </div>
     <LogPanel v-show="showLog && !hasErrors && !hideExecutionControls" ref="logPanel" :outputFormat="outputFormat"/>
     <LogPanel v-if="preloadOutput && !showLog && !hasErrors && !hideExecutionControls"
               ref="preloadOutputPanel"
@@ -16,7 +13,7 @@
         <li v-for="error in shownErrors">{{ error }}</li>
       </ul>
     </div>
-    <div v-if="downloadableFiles && (downloadableFiles.length > 0) && !scheduleMode" v-show="!hideExecutionControls"
+    <div v-if="downloadableFiles && (downloadableFiles.length > 0)" v-show="!hideExecutionControls"
          class="files-download-panel">
       <a v-for="file in downloadableFiles"
          :download="file.filename"
@@ -34,10 +31,6 @@
              type="text"
              v-on:keyup="inputKeyUpHandler">
     </div>
-    <ScriptViewScheduleHolder v-if="!hideExecutionControls"
-                              ref="scheduleHolder"
-                              :scriptConfigComponentsHeight="scriptConfigComponentsHeight"
-                              @close="scheduleMode = false"/>
   </div>
 </template>
 
@@ -45,9 +38,7 @@
 
 import LogPanel from '@/common/components/log_panel'
 import {deepCloneObject, forEachKeyValue, isEmptyObject, isEmptyString, isNull} from '@/common/utils/common';
-import ScheduleButton from '@/main-app/components/scripts/ScheduleButton';
 import ScriptLoadingText from '@/main-app/components/scripts/ScriptLoadingText';
-import ScriptViewScheduleHolder from '@/main-app/components/scripts/ScriptViewScheduleHolder';
 import DOMPurify from 'dompurify';
 import {marked} from 'marked';
 import {mapActions, mapState} from 'vuex'
@@ -61,9 +52,7 @@ export default {
       everStarted: false,
       shownErrors: [],
       nextLogIndex: 0,
-      lastInlineImages: {},
-      scheduleMode: false,
-      scriptConfigComponentsHeight: 0
+      lastInlineImages: {}
     }
   },
 
@@ -78,9 +67,7 @@ export default {
   components: {
     ScriptLoadingText,
     LogPanel,
-    ScriptParametersView,
-    ScheduleButton,
-    ScriptViewScheduleHolder
+    ScriptParametersView
   },
 
   computed: {
@@ -130,28 +117,6 @@ export default {
     },
 
     enableExecuteButton() {
-      if (this.scheduleMode) {
-        return false;
-      }
-
-      if (this.hideExecutionControls) {
-        return false;
-      }
-
-      if (this.loading) {
-        return false;
-      }
-
-      if (isNull(this.currentExecutor)) {
-        return true;
-      }
-
-      return this.currentExecutor.state.status === STATUS_FINISHED
-          || this.currentExecutor.state.status === STATUS_DISCONNECTED
-          || this.currentExecutor.state.status === STATUS_ERROR;
-    },
-
-    enableScheduleButton() {
       if (this.hideExecutionControls) {
         return false;
       }
@@ -192,7 +157,7 @@ export default {
     },
 
     showLog() {
-      return !isNull(this.currentExecutor) && !this.scheduleMode;
+      return !isNull(this.currentExecutor);
     },
 
     downloadableFiles() {
@@ -233,10 +198,6 @@ export default {
 
     killEnabledTimeout() {
       return isNull(this.currentExecutor) ? null : this.currentExecutor.state.killTimeoutSec;
-    },
-
-    schedulable() {
-      return this.scriptConfig && this.scriptConfig.schedulable;
     }
   },
 
@@ -271,15 +232,6 @@ export default {
       }
 
       this.startExecution();
-    },
-
-    openSchedule: function () {
-      if (!this.validatePreExecution()) {
-        return;
-      }
-
-      this.$refs.scheduleHolder.open();
-      this.scheduleMode = true;
     },
 
     ...mapActions('executions', {
@@ -406,18 +358,6 @@ export default {
         this.shownErrors = []
 
         this.$nextTick(() => {
-          // 200 is a rough height for headers,buttons, description, etc.
-          const otherElemsHeight = 200;
-
-          if (isNull(this.$refs.parametersView)) {
-            this.scriptConfigComponentsHeight = otherElemsHeight;
-            return;
-          }
-
-          const paramHeight = this.$refs.parametersView.$el.clientHeight;
-
-          this.scriptConfigComponentsHeight = paramHeight + otherElemsHeight;
-
           // Auto-execute if pending (from inline execute button in sidebar)
           if (this.pendingAutoExecute && newConfig && this.enableExecuteButton) {
             this.$store.commit('scripts/SET_PENDING_AUTO_EXECUTE', false);
@@ -465,7 +405,6 @@ export default {
   min-height: 0;
 }
 
-.actions-panel,
 .files-download-panel {
   flex: 0 0 content;
 }
@@ -473,15 +412,6 @@ export default {
 .script-description,
 .script-loading-text {
   margin: 0;
-}
-
-.actions-panel {
-  margin-top: 8px;
-  display: flex;
-}
-
-.schedule-button {
-  flex: 1 0 auto;
 }
 
 .script-input-panel {

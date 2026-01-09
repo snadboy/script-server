@@ -21,14 +21,25 @@
               <span class="script-name">{{ execution.script }}</span>
               <span class="status-badge status-running">Running</span>
             </div>
-            <div class="card-body">
-              <div class="card-row">
-                <span class="label">User:</span>
-                <span class="value">{{ execution.user }}</span>
+            <div class="card-body running-card-body">
+              <div class="card-info">
+                <div class="card-row">
+                  <span class="label">User:</span>
+                  <span class="value">{{ execution.user }}</span>
+                </div>
+                <div class="card-row">
+                  <span class="label">Started:</span>
+                  <span class="value">{{ execution.startTimeString }}</span>
+                </div>
               </div>
-              <div class="card-row">
-                <span class="label">Started:</span>
-                <span class="value">{{ execution.startTimeString }}</span>
+              <div class="running-card-actions">
+                <button class="stop-btn waves-effect"
+                        :class="{ 'kill-mode': isKillMode(execution.id) }"
+                        :title="getStopButtonTitle(execution.id)"
+                        @click.stop="stopExecution(execution)">
+                  <i class="material-icons">{{ getStopIcon(execution.id) }}</i>
+                  <span v-if="getKillTimeout(execution.id)" class="timeout-badge">{{ getKillTimeout(execution.id) }}</span>
+                </button>
               </div>
             </div>
           </div>
@@ -71,6 +82,9 @@
               <span v-else class="once-badge">One-time</span>
             </div>
             <div class="card-body">
+              <div v-if="schedule.description" class="card-row description-row">
+                <span class="description-text">{{ schedule.description }}</span>
+              </div>
               <div class="card-row">
                 <span class="label">Next run:</span>
                 <span class="value next-run">{{ formatNextExecution(schedule) }}</span>
@@ -126,6 +140,8 @@
 
 <script>
 import {mapState, mapActions} from 'vuex';
+import {axiosInstance} from '@/common/utils/axios_utils';
+import Vue from 'vue';
 import ClearIcon from '@/assets/clear.png';
 import SearchIcon from '@/assets/search.png';
 
@@ -136,7 +152,8 @@ export default {
     return {
       expandedParams: null,
       deleting: null,
-      searchText: ''
+      searchText: '',
+      stoppingExecutions: {}  // { executionId: { killEnabled: false, killTimeout: null, intervalId: null } }
     };
   },
 
@@ -284,7 +301,124 @@ export default {
             this.deleting = null;
           });
       }
+    },
+
+    stopExecution(execution) {
+      const id = execution.id;
+      const stopState = this.stoppingExecutions[id];
+
+      if (stopState && stopState.killEnabled) {
+        // Kill mode - send kill request
+        axiosInstance.post('executions/kill/' + id)
+          .then(() => {
+            M.toast({html: 'Script killed'});
+            this.clearStopState(id);
+          })
+          .catch(e => {
+            M.toast({html: e.response?.data || 'Failed to kill script'});
+          });
+      } else {
+        // Stop mode - send stop request and start kill countdown
+        axiosInstance.post('executions/stop/' + id)
+          .then(() => {
+            M.toast({html: 'Stop signal sent'});
+            this.startKillCountdown(id);
+          })
+          .catch(e => {
+            M.toast({html: e.response?.data || 'Failed to stop script'});
+          });
+      }
+    },
+
+    startKillCountdown(id) {
+      // Initialize stop state with 5 second countdown
+      Vue.set(this.stoppingExecutions, id, {
+        killEnabled: false,
+        killTimeout: 5,
+        intervalId: setInterval(() => {
+          this.tickKillCountdown(id);
+        }, 1000)
+      });
+    },
+
+    tickKillCountdown(id) {
+      const stopState = this.stoppingExecutions[id];
+      if (!stopState) return;
+
+      // Check if execution is still running
+      const stillRunning = this.runningExecutions.some(e => e.id === id);
+      if (!stillRunning) {
+        this.clearStopState(id);
+        return;
+      }
+
+      if (stopState.killTimeout <= 1) {
+        // Enable kill mode
+        clearInterval(stopState.intervalId);
+        Vue.set(this.stoppingExecutions, id, {
+          killEnabled: true,
+          killTimeout: null,
+          intervalId: null
+        });
+      } else {
+        // Decrement countdown
+        Vue.set(this.stoppingExecutions, id, {
+          ...stopState,
+          killTimeout: stopState.killTimeout - 1
+        });
+      }
+    },
+
+    clearStopState(id) {
+      const stopState = this.stoppingExecutions[id];
+      if (stopState && stopState.intervalId) {
+        clearInterval(stopState.intervalId);
+      }
+      Vue.delete(this.stoppingExecutions, id);
+    },
+
+    isKillMode(id) {
+      return this.stoppingExecutions[id]?.killEnabled || false;
+    },
+
+    getKillTimeout(id) {
+      return this.stoppingExecutions[id]?.killTimeout || null;
+    },
+
+    getStopIcon(id) {
+      if (this.isKillMode(id)) return 'dangerous';
+      return 'stop';
+    },
+
+    getStopButtonTitle(id) {
+      if (this.isKillMode(id)) return 'Kill script';
+      const timeout = this.getKillTimeout(id);
+      if (timeout) return `Stop (${timeout}s to kill)`;
+      return 'Stop script';
     }
+  },
+
+  watch: {
+    runningExecutions: {
+      handler(newVal, oldVal) {
+        // Clear stop state for executions that are no longer running
+        if (oldVal) {
+          const currentIds = new Set(newVal.map(e => e.id));
+          Object.keys(this.stoppingExecutions).forEach(id => {
+            if (!currentIds.has(id)) {
+              this.clearStopState(id);
+            }
+          });
+        }
+      }
+    }
+  },
+
+  beforeDestroy() {
+    // Clean up all intervals
+    Object.keys(this.stoppingExecutions).forEach(id => {
+      this.clearStopState(id);
+    });
   }
 };
 </script>
@@ -494,6 +628,70 @@ export default {
   color: var(--info-color);
 }
 
+/* Running card body with stop button */
+.running-card-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.running-card-body .card-info {
+  flex: 1;
+}
+
+.running-card-actions {
+  flex-shrink: 0;
+}
+
+.stop-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: #e57373;
+  color: white;
+  position: relative;
+  transition: background-color 0.2s ease;
+}
+
+.stop-btn:hover {
+  background-color: #ef5350;
+}
+
+.stop-btn.kill-mode {
+  background-color: #c62828;
+}
+
+.stop-btn.kill-mode:hover {
+  background-color: #b71c1c;
+}
+
+.stop-btn i {
+  font-size: 18px;
+}
+
+.timeout-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #c62828;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
 .repeat-badge {
   display: flex;
   align-items: center;
@@ -538,6 +736,17 @@ export default {
 .card-row .next-run {
   font-weight: 500;
   color: var(--primary-color);
+}
+
+.card-row.description-row {
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--separator-color);
+}
+
+.description-text {
+  font-style: italic;
+  color: var(--font-color-medium);
 }
 
 .card-actions {

@@ -250,3 +250,124 @@ if (this.originalParent && this.$el.parentElement === document.body) {
 - Modal overlay now has `parentElement: BODY` instead of being nested in sidebar
 - Modal stays centered at all viewport widths
 - Overlay covers full viewport including sidebar area
+
+---
+
+### Schedule Modal Refactor (2026-01-09 continued)
+
+Moved the SCHEDULE button from the right-hand script view to the left sidebar (next to the edit button), and converted the Schedule Dialog into a proper modal like AddScriptModal and UserManagementModal.
+
+#### Files Created
+
+| File | Description |
+|------|-------------|
+| `web-src/src/main-app/components/schedule/ScheduleModal.vue` | New modal wrapper for scheduling with teleport-to-body pattern |
+
+#### Files Modified
+
+| File | Changes |
+|------|---------|
+| `web-src/src/main-app/components/scripts/ScriptInlineActions.vue` | Added schedule button with `date_range` icon, integrated ScheduleModal |
+| `web-src/src/main-app/components/scripts/script-view.vue` | Removed SCHEDULE button, actions-panel, and ScriptViewScheduleHolder |
+
+#### Files Deleted
+
+| File | Reason |
+|------|--------|
+| `web-src/src/main-app/components/scripts/ScriptViewScheduleHolder.vue` | No longer needed - replaced by ScheduleModal |
+| `web-src/src/main-app/components/scripts/ScheduleButton.vue` | No longer needed - button now inline in ScriptInlineActions |
+| `web-src/src/main-app/components/schedule/SchedulePanel.vue` | Content merged into ScheduleModal |
+
+#### Button Layout
+
+The sidebar inline actions now show: `[Play] [Stop] [Schedule] [Edit]`
+
+- Schedule button only appears for schedulable scripts
+- Uses same styling as edit button (surface background, border)
+- Opens centered modal with schedule creation form
+
+#### Modal Features
+
+- Teleports to document.body to avoid sidebar transform issues
+- Flexbox centering with display scaling fix
+- Shows existing schedules + create new schedule form
+- Parameters table, one-time vs repeat options
+- Cancel/Schedule footer buttons
+
+---
+
+### Execute/Stop Button Merge (2026-01-09 continued)
+
+Merged the execute and stop buttons into a single button that changes behavior based on execution state, and updated styling to match the schedule/edit buttons.
+
+#### Changes
+
+| File | Changes |
+|------|---------|
+| `web-src/src/main-app/components/scripts/ScriptInlineActions.vue` | Merged execute/stop into single button, updated styling |
+
+#### Button Behavior
+
+- **Not executing**: Shows `play_arrow` icon, executes script on click
+- **Executing**: Shows `stop` icon, stops script on click
+- **Kill mode**: Shows `dangerous` icon with red background, kills script on click
+- **Kill countdown**: Shows timeout badge with seconds remaining
+
+#### Button Layout
+
+The sidebar inline actions now show: `[Execute/Stop] [Schedule] [Edit]`
+
+All buttons now have consistent styling:
+- Surface background color
+- 1px border with separator color
+- Hover effect changes to primary color
+
+---
+
+### Schedule Enhancements & Stop Buttons (2026-01-09 continued)
+
+Three enhancements to scheduling and running script management:
+
+#### 1. Schedule Modal Stays Open After Scheduling
+
+After creating a schedule, the modal now resets the form instead of closing, allowing users to create multiple schedules without reopening the modal.
+
+| File | Changes |
+|------|---------|
+| `web-src/src/main-app/components/schedule/ScheduleModal.vue` | Added `resetScheduleFields()` method, `refreshScheduleList()` method, changed `runScheduleAction()` to reset instead of close |
+
+#### 2. Description Field for Schedules
+
+Added an optional description field to scheduled executions for better identification.
+
+**Frontend Changes:**
+
+| File | Changes |
+|------|---------|
+| `web-src/src/main-app/components/schedule/ScheduleModal.vue` | Added description input field, included in `buildScheduleSetup()` and form reset |
+| `web-src/src/main-app/components/schedule/ScheduleList.vue` | Display description in schedule cards |
+| `web-src/src/main-app/components/scheduled/ScheduledPage.vue` | Display description in schedule cards |
+
+**Backend Changes:**
+
+| File | Changes |
+|------|---------|
+| `src/scheduling/scheduling_job.py` | Added `description` parameter to `SchedulingJob.__init__()`, included in `as_serializable_dict()`, loaded in `from_dict()` |
+| `src/model/external_model.py` | Added `description` to `parse_external_schedule()` |
+| `src/scheduling/schedule_service.py` | Extract description from config and pass to `SchedulingJob` |
+
+#### 3. Stop Buttons for Running Scripts
+
+Added stop/kill buttons to running execution cards on History and Scheduled pages.
+
+| File | Changes |
+|------|---------|
+| `web-src/src/main-app/components/history/AppHistoryPanel.vue` | Added stop button to running cards with kill countdown timer |
+| `web-src/src/main-app/components/scheduled/ScheduledPage.vue` | Added stop button to running cards with kill countdown timer |
+
+**Stop Button Behavior:**
+- First click: Sends stop signal, starts 5-second countdown
+- During countdown: Shows timeout badge with seconds remaining
+- After countdown: Button changes to "kill mode" (red background, dangerous icon)
+- Kill mode click: Sends kill signal to forcefully terminate script
+- Auto-clears when script stops running

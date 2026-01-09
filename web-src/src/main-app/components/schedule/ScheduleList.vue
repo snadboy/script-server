@@ -16,6 +16,7 @@
       <div v-for="schedule in schedules" :key="schedule.id" class="schedule-item-wrapper">
         <div class="schedule-item">
           <div class="schedule-info">
+            <div v-if="schedule.description" class="schedule-description">{{ schedule.description }}</div>
             <div class="schedule-time">
               <i class="material-icons">schedule</i>
               <span>{{ formatNextExecution(schedule) }}</span>
@@ -193,6 +194,13 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.schedule-description {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--font-color-main);
+  margin-bottom: 2px;
 }
 
 .schedule-time {

@@ -5,21 +5,25 @@ from scheduling.schedule_config import ScheduleConfig
 
 
 class SchedulingJob:
-    def __init__(self, id, user, schedule_config, script_name, parameter_values) -> None:
+    def __init__(self, id, user, schedule_config, script_name, parameter_values, description=None) -> None:
         self.id = str(id)
         self.user = user  # type: User
         self.schedule = schedule_config  # type: ScheduleConfig
         self.script_name = script_name
         self.parameter_values = parameter_values  # type: dict
+        self.description = description  # type: str
 
     def as_serializable_dict(self):
-        return {
+        result = {
             'id': self.id,
             'user': self.user.as_serializable_dict(),
             'schedule': self.schedule.as_serializable_dict(),
             'script_name': self.script_name,
             'parameter_values': self.parameter_values
         }
+        if self.description:
+            result['description'] = self.description
+        return result
 
     def get_log_name(self):
         return 'Job#' + str(self.id) + '-' + self.script_name
@@ -31,5 +35,6 @@ def from_dict(job_as_dict):
     schedule = schedule_config.read_schedule_config(job_as_dict['schedule'])
     script_name = job_as_dict['script_name']
     parameter_values = job_as_dict['parameter_values']
+    description = job_as_dict.get('description')
 
-    return SchedulingJob(id, parsed_user, schedule, script_name, parameter_values)
+    return SchedulingJob(id, parsed_user, schedule, script_name, parameter_values, description)

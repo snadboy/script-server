@@ -90,7 +90,8 @@ class ScheduleService:
             if value_wrapper.user_value is not None:
                 normalized_values[parameter_name] = value_wrapper.user_value
 
-        job = SchedulingJob(id, user, schedule_config, script_name, normalized_values)
+        description = incoming_schedule_config.get('description')
+        job = SchedulingJob(id, user, schedule_config, script_name, normalized_values, description)
 
         job_path = self.save_job(job)
 
