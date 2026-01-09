@@ -125,10 +125,14 @@ Converted the "Add Script" page into a modal dialog that opens when clicking "Ad
 
 - Modal opens instead of navigating to `/_new` page
 - Works from both `admin.html` and `index.html` entry points
-- Full form with all sections: Script details, Access, Scheduling, Parameters
-- Scrollable modal body taking up 85% of viewport (width and height)
-- Dirty state tracking with confirmation prompt on close
-- Multiple close methods: Cancel button, X button, Escape key, click outside
+- **Tabbed wizard interface** with 4 tabs:
+  1. Details (name, path, description, output format)
+  2. Access (allowed users, admin users, shared instances)
+  3. Scheduling (enable/disable, auto cleanup)
+  4. Parameters
+- Centered modal with max-width 1000px, 85% viewport height
+- **Modal can only be closed via Cancel or Add buttons** (no X, no escape, no click-outside)
+- Dirty state tracking with confirmation prompt on Cancel
 
 ### Technical Notes
 
@@ -142,3 +146,4 @@ Converted the "Add Script" page into a modal dialog that opens when clicking "Ad
 - `b81825b` - Convert Add Script page to modal dialog
 - `24dc162` - Increase modal size to 85% of viewport
 - `635fa44` - Fix modal to work from main app navigation
+- `ddcd23a` - Convert modal to tabbed wizard with 4 tabs (Details, Access, Scheduling, Parameters)
