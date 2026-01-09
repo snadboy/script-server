@@ -97,7 +97,7 @@
 
       <div class="modal-footer">
         <button class="btn-flat waves-effect" @click="handleCancel">Cancel</button>
-        <PromisableButton :click="save" title="Add"/>
+        <PromisableButton :click="save" :enabled="isFormValid" title="Add"/>
       </div>
     </div>
   </div>
@@ -154,6 +154,8 @@ export default {
     return {
       NEW_SCRIPT,
       activeTab: 0,
+      boundFixOverlayDimensions: null,
+      originalParent: null,
       tabs: [
         { id: 'details', label: 'Details' },
         { id: 'access', label: 'Access' },
@@ -197,6 +199,13 @@ export default {
     },
     isDirty() {
       return this.$store.state[this.storeModule].isDirty;
+    },
+    isFormValid() {
+      if (!this.scriptConfig) return false;
+      const hasName = this.scriptConfig.name && this.scriptConfig.name.trim().length > 0;
+      const hasScript = this.scriptConfig.script_path ||
+        (this.scriptConfig.script && (this.scriptConfig.script.path || this.scriptConfig.script.command));
+      return hasName && hasScript;
     }
   },
 
@@ -206,8 +215,23 @@ export default {
         document.body.style.overflow = 'hidden';
         this.activeTab = 0;
         this.$store.dispatch(`${this.storeModule}/init`, NEW_SCRIPT);
+        // Move modal to body to avoid transform containment issues from parent elements
+        this.$nextTick(() => {
+          this.originalParent = this.$el.parentElement;
+          document.body.appendChild(this.$el);
+          this.boundFixOverlayDimensions = this.fixOverlayDimensions.bind(this);
+          this.boundFixOverlayDimensions();
+          window.addEventListener('resize', this.boundFixOverlayDimensions);
+        });
       } else {
         document.body.style.overflow = '';
+        if (this.boundFixOverlayDimensions) {
+          window.removeEventListener('resize', this.boundFixOverlayDimensions);
+        }
+        // Move modal back to original parent
+        if (this.originalParent && this.$el.parentElement === document.body) {
+          this.originalParent.appendChild(this.$el);
+        }
       }
     },
 
@@ -256,6 +280,15 @@ export default {
   },
 
   methods: {
+    fixOverlayDimensions() {
+      // Fix for display scaling causing 100vh to be larger than viewport
+      const overlay = this.$el;
+      if (overlay && overlay.classList.contains('modal-overlay')) {
+        overlay.style.height = window.innerHeight + 'px';
+        overlay.style.width = window.innerWidth + 'px';
+      }
+    },
+
     save() {
       return this.$store.dispatch(`${this.storeModule}/save`)
         .then(() => {
@@ -360,8 +393,8 @@ export default {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
+  width: 100vw;
+  height: 100vh;
   background: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
@@ -377,7 +410,8 @@ export default {
   display: flex;
   flex-direction: column;
   border-radius: var(--radius-md);
-  margin: 0;
+  margin: 0 !important;
+  position: relative;
 }
 
 .modal-header {
@@ -494,6 +528,12 @@ export default {
   border-top: 1px solid var(--separator-color);
   flex-shrink: 0;
   background: var(--background-color-level-16dp);
+}
+
+.modal-footer >>> .promisable-button[disabled] {
+  color: var(--font-color-disabled) !important;
+  pointer-events: none;
+  cursor: default;
 }
 
 .error {

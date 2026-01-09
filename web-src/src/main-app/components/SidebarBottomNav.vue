@@ -23,18 +23,22 @@
       <span class="nav-label">Add Script</span>
     </button>
 
-    <router-link v-if="adminUser"
+    <button v-if="adminUser"
        class="nav-tab waves-effect"
-       to="/admin/users"
-       :class="{ active: isUsersActive }">
+       @click="showUsersModal = true">
       <i class="material-icons">people</i>
       <span class="nav-label">Users</span>
-    </router-link>
+    </button>
 
     <AddScriptModal
       :visible="showAddScriptModal"
       @close="showAddScriptModal = false"
       @saved="onScriptSaved"
+    />
+
+    <UserManagementModal
+      :visible="showUsersModal"
+      @close="showUsersModal = false"
     />
   </div>
 </template>
@@ -42,17 +46,20 @@
 <script>
 import {mapState} from 'vuex';
 import AddScriptModal from '@/admin/components/scripts-config/AddScriptModal';
+import UserManagementModal from '@/admin/components/UserManagementModal';
 
 export default {
   name: 'SidebarBottomNav',
 
   components: {
-    AddScriptModal
+    AddScriptModal,
+    UserManagementModal
   },
 
   data() {
     return {
-      showAddScriptModal: false
+      showAddScriptModal: false,
+      showUsersModal: false
     };
   },
 
@@ -66,9 +73,6 @@ export default {
     },
     isScheduledActive() {
       return this.$route.path === '/scheduled';
-    },
-    isUsersActive() {
-      return this.$route.path.includes('/admin/users');
     }
   },
 

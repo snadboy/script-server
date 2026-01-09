@@ -6,7 +6,7 @@
                    @moveUp="moveUp(param)"/>
     <li class="add-param-item" @click.stop="addParam">
       <div class="collapsible-header">
-        <i class="material-icons">add</i>Add
+        <i class="material-icons">add</i>Add Parameter
       </div>
     </li>
   </ul>

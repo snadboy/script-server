@@ -147,3 +147,106 @@ Converted the "Add Script" page into a modal dialog that opens when clicking "Ad
 - `24dc162` - Increase modal size to 85% of viewport
 - `635fa44` - Fix modal to work from main app navigation
 - `ddcd23a` - Convert modal to tabbed wizard with 4 tabs (Details, Access, Scheduling, Parameters)
+
+---
+
+### Add Script Modal Improvements (2026-01-08 continued)
+
+Additional improvements to the Add Script modal:
+
+### Files Changed
+
+| File | Changes |
+|------|---------|
+| `web-src/src/admin/components/scripts-config/AddScriptModal.vue` | Added form validation, disabled Add button until required fields completed, fixed centering (offset for 300px sidebar) |
+| `web-src/src/admin/components/scripts-config/ScriptParamList.vue` | Changed "+ Add" to "+ Add Parameter" |
+
+### Details
+
+1. **Add button disabled until form valid**
+   - Added `isFormValid` computed property
+   - Checks that Script Name and Script Path are filled
+   - Button is grayed out and non-clickable until valid
+
+2. **Fixed centering in content area**
+   - Modal overlay now starts at `left: 300px` to account for sidebar
+   - Centers in the main content area, not the full viewport
+   - Media query resets to `left: 0` on screens < 992px where sidebar collapses
+
+3. **Renamed Add Parameter button**
+   - Changed from "+ Add" to "+ Add Parameter" in the Parameters tab
+
+---
+
+### Modal Centering Fix & User Management Modal (2026-01-09)
+
+#### Modal Centering Fix
+
+Fixed the vertical centering issue with the Add Script modal on systems with display scaling:
+
+| File | Changes |
+|------|---------|
+| `web-src/src/admin/components/scripts-config/AddScriptModal.vue` | Added dynamic overlay sizing via JavaScript to fix display scaling issues with `100vh` |
+
+**Details:**
+- Added `boundFixOverlayDimensions` to store bound function reference
+- On modal open, sets overlay dimensions to `window.innerWidth` x `window.innerHeight` pixels
+- Listens for resize events and updates dimensions accordingly
+- Properly unbinds event listener when modal closes
+
+#### User Management Modal
+
+Converted the Users page to a modal dialog, matching the Add Script modal treatment:
+
+| File | Changes |
+|------|---------|
+| `web-src/src/admin/components/UserManagementModal.vue` | **NEW** - Modal component for user management |
+| `web-src/src/main-app/components/SidebarBottomNav.vue` | Changed Users from router-link to button that opens modal |
+
+**Features:**
+- Displays user list with admin/code editor checkboxes
+- Add User nested modal dialog
+- Change Password nested modal dialog
+- Delete user with confirmation
+- Default password warning banner
+- Same centering fix as Add Script modal
+
+---
+
+### Modal Teleport Fix (2026-01-09 continued)
+
+Fixed modal centering issue when window is resized to narrow widths. Both Add Script and User Management modals were breaking because they were rendered inside the sidebar which has a CSS transform when collapsed.
+
+#### Root Cause
+
+The `.app-sidebar` element uses `transform: matrix(1, 0, 0, 1, -315, 0)` when collapsed, which creates a new containing block for `position: fixed` elements. This caused modals inside the sidebar to be positioned relative to the transformed sidebar rather than the viewport.
+
+#### Solution
+
+Teleport modal elements to the document body when opened, and move them back to their original parent when closed.
+
+| File | Changes |
+|------|---------|
+| `web-src/src/admin/components/scripts-config/AddScriptModal.vue` | Added `originalParent` to data, teleport to body on open, restore on close |
+| `web-src/src/admin/components/UserManagementModal.vue` | Same teleport fix |
+
+**Key code changes:**
+```javascript
+// On modal open
+this.$nextTick(() => {
+  this.originalParent = this.$el.parentElement;
+  document.body.appendChild(this.$el);
+  // ... dimension fixes
+});
+
+// On modal close
+if (this.originalParent && this.$el.parentElement === document.body) {
+  this.originalParent.appendChild(this.$el);
+}
+```
+
+#### Verification
+
+- Modal overlay now has `parentElement: BODY` instead of being nested in sidebar
+- Modal stays centered at all viewport widths
+- Overlay covers full viewport including sidebar area
