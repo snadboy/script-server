@@ -16,13 +16,12 @@
       <span class="nav-label">Scheduled</span>
     </router-link>
 
-    <router-link v-if="adminUser"
+    <button v-if="adminUser"
        class="nav-tab waves-effect"
-       to="/admin/scripts/_new"
-       :class="{ active: isAddScriptActive }">
+       @click="showAddScriptModal = true">
       <i class="material-icons">add_circle_outline</i>
       <span class="nav-label">Add Script</span>
-    </router-link>
+    </button>
 
     <router-link v-if="adminUser"
        class="nav-tab waves-effect"
@@ -31,14 +30,31 @@
       <i class="material-icons">people</i>
       <span class="nav-label">Users</span>
     </router-link>
+
+    <AddScriptModal
+      :visible="showAddScriptModal"
+      @close="showAddScriptModal = false"
+      @saved="onScriptSaved"
+    />
   </div>
 </template>
 
 <script>
 import {mapState} from 'vuex';
+import AddScriptModal from '@/admin/components/scripts-config/AddScriptModal';
 
 export default {
   name: 'SidebarBottomNav',
+
+  components: {
+    AddScriptModal
+  },
+
+  data() {
+    return {
+      showAddScriptModal: false
+    };
+  },
 
   computed: {
     ...mapState('auth', {
@@ -51,11 +67,18 @@ export default {
     isScheduledActive() {
       return this.$route.path === '/scheduled';
     },
-    isAddScriptActive() {
-      return this.$route.path.includes('/admin/scripts');
-    },
     isUsersActive() {
       return this.$route.path.includes('/admin/users');
+    }
+  },
+
+  methods: {
+    onScriptSaved(scriptName) {
+      this.showAddScriptModal = false;
+      // Refresh scripts list if we're on the scripts page
+      if (this.$route.path.includes('/admin/scripts')) {
+        this.$store.dispatch('adminScripts/init');
+      }
     }
   }
 }
@@ -85,6 +108,11 @@ export default {
   color: var(--font-color-medium);
   transition: color 0.2s ease, background-color 0.2s ease;
   padding: 4px 8px;
+  /* Reset button styles */
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
 }
 
 .nav-tab:hover {

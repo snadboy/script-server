@@ -28,7 +28,6 @@
 <script>
 import {NEW_SCRIPT} from '@/admin/store/script-config-module';
 import PromisableButton from '@/common/components/PromisableButton';
-import {mapActions, mapState} from 'vuex';
 import ScriptConfigForm from './ScriptConfigForm';
 import ScriptParamList from './ScriptParamList';
 
@@ -50,18 +49,26 @@ export default {
   },
 
   computed: {
-    ...mapState('scriptConfig', {
-      scriptConfig: 'scriptConfig',
-      loadingError: 'error',
-      isDirty: 'isDirty'
-    })
+    // Detect which store module to use (admin.html uses 'scriptConfig', index.html uses 'adminScriptConfig')
+    storeModule() {
+      return this.$store.state.adminScriptConfig ? 'adminScriptConfig' : 'scriptConfig';
+    },
+    scriptConfig() {
+      return this.$store.state[this.storeModule].scriptConfig;
+    },
+    loadingError() {
+      return this.$store.state[this.storeModule].error;
+    },
+    isDirty() {
+      return this.$store.state[this.storeModule].isDirty;
+    }
   },
 
   watch: {
     visible(newVal) {
       if (newVal) {
         document.body.style.overflow = 'hidden';
-        this.initConfig(NEW_SCRIPT);
+        this.$store.dispatch(`${this.storeModule}/init`, NEW_SCRIPT);
       } else {
         document.body.style.overflow = '';
       }
@@ -91,13 +98,8 @@ export default {
   },
 
   methods: {
-    ...mapActions('scriptConfig', {
-      initConfig: 'init',
-      saveConfig: 'save'
-    }),
-
     save() {
-      return this.saveConfig()
+      return this.$store.dispatch(`${this.storeModule}/save`)
         .then((result) => {
           const scriptName = this.scriptConfig.name;
           this.$emit('saved', scriptName);
@@ -119,7 +121,7 @@ export default {
           return;
         }
       }
-      this.$store.commit('scriptConfig/SET_DIRTY', false);
+      this.$store.commit(`${this.storeModule}/SET_DIRTY`, false);
       this.$emit('close');
     },
 
@@ -134,19 +136,19 @@ export default {
     captureOriginal() {
       setTimeout(() => {
         if (this.scriptConfig) {
-          this.$store.commit('scriptConfig/CAPTURE_ORIGINAL');
+          this.$store.commit(`${this.storeModule}/CAPTURE_ORIGINAL`);
         }
       }, 100);
     },
 
     checkDirty() {
-      const original = this.$store.state.scriptConfig.originalConfigJson;
+      const original = this.$store.state[this.storeModule].originalConfigJson;
       if (!original) {
         return false;
       }
       const current = JSON.stringify(this.scriptConfig);
       const isDirty = original !== current;
-      this.$store.commit('scriptConfig/SET_DIRTY', isDirty);
+      this.$store.commit(`${this.storeModule}/SET_DIRTY`, isDirty);
       return isDirty;
     }
   }
