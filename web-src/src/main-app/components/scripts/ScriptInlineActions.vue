@@ -19,12 +19,12 @@
       <i class="material-icons">date_range</i>
     </button>
 
-    <a v-if="isAdmin"
+    <router-link v-if="isAdmin"
        class="action-btn edit-btn waves-effect waves-light"
-       :href="editUrl"
+       :to="editUrl"
        title="Edit script configuration">
       <i class="material-icons">edit</i>
-    </a>
+    </router-link>
 
     <ScheduleModal
         :visible="showScheduleModal"
@@ -82,7 +82,7 @@ export default {
     },
 
     editUrl() {
-      return 'admin.html#/scripts/' + encodeURIComponent(this.scriptName);
+      return '/admin/scripts/' + encodeURIComponent(this.scriptName);
     },
 
     executor() {
