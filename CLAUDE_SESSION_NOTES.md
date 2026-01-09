@@ -70,3 +70,71 @@ This session also completed:
 - Added backup retention (30 days / max 10 backups)
 - Deleted the now-unnecessary `gdrive_auth.py`
 - Installed script to Script Server on `utilities` host (endpoint 13)
+
+---
+
+## Session Summary (2026-01-08)
+
+### What Was Done
+
+Fixed UI inconsistency between the History and Scheduled page headers. The banners were visually different and needed to match.
+
+### Files Changed
+
+| File | Changes |
+|------|---------|
+| `web-src/src/main-app/components/scheduled/ScheduledHeader.vue` | Updated to match `AppHistoryHeader.vue` styling - changed `<h5>` to `<h3>`, replaced `scheduled-header primary-color-dark` class with `main-content-header`, shortened title from "Scheduled Executions" to "Scheduled" |
+
+### Details
+
+**Before:**
+- History header: Used `main-content-header` class, `<h3>` tag, title "History"
+- Schedule header: Used `scheduled-header primary-color-dark` class, `<h5>` tag, title "Scheduled Executions"
+
+**After:**
+- Both headers now use identical structure and styling
+- Consistent font size (1.3em), height (56px), and text color
+
+### Build Notes
+
+Frontend build requires OpenSSL legacy provider on newer Node.js versions:
+```bash
+cd /home/snadboy/projects/script-server/web-src
+NODE_OPTIONS=--openssl-legacy-provider npm run build
+```
+
+### Commit
+
+- `ac2ce81` - Fix Scheduled header banner to match History header styling
+
+---
+
+### Add Script Modal Feature (2026-01-08 continued)
+
+Converted the "Add Script" page into a modal dialog that opens when clicking "Add Script" button in the admin scripts list.
+
+### Files Changed
+
+| File | Changes |
+|------|---------|
+| `web-src/src/admin/components/scripts-config/AddScriptModal.vue` | **NEW** - Modal component wrapping ScriptConfigForm and ScriptParamList |
+| `web-src/src/admin/components/scripts-config/ScriptsList.vue` | Replaced router-link with button that opens modal, added modal component |
+
+### Features
+
+- Modal opens instead of navigating to `/_new` page
+- Full form with all sections: Script details, Access, Scheduling, Parameters
+- Scrollable modal body taking up 85% of viewport (width and height)
+- Dirty state tracking with confirmation prompt on close
+- Multiple close methods: Cancel button, X button, Escape key, click outside
+- Uses existing Vuex `scriptConfig` module for state management
+
+### Technical Notes
+
+- Admin app has its own Vuex store in `AdminApp.vue` with module name `scriptConfig` (not `adminScriptConfig`)
+- Direct URL access to `#/admin/scripts/_new` still works as full page
+
+### Commits
+
+- `b81825b` - Convert Add Script page to modal dialog
+- Modal size updated to 85% of viewport for better usability

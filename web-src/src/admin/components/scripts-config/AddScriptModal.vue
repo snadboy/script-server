@@ -168,10 +168,8 @@ export default {
 }
 
 .add-script-modal {
-  width: 90%;
-  max-width: 900px;
-  height: 80vh;
-  max-height: 80vh;
+  width: 85%;
+  height: 85vh;
   display: flex;
   flex-direction: column;
   border-radius: var(--radius-md);
@@ -233,8 +231,7 @@ export default {
 @media screen and (max-width: 768px) {
   .add-script-modal {
     width: 95%;
-    height: 90vh;
-    max-height: 90vh;
+    height: 95vh;
   }
 
   .modal-body {
