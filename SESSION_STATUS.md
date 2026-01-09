@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-01-09
 **Branch:** `feature/schedule-list-and-delete`
-**Latest Commit:** `87ca7d2` - Refactor schedule UI with modal, add description field and stop buttons
+**Latest Commit:** `efc4aa2` - Fix edit script link to use unified SPA router
 
 ---
 
@@ -23,6 +23,8 @@
 | Add Script Modal | ✅ Done | Tabbed wizard with 4 tabs |
 | User Management Modal | ✅ Done | Modal for user admin |
 | Header Consistency | ✅ Done | History/Scheduled headers match |
+| History Section Fix | ✅ Done | Running tasks excluded from Completed section |
+| Edit Script Modal | ✅ Done | Tabbed wizard modal matching Add Script UX |
 
 ### Test Infrastructure
 
@@ -64,9 +66,12 @@ docker build -t script-server:custom .
 
 ### Key Files Changed This Session
 - `web-src/src/main-app/components/schedule/ScheduleModal.vue` (new)
+- `web-src/src/main-app/components/scripts/EditScriptModal.vue` (new)
 - `web-src/src/main-app/components/history/AppHistoryPanel.vue`
 - `web-src/src/main-app/components/scheduled/ScheduledPage.vue`
 - `web-src/src/main-app/components/scripts/ScriptInlineActions.vue`
+- `web-src/src/common/components/history/executions-log.vue`
+- `web-src/src/common/components/history/executions-log-page.vue`
 - `src/scheduling/scheduling_job.py`
 - `src/scheduling/schedule_service.py`
 - `src/model/external_model.py`

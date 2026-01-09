@@ -19,17 +19,25 @@
       <i class="material-icons">date_range</i>
     </button>
 
-    <router-link v-if="isAdmin"
-       class="action-btn edit-btn waves-effect waves-light"
-       :to="editUrl"
-       title="Edit script configuration">
+    <button
+        v-if="isAdmin"
+        class="action-btn edit-btn waves-effect waves-light"
+        title="Edit script configuration"
+        @click="openEditModal">
       <i class="material-icons">edit</i>
-    </router-link>
+    </button>
 
     <ScheduleModal
         :visible="showScheduleModal"
         :script-name="scriptName"
         @close="showScheduleModal = false"/>
+
+    <EditScriptModal
+        :visible="showEditModal"
+        :script-name="scriptName"
+        @close="showEditModal = false"
+        @saved="handleEditSaved"
+        @deleted="handleEditDeleted"/>
   </div>
 </template>
 
@@ -39,12 +47,14 @@ import {scriptNameToHash} from '../../utils/model_helper';
 import {STATUS_EXECUTING, STATUS_INITIALIZING, STATUS_FINISHED, STATUS_DISCONNECTED, STATUS_ERROR} from '../../store/scriptExecutor';
 import {mapState} from 'vuex';
 import ScheduleModal from '@/main-app/components/schedule/ScheduleModal';
+import EditScriptModal from '@/main-app/components/scripts/EditScriptModal';
 
 export default {
   name: 'ScriptInlineActions',
 
   components: {
-    ScheduleModal
+    ScheduleModal,
+    EditScriptModal
   },
 
   props: {
@@ -60,7 +70,8 @@ export default {
 
   data() {
     return {
-      showScheduleModal: false
+      showScheduleModal: false,
+      showEditModal: false
     };
   },
 
@@ -79,10 +90,6 @@ export default {
 
     scriptHash() {
       return scriptNameToHash(this.scriptName);
-    },
-
-    editUrl() {
-      return '/admin/scripts/' + encodeURIComponent(this.scriptName);
     },
 
     executor() {
@@ -173,6 +180,27 @@ export default {
     openScheduleModal() {
       if (!this.canSchedule) return;
       this.showScheduleModal = true;
+    },
+
+    openEditModal() {
+      this.showEditModal = true;
+    },
+
+    handleEditSaved(scriptName) {
+      this.showEditModal = false;
+      M.toast({ html: 'Script saved successfully' });
+      // Reload script config if we're viewing this script
+      if (this.selectedScript === this.scriptName || this.selectedScript === scriptName) {
+        this.$store.dispatch('scriptConfig/reloadScript', { selectedScript: scriptName });
+      }
+    },
+
+    handleEditDeleted() {
+      this.showEditModal = false;
+      // Navigate to home if we were viewing this script
+      if (this.selectedScript === this.scriptName) {
+        this.$router.push('/');
+      }
     }
   }
 }
