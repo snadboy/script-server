@@ -119,22 +119,26 @@ Converted the "Add Script" page into a modal dialog that opens when clicking "Ad
 |------|---------|
 | `web-src/src/admin/components/scripts-config/AddScriptModal.vue` | **NEW** - Modal component wrapping ScriptConfigForm and ScriptParamList |
 | `web-src/src/admin/components/scripts-config/ScriptsList.vue` | Replaced router-link with button that opens modal, added modal component |
+| `web-src/src/main-app/components/SidebarBottomNav.vue` | Changed "Add Script" nav item from router-link to button that opens modal |
 
 ### Features
 
 - Modal opens instead of navigating to `/_new` page
+- Works from both `admin.html` and `index.html` entry points
 - Full form with all sections: Script details, Access, Scheduling, Parameters
 - Scrollable modal body taking up 85% of viewport (width and height)
 - Dirty state tracking with confirmation prompt on close
 - Multiple close methods: Cancel button, X button, Escape key, click outside
-- Uses existing Vuex `scriptConfig` module for state management
 
 ### Technical Notes
 
-- Admin app has its own Vuex store in `AdminApp.vue` with module name `scriptConfig` (not `adminScriptConfig`)
+- Modal dynamically detects which Vuex store module to use:
+  - `admin.html` → `scriptConfig` module
+  - `index.html` → `adminScriptConfig` module
 - Direct URL access to `#/admin/scripts/_new` still works as full page
 
 ### Commits
 
 - `b81825b` - Convert Add Script page to modal dialog
-- Modal size updated to 85% of viewport for better usability
+- `24dc162` - Increase modal size to 85% of viewport
+- `635fa44` - Fix modal to work from main app navigation
