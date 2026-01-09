@@ -49,7 +49,7 @@
         <i class="material-icons">history</i>
         Completed
       </h6>
-      <ExecutionsLogPage :disableProgressIndicator="true" class="main-app-executions-log"/>
+      <ExecutionsLogPage :disableProgressIndicator="true" :excludeRunning="true" class="main-app-executions-log"/>
     </section>
   </div>
 </template>

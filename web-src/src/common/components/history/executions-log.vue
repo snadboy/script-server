@@ -17,6 +17,10 @@ export default {
     disableProgressIndicator: {
       type: Boolean,
       default: false
+    },
+    excludeRunning: {
+      type: Boolean,
+      default: false
     }
   },
   components: {
@@ -41,9 +45,18 @@ export default {
 
   computed: {
     ...mapState('history', {
-      executionRows: 'executions',
+      executions: 'executions',
       loading: 'loading'
-    })
+    }),
+    executionRows() {
+      if (!this.executions) return [];
+      if (this.excludeRunning) {
+        return this.executions.filter(e =>
+          !e.status || e.status.toLowerCase() !== 'running'
+        );
+      }
+      return this.executions;
+    }
   }
 }
 
