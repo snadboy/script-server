@@ -1,0 +1,19 @@
+{
+  "id": "6",
+  "user": {
+    "user_id": "admin",
+    "audit_names": {
+      "auth_username": "admin",
+      "ip": "127.0.0.1",
+      "hostname": "localhost"
+    }
+  },
+  "schedule": {
+    "repeatable": false,
+    "start_datetime": "2026-01-07T21:09:00.000000Z"
+  },
+  "script_name": "Test Script",
+  "parameter_values": {
+    "Message": "Hello from Script Server!"
+  }
+}
