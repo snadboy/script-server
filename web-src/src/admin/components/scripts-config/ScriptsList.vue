@@ -3,10 +3,10 @@
     <PageProgress v-if="loading"/>
     <transition name="fade" mode="out-in">
       <div v-if="!loading" key="content">
-        <router-link :to="newScriptPath" append class="waves-effect waves-light btn add-script-btn">
+        <button class="waves-effect waves-light btn add-script-btn" @click="showAddScriptModal = true">
           <i class="material-icons left">add</i>
           Add Script
-        </router-link>
+        </button>
         <div class="collection card-flat">
           <transition-group name="list" tag="div">
             <router-link v-for="script in scripts"
@@ -23,13 +23,19 @@
         </div>
       </div>
     </transition>
+
+    <AddScriptModal
+      :visible="showAddScriptModal"
+      @close="showAddScriptModal = false"
+      @saved="onScriptSaved"
+    />
   </div>
 </template>
 
 <script>
 import PageProgress from '@/common/components/PageProgress';
+import AddScriptModal from './AddScriptModal';
 import {mapActions, mapState} from 'vuex';
-import {NEW_SCRIPT} from '../../store/script-config-module';
 
 export default {
   name: 'ScriptsList',
@@ -40,7 +46,7 @@ export default {
 
   data() {
     return {
-      newScriptPath: NEW_SCRIPT
+      showAddScriptModal: false
     }
   },
 
@@ -60,11 +66,17 @@ export default {
   },
 
   components: {
-    PageProgress
+    PageProgress,
+    AddScriptModal
   },
 
   methods: {
-    ...mapActions('adminScripts', ['init'])
+    ...mapActions('adminScripts', ['init']),
+
+    onScriptSaved(scriptName) {
+      this.showAddScriptModal = false;
+      this.init();  // Refresh the scripts list
+    }
   }
 }
 </script>
