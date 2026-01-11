@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-01-10
 **Branch:** `feature/schedule-list-and-delete`
-**Latest Commit:** `4223ed2` - Remove parameter history button and schedule list from modal
+**Latest Commit:** `f8323ce` - Add Execute Modal dialog for script execution
 **Status:** ✅ All features tested and verified working
 
 ---
@@ -36,6 +36,7 @@
 | Scheduled Badge on Running | Done | Purple "Scheduled" badge shown on running executions triggered by schedules |
 | Remove Parameter History | Done | Removed history button from script header |
 | Simplify Schedule Modal | Done | Removed schedule list from Schedule Execution dialog |
+| Execute Modal | Done | Modal dialog for script execution with instance name and parameters |
 
 ### Test Infrastructure
 

@@ -15,7 +15,7 @@
 ## Current State
 
 **Branch:** `feature/schedule-list-and-delete`
-**Latest Commit:** `4223ed2` - Remove parameter history button and schedule list from modal
+**Latest Commit:** `f8323ce` - Add Execute Modal dialog for script execution
 **Last Updated:** 2026-01-10
 **Status:** ✅ All features tested and verified working
 
@@ -46,6 +46,7 @@
 | Scheduled Badge on Running | Done | Purple "Scheduled" badge shown on running executions triggered by schedules |
 | Remove Parameter History | Done | Removed history button from script header |
 | Simplify Schedule Modal | Done | Removed schedule list from Schedule Execution dialog |
+| Execute Modal | Done | Modal dialog for script execution with instance name and parameters |
 
 ### Test Infrastructure
 
@@ -81,6 +82,7 @@ docker build -t script-server:custom .
 
 - `web-src/src/main-app/components/schedule/ScheduleModal.vue` (new)
 - `web-src/src/main-app/components/scripts/EditScriptModal.vue` (new)
+- `web-src/src/main-app/components/scripts/ExecuteModal.vue` (new - execute dialog with parameters)
 - `web-src/src/main-app/components/scripts/ScriptExecutionsPanel.vue` (new)
 - `web-src/src/main-app/components/activity/ActivityPage.vue` (new - unified activity view)
 - `web-src/src/main-app/components/activity/ActivityHeader.vue` (new)
