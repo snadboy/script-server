@@ -15,9 +15,8 @@
 ## Current State
 
 **Branch:** `feature/schedule-list-and-delete`
-**Latest Commit:** `34d7c08` - Add enable/disable toggle for recurring schedules
+**Latest Commit:** `ad165f8` - Add schedule editing and execution time tracking
 **Last Updated:** 2026-01-11
-**Status:** ✅ All features tested and verified working
 
 ### Completed Features
 
@@ -52,6 +51,8 @@
 | Settings Modal | Done | Configurable completed executions limit via gear icon in sidebar |
 | Schedule Enable/Disable | Done | Toggle button on schedule rows, checkbox in Schedule modal for recurring schedules |
 | Unified Section Components | Done | Single implementation for Running/Scheduled/Completed sections used by both Activity and Script views |
+| Schedule Editing | Done | PUT /schedules/{id} endpoint, edit button on schedule cards opens ScheduleModal in edit mode |
+| Execution Finish Time | Done | Tracks finish_time in logs, shows Started/Completed times on completed execution cards |
 
 ### Test Infrastructure
 
@@ -112,12 +113,12 @@ docker build -t script-server:custom .
 - `web-src/src/main-app/store/scriptSchedule.js` (modified - cross-store refresh on create/delete)
 - `web-src/src/common/store/executions-module.js` (modified - added refresh action)
 - `src/scheduling/scheduling_job.py`
-- `src/scheduling/schedule_service.py` (modified - passes schedule_id when executing jobs)
+- `src/scheduling/schedule_service.py` (modified - passes schedule_id when executing jobs, added update_job method)
 - `src/scheduling/schedule_config.py` (modified - added get_last_execution_time method)
 - `src/execution/execution_service.py` (modified - added schedule_id tracking to executions)
-- `src/execution/logging.py` (modified - added schedule_id to logs and history)
-- `src/web/server.py` (modified - added last_execution to schedule API response)
-- `src/model/external_model.py` (modified - added scheduleId to API response)
+- `src/execution/logging.py` (modified - added schedule_id to logs and history, added finish_time tracking)
+- `src/web/server.py` (modified - added last_execution to schedule API response, added PUT /schedules/{id} endpoint)
+- `src/model/external_model.py` (modified - added scheduleId and finishTime to API response)
 - `web-src/src/main-app/components/MainAppSidebar.vue` (modified - moved version to bottom)
 - `web-src/src/admin/store/script-config-module.js` (modified - improved error handling for save/delete)
 - `src/web/server.py` (modified - fixed HTTPError reason parameter, added schedule enable toggle API)

@@ -110,20 +110,42 @@ function sortExecutionLogs(logs) {
 }
 
 export function translateExecutionLog(log) {
-    log.startTimeString = getTimeString(log.startTime);
-    log.finishTimeString = getTimeString(log.finishTime);
+    log.startTimeString = formatDateCompact(log.startTime);
+    log.finishTimeString = formatDateCompact(log.finishTime);
+    log.durationString = formatDuration(log.startTime, log.finishTime);
     log.fullStatus = getFullStatus(log);
 
     return log;
 }
 
-function getTimeString(timeValue) {
-    if (!isNull(timeValue)) {
-        const time = new Date(timeValue);
-        return time.toLocaleDateString() + ' ' + time.toLocaleTimeString();
-    } else {
+function formatDateCompact(timeValue) {
+    if (isNull(timeValue)) {
         return '';
     }
+    const date = new Date(timeValue);
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const year = date.getFullYear();
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${month}/${day}/${year} @ ${hours}:${minutes}`;
+}
+
+function formatDuration(startTime, finishTime) {
+    if (isNull(startTime) || isNull(finishTime)) {
+        return '';
+    }
+    const start = new Date(startTime);
+    const finish = new Date(finishTime);
+    const durationMs = finish - start;
+
+    if (durationMs < 0) return '';
+
+    const totalSeconds = Math.floor(durationMs / 1000);
+    const hours = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
+    const minutes = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
+    const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+    return `(${hours}:${minutes}:${seconds})`;
 }
 
 function getFullStatus(log) {

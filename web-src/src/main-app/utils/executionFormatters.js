@@ -18,7 +18,7 @@ export function getUserName(user) {
 }
 
 /**
- * Format next execution time with relative display for near times
+ * Format next execution time
  * @param {Object} schedule - Schedule object with next_execution property
  * @returns {string} Formatted next execution time
  */
@@ -27,24 +27,25 @@ export function formatNextExecution(schedule) {
     return 'No upcoming execution';
   }
   const date = new Date(schedule.next_execution);
-  const now = new Date();
-  const diff = date - now;
-
-  // Show relative time if within 24 hours
-  if (diff > 0 && diff < 24 * 60 * 60 * 1000) {
-    const hours = Math.floor(diff / (60 * 60 * 1000));
-    const minutes = Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000));
-    if (hours > 0) {
-      return `In ${hours}h ${minutes}m`;
-    }
-    return `In ${minutes}m`;
-  }
-
-  return date.toLocaleString();
+  return formatDateCompact(date);
 }
 
 /**
- * Format last execution time with relative display for recent times
+ * Format a date as 'M/D/YYYY @ HH:MM'
+ * @param {Date} date - Date object to format
+ * @returns {string} Formatted date string
+ */
+function formatDateCompact(date) {
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const year = date.getFullYear();
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return `${month}/${day}/${year} @ ${hours}:${minutes}`;
+}
+
+/**
+ * Format last execution time
  * @param {Object} schedule - Schedule object with last_execution property
  * @returns {string} Formatted last execution time
  */
@@ -53,23 +54,7 @@ export function formatLastExecution(schedule) {
     return 'Never';
   }
   const date = new Date(schedule.last_execution);
-  const now = new Date();
-  const diff = now - date;
-
-  // Show relative time if within 24 hours
-  if (diff > 0 && diff < 24 * 60 * 60 * 1000) {
-    const hours = Math.floor(diff / (60 * 60 * 1000));
-    const minutes = Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000));
-    if (hours > 0) {
-      return `${hours}h ${minutes}m ago`;
-    }
-    if (minutes > 0) {
-      return `${minutes}m ago`;
-    }
-    return 'Just now';
-  }
-
-  return date.toLocaleString();
+  return formatDateCompact(date);
 }
 
 /**

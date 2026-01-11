@@ -22,8 +22,8 @@
         :user="execution.user"
         timeLabel="Started"
         :timeValue="execution.startTimeString"
-        timeLabel2="Completed"
-        :timeValue2="execution.finishTimeString"
+        timeLabel2="Ended"
+        :timeValue2="execution.finishTimeString ? execution.finishTimeString + ' ' + execution.durationString : ''"
         @click="handleClick(execution)">
       </ExecutionCard>
     </template>
