@@ -15,7 +15,7 @@
 ## Current State
 
 **Branch:** `feature/schedule-list-and-delete`
-**Latest Commit:** `34d3dde` - Add unified Activity page, live updates, and UI fixes
+**Latest Commit:** `4656034` - Add Scheduled badge and description to running executions
 **Last Updated:** 2026-01-10
 
 ### Completed Features
@@ -42,6 +42,7 @@
 | Schedule Last Run | Done | Shows last execution time for recurring schedules in lists |
 | Sidebar Version Move | Done | Version/build number moved to bottom of sidebar |
 | Sidebar Icon Alignment | Done | Fixed nav icon alignment (override global min-height CSS) |
+| Scheduled Badge on Running | Done | Purple "Scheduled" badge shown on running executions triggered by schedules |
 
 ### Test Infrastructure
 

@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-01-10
 **Branch:** `feature/schedule-list-and-delete`
-**Latest Commit:** `34d3dde` - Add unified Activity page, live updates, and UI fixes
+**Latest Commit:** `4656034` - Add Scheduled badge and description to running executions
 
 ---
 
@@ -32,6 +32,7 @@
 | Schedule Last Run | Done | Shows last execution time for recurring schedules in lists |
 | Sidebar Version Move | Done | Version/build number moved to bottom of sidebar |
 | Sidebar Icon Alignment | Done | Fixed nav icon alignment (override global min-height CSS) |
+| Scheduled Badge on Running | Done | Purple "Scheduled" badge shown on running executions triggered by schedules |
 
 ### Test Infrastructure
 
@@ -44,9 +45,10 @@
 
 ## Pending / Suggested Next Steps
 
-1. **Testing** - Test the new features on a running Script Server instance
-2. **Docker Build** - Build a Docker image from the fork for deployment
-3. **PR to Upstream** - Consider submitting PR to `bugy/script-server` if desired
+1. **Server Restart** - Restart server to pick up backend schedule_id tracking changes
+2. **Testing** - Test the new features on a running Script Server instance
+3. **Docker Build** - Build a Docker image from the fork for deployment
+4. **PR to Upstream** - Consider submitting PR to `bugy/script-server` if desired
 
 ---
 
@@ -72,18 +74,11 @@ docker build -t script-server:custom .
 - **Local Path:** `/home/snadboy/projects/script-server`
 
 ### Key Files Changed This Session
-- `web-src/src/main-app/components/activity/ActivityPage.vue` (new - unified activity view)
-- `web-src/src/main-app/components/activity/ActivityHeader.vue` (new)
-- `web-src/src/main-app/components/common/CollapsibleSection.vue` (new - base component)
-- `web-src/src/main-app/components/common/ExecutionCard.vue` (new - base component)
-- `web-src/src/main-app/components/common/StopButton.vue` (new - reusable stop/kill button)
-- `web-src/src/main-app/components/scripts/ScriptExecutionsPanel.vue` (new)
-- `web-src/src/main-app/components/SidebarBottomNav.vue` (modified - Activity nav, icon fix)
-- `web-src/src/main-app/components/MainAppSidebar.vue` (modified - moved version to bottom)
-- `web-src/src/main-app/router/router.js` (modified - Activity route replaces History/Scheduled)
-- `web-src/src/main-app/store/index.js` (modified - init history and allSchedules, watcher for live updates)
-- `web-src/src/main-app/store/allSchedules.js` (modified - added refresh action)
-- `web-src/src/main-app/store/scriptSchedule.js` (modified - cross-store refresh on create/delete)
-- `web-src/src/common/store/executions-module.js` (modified - added refresh action)
-- `src/scheduling/schedule_config.py` (modified - added get_last_execution_time method)
-- `src/web/server.py` (modified - added last_execution to schedule API response)
+- `src/execution/execution_service.py` (modified - added schedule_id tracking)
+- `src/execution/logging.py` (modified - added schedule_id to logs and history)
+- `src/model/external_model.py` (modified - added scheduleId to API response)
+- `src/scheduling/schedule_service.py` (modified - passes schedule_id when executing)
+- `web-src/src/main-app/components/activity/ActivityPage.vue` (modified - scheduled badge)
+- `web-src/src/main-app/components/common/ExecutionCard.vue` (modified - scheduled badge/description props)
+- `web-src/src/main-app/components/scripts/ScriptExecutionsPanel.vue` (modified - scheduled badge)
+- `web-src/src/main-app/components/SidebarBottomNav.vue` (modified - icon alignment fix)
