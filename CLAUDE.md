@@ -51,6 +51,7 @@
 | Collapsed State Persistence | Done | Running/Scheduled/Completed sections remember collapsed state via localStorage |
 | Settings Modal | Done | Configurable completed executions limit via gear icon in sidebar |
 | Schedule Enable/Disable | Done | Toggle button on schedule rows, checkbox in Schedule modal for recurring schedules |
+| Unified Section Components | Done | Single implementation for Running/Scheduled/Completed sections used by both Activity and Script views |
 
 ### Test Infrastructure
 
@@ -93,6 +94,11 @@ docker build -t script-server:custom .
 - `web-src/src/main-app/components/common/CollapsibleSection.vue` (new - base component)
 - `web-src/src/main-app/components/common/ExecutionCard.vue` (new - base component)
 - `web-src/src/main-app/components/common/StopButton.vue` (new - reusable stop/kill button)
+- `web-src/src/main-app/components/common/RunningSection.vue` (new - unified running executions section)
+- `web-src/src/main-app/components/common/ScheduledSection.vue` (new - unified scheduled executions section)
+- `web-src/src/main-app/components/common/CompletedSection.vue` (new - unified completed executions section)
+- `web-src/src/main-app/components/common/ScheduleCard.vue` (new - reusable schedule card)
+- `web-src/src/main-app/utils/executionFormatters.js` (new - shared formatting utilities)
 - `web-src/src/main-app/components/scripts/script-view.vue` (modified - uses ScriptExecutionsPanel)
 - `web-src/src/main-app/components/SidebarBottomNav.vue` (modified - Activity replaces History/Scheduled)
 - `web-src/src/main-app/router/router.js` (modified - Activity route replaces History/Scheduled)
