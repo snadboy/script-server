@@ -197,9 +197,10 @@ export default {
 }
 
 .btn {
-  padding: 8px 16px;
+  padding: 10px 20px;
   border-radius: var(--radius-sm);
   font-size: 14px;
+  line-height: 1.2;
   cursor: pointer;
   border: none;
   background: var(--background-color-high-emphasis);
