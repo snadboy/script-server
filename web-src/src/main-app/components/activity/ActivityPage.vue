@@ -23,6 +23,8 @@
           :user="execution.user"
           timeLabel="Started"
           :timeValue="execution.startTimeString"
+          :isScheduled="!!execution.scheduleId"
+          :scheduleDescription="getScheduleDescription(execution.scheduleId)"
           @click="viewExecution(execution)">
           <template #actions>
             <StopButton :executionId="execution.id" />
@@ -328,6 +330,12 @@ export default {
             this.deleting = null;
           });
       }
+    },
+
+    getScheduleDescription(scheduleId) {
+      if (!scheduleId || !this.schedules) return '';
+      const schedule = this.schedules.find(s => String(s.id) === String(scheduleId));
+      return schedule ? schedule.description || '' : '';
     }
   }
 };

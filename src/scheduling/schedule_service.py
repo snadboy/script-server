@@ -144,7 +144,7 @@ class ScheduleService:
             config = self._config_service.load_config_model(script_name, user, parameter_values)
             self.validate_script_config(config)
 
-            execution_id = self._execution_service.start_script(config, user)
+            execution_id = self._execution_service.start_script(config, user, schedule_id=job.id)
             LOGGER.info('Started script #' + str(execution_id) + ' for ' + job.get_log_name())
 
             if config.scheduling_auto_cleanup:

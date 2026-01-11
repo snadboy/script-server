@@ -72,10 +72,17 @@
                class="execution-card"
                @click="selectExecution(execution)">
             <div class="card-header">
-              <span class="status-badge status-running">Running</span>
+              <div class="badge-container">
+                <span class="status-badge status-running">Running</span>
+                <span v-if="execution.scheduleId" class="status-badge status-scheduled">Scheduled</span>
+              </div>
             </div>
             <div class="card-body">
               <div class="card-info">
+                <div v-if="getScheduleDescription(execution.scheduleId)" class="card-row schedule-description-row">
+                  <span class="schedule-label">Schedule:</span>
+                  <span class="schedule-text">{{ getScheduleDescription(execution.scheduleId) }}</span>
+                </div>
                 <div class="card-row">
                   <span class="label">User:</span>
                   <span class="value">{{ execution.user }}</span>
@@ -419,6 +426,12 @@ export default {
       if (status === 'running') return 'status-running';
       if (execution.exitCode === 0) return 'status-success';
       return 'status-error';
+    },
+
+    getScheduleDescription(scheduleId) {
+      if (!scheduleId || !this.schedules) return '';
+      const schedule = this.schedules.find(s => String(s.id) === String(scheduleId));
+      return schedule ? schedule.description || '' : '';
     }
   },
 
@@ -700,6 +713,12 @@ export default {
   border-bottom: 1px solid var(--separator-color);
 }
 
+.badge-container {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
 .status-badge {
   font-size: 10px;
   padding: 2px 8px;
@@ -712,6 +731,11 @@ export default {
 .status-running {
   background: var(--info-color-light);
   color: var(--info-color);
+}
+
+.status-scheduled {
+  background: rgba(156, 39, 176, 0.2);
+  color: #ba68c8;
 }
 
 .status-success {
@@ -787,6 +811,20 @@ export default {
 .description-text {
   font-style: italic;
   color: var(--font-color-medium);
+}
+
+.card-row.schedule-description-row {
+  margin-bottom: 4px;
+}
+
+.schedule-label {
+  color: #ba68c8;
+  min-width: 55px;
+}
+
+.schedule-text {
+  color: var(--font-color-medium);
+  font-style: italic;
 }
 
 .card-actions {

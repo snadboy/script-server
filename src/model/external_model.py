@@ -85,7 +85,7 @@ def _translate_history_entry(entry, running):
     else:
         start_time = None
 
-    return {
+    result = {
         'id': entry.id,
         'startTime': start_time,
         'user': entry.user_name,
@@ -94,6 +94,9 @@ def _translate_history_entry(entry, running):
         'exitCode': entry.exit_code,
         'parameterValues': entry.parameter_values
     }
+    if entry.schedule_id:
+        result['scheduleId'] = entry.schedule_id
+    return result
 
 
 def running_flag_to_status(running):

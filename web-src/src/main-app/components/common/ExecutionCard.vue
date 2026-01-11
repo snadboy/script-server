@@ -2,11 +2,21 @@
   <div class="execution-card" :class="cardClasses" @click="$emit('click', $event)">
     <div class="card-header">
       <span class="script-name">{{ title }}</span>
-      <span class="status-badge" :class="statusClass">{{ statusText }}</span>
+      <div class="badge-container">
+        <span class="status-badge" :class="statusClass">{{ statusText }}</span>
+        <span v-if="isScheduled" class="scheduled-badge">Scheduled</span>
+      </div>
     </div>
     <div class="card-body">
       <div class="card-info">
         <slot name="info">
+          <div v-if="description" class="card-row description-row">
+            <span class="description-text">{{ description }}</span>
+          </div>
+          <div v-if="scheduleDescription" class="card-row schedule-description-row">
+            <span class="schedule-label">Schedule:</span>
+            <span class="schedule-text">{{ scheduleDescription }}</span>
+          </div>
           <div v-if="user" class="card-row">
             <span class="label">User:</span>
             <span class="value">{{ user }}</span>
@@ -50,6 +60,18 @@ export default {
       default: ''
     },
     timeValue: {
+      type: String,
+      default: ''
+    },
+    isScheduled: {
+      type: Boolean,
+      default: false
+    },
+    description: {
+      type: String,
+      default: ''
+    },
+    scheduleDescription: {
       type: String,
       default: ''
     }
@@ -103,6 +125,12 @@ export default {
   color: var(--font-color-main);
 }
 
+.badge-container {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
 .status-badge {
   font-size: 10px;
   padding: 2px 8px;
@@ -110,6 +138,17 @@ export default {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 500;
+}
+
+.scheduled-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+  background: rgba(156, 39, 176, 0.2);
+  color: #ba68c8;
 }
 
 .status-badge.status-running {
@@ -162,6 +201,31 @@ export default {
 
 .card-row .value {
   color: var(--font-color-main);
+}
+
+.card-row.description-row {
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--separator-color);
+}
+
+.description-text {
+  font-style: italic;
+  color: var(--font-color-medium);
+}
+
+.card-row.schedule-description-row {
+  margin-bottom: 4px;
+}
+
+.schedule-label {
+  color: #ba68c8;
+  min-width: 55px;
+}
+
+.schedule-text {
+  color: var(--font-color-medium);
+  font-style: italic;
 }
 
 .card-actions {
