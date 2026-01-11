@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-01-10
 **Branch:** `feature/schedule-list-and-delete`
-**Latest Commit:** `f8323ce` - Add Execute Modal dialog for script execution
+**Latest Commit:** `92d5c92` - Fix script save error messages not showing to user
 **Status:** ✅ All features tested and verified working
 
 ---
@@ -37,6 +37,7 @@
 | Remove Parameter History | Done | Removed history button from script header |
 | Simplify Schedule Modal | Done | Removed schedule list from Schedule Execution dialog |
 | Execute Modal | Done | Modal dialog for script execution with instance name and parameters |
+| Error Message Display | Done | Backend errors now show actual message instead of generic "Failed to save" |
 
 ### Test Infrastructure
 
@@ -80,7 +81,10 @@ docker build -t script-server:custom .
 - `src/execution/logging.py` (modified - added schedule_id to logs and history)
 - `src/model/external_model.py` (modified - added scheduleId to API response)
 - `src/scheduling/schedule_service.py` (modified - passes schedule_id when executing)
+- `src/web/server.py` (modified - fixed HTTPError reason parameter for error messages)
 - `web-src/src/main-app/components/activity/ActivityPage.vue` (modified - scheduled badge)
 - `web-src/src/main-app/components/common/ExecutionCard.vue` (modified - scheduled badge/description props)
 - `web-src/src/main-app/components/scripts/ScriptExecutionsPanel.vue` (modified - scheduled badge)
+- `web-src/src/main-app/components/scripts/ExecuteModal.vue` (new - execute dialog with parameters)
 - `web-src/src/main-app/components/SidebarBottomNav.vue` (modified - icon alignment fix)
+- `web-src/src/admin/store/script-config-module.js` (modified - improved error handling)

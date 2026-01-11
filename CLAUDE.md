@@ -15,7 +15,7 @@
 ## Current State
 
 **Branch:** `feature/schedule-list-and-delete`
-**Latest Commit:** `f8323ce` - Add Execute Modal dialog for script execution
+**Latest Commit:** `92d5c92` - Fix script save error messages not showing to user
 **Last Updated:** 2026-01-10
 **Status:** ✅ All features tested and verified working
 
@@ -47,6 +47,7 @@
 | Remove Parameter History | Done | Removed history button from script header |
 | Simplify Schedule Modal | Done | Removed schedule list from Schedule Execution dialog |
 | Execute Modal | Done | Modal dialog for script execution with instance name and parameters |
+| Error Message Display | Done | Backend errors now show actual message instead of generic "Failed to save" |
 
 ### Test Infrastructure
 
@@ -109,3 +110,5 @@ docker build -t script-server:custom .
 - `src/web/server.py` (modified - added last_execution to schedule API response)
 - `src/model/external_model.py` (modified - added scheduleId to API response)
 - `web-src/src/main-app/components/MainAppSidebar.vue` (modified - moved version to bottom)
+- `web-src/src/admin/store/script-config-module.js` (modified - improved error handling for save/delete)
+- `src/web/server.py` (modified - fixed HTTPError reason parameter for proper error message display)
