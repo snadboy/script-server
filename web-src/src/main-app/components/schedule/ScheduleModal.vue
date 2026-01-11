@@ -7,9 +7,6 @@
       </div>
 
       <div class="modal-body">
-        <ScheduleList class="existing-schedules"/>
-        <div class="schedule-divider"></div>
-        <span class="card-subtitle">Create New Schedule</span>
 
         <div class="schedule-description-field input-field">
           <input type="text" v-model="description" id="schedule-description"
@@ -170,14 +167,13 @@ import '@/common/materializecss/imports/cards';
 import {repeatPeriodField, repeatTimeUnitField} from "@/main-app/components/schedule/schedulePanelFields";
 import ToggleDayButton from "@/main-app/components/schedule/ToggleDayButton";
 import PromisableButton from "@/common/components/PromisableButton";
-import ScheduleList from "@/main-app/components/schedule/ScheduleList";
 import {mapActions, mapState} from "vuex";
 import '@/common/materializecss/imports/toast'
 import {clearArray, isEmptyArray, isEmptyString} from "@/common/utils/common";
 
 export default {
   name: 'ScheduleModal',
-  components: {PromisableButton, ToggleDayButton, Combobox, Textfield, TimePicker, DatePicker, ScheduleList},
+  components: {PromisableButton, ToggleDayButton, Combobox, Textfield, TimePicker, DatePicker},
 
   props: {
     visible: {
@@ -233,7 +229,7 @@ export default {
   },
 
   methods: {
-    ...mapActions('scriptSchedule', ['schedule', 'fetchSchedules']),
+    ...mapActions('scriptSchedule', ['schedule']),
     ...mapActions('scriptSetup', ['setParameterValue']),
 
     fixOverlayDimensions() {
@@ -261,8 +257,6 @@ export default {
             M.toast({html: 'Scheduled #' + response['id']});
             // Reset form to allow creating another schedule
             this.resetScheduleFields();
-            // Refresh the schedule list to show the new schedule
-            this.refreshScheduleList();
           })
           .catch((e) => {
             if (e.response && e.response.data) {
@@ -305,13 +299,6 @@ export default {
       this.errors = [];
       this.apiError = null;
       this.$nextTick(() => M.updateTextFields());
-    },
-
-    refreshScheduleList() {
-      // Trigger refresh in ScheduleList by re-fetching schedules
-      if (this.scriptConfig && this.scriptConfig.name) {
-        this.fetchSchedules({scriptName: this.scriptConfig.name});
-      }
     },
 
     buildScheduleSetup() {
@@ -513,23 +500,6 @@ export default {
   flex: 1;
   overflow-y: auto;
   padding: 16px 24px;
-}
-
-.existing-schedules {
-  margin-bottom: 12px;
-}
-
-.schedule-divider {
-  border-top: 1px solid var(--outline-color);
-  margin: 12px 0;
-}
-
-.card-subtitle {
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--font-color-main);
-  display: block;
-  margin-bottom: 8px;
 }
 
 .schedule-description-field {
