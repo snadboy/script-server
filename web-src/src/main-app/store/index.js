@@ -7,6 +7,7 @@ import authModule from '@/common/store/auth';
 import scheduleModule from './scriptSchedule';
 import allSchedulesModule from './allSchedules';
 import pageModule from './page';
+import settingsModule from './settings';
 
 import scriptConfigModule from './scriptConfig';
 import scriptExecutionManagerModule from './scriptExecutionManager';
@@ -34,6 +35,7 @@ const store = new Vuex.Store({
         page: pageModule,
         scriptSchedule: scheduleModule,
         allSchedules: allSchedulesModule,
+        settings: settingsModule,
         // Admin modules (namespaced for admin pages)
         adminScripts: adminScriptsModule,
         adminScriptConfig: adminScriptConfigModule

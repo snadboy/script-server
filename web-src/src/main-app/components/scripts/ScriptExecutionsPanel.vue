@@ -231,6 +231,7 @@ export default {
       schedules: 'schedules',
       schedulesLoading: 'loading'
     }),
+    ...mapState('settings', ['completedExecutionsLimit']),
 
     runningExecutions() {
       if (!this.executions || !this.selectedScript) return [];
@@ -245,7 +246,7 @@ export default {
       return this.executions.filter(e =>
         e.script === this.selectedScript &&
         (!e.status || e.status.toLowerCase() !== 'running')
-      ).slice(0, 50); // Limit to 50 most recent
+      ).slice(0, this.completedExecutionsLimit);
     },
 
     scriptSchedules() {

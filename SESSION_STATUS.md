@@ -39,6 +39,8 @@
 | Execute Modal | Done | Modal dialog for script execution with instance name and parameters |
 | Error Message Display | Done | Backend errors now show actual message instead of generic "Failed to save" |
 | Collapsed State Persistence | Done | Running/Scheduled/Completed section collapse state saved to localStorage |
+| Settings Modal | Done | Gear icon in header opens settings dialog with configurable options |
+| Configurable History Limit | Done | "Completed executions to show" setting (10-500, default 50) |
 
 ### Test Infrastructure
 
@@ -85,7 +87,9 @@ docker build -t script-server:custom .
 - `src/web/server.py` (modified - fixed HTTPError reason parameter for error messages)
 - `web-src/src/main-app/components/activity/ActivityPage.vue` (modified - scheduled badge)
 - `web-src/src/main-app/components/common/ExecutionCard.vue` (modified - scheduled badge/description props)
-- `web-src/src/main-app/components/scripts/ScriptExecutionsPanel.vue` (modified - scheduled badge, collapsed state persistence)
+- `web-src/src/main-app/components/scripts/ScriptExecutionsPanel.vue` (modified - scheduled badge, collapsed state persistence, configurable limit)
+- `web-src/src/main-app/components/SettingsModal.vue` (new - settings dialog)
+- `web-src/src/main-app/store/settings.js` (new - settings store with localStorage persistence)
 - `web-src/src/main-app/components/scripts/ExecuteModal.vue` (new - execute dialog with parameters)
 - `web-src/src/main-app/components/SidebarBottomNav.vue` (modified - icon alignment fix)
 - `web-src/src/admin/store/script-config-module.js` (modified - improved error handling)

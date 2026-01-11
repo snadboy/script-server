@@ -12,7 +12,12 @@
       </router-link>
 
       <SearchPanel v-model="searchText"/>
+      <button class="settings-btn waves-effect waves-circle" @click="showSettings = true" title="Settings">
+        <i class="material-icons">settings</i>
+      </button>
     </div>
+
+    <SettingsModal :visible="showSettings" @close="showSettings = false" />
 
     <SidebarBottomNav />
 
@@ -36,6 +41,7 @@ import {mapActions, mapState} from 'vuex';
 import ScriptsList from './scripts/ScriptsList'
 import SearchPanel from './SearchPanel';
 import SidebarBottomNav from './SidebarBottomNav';
+import SettingsModal from './SettingsModal';
 import ThemeToggle from '@/common/components/ThemeToggle';
 
 export default {
@@ -44,12 +50,14 @@ export default {
     SearchPanel,
     ScriptsList,
     SidebarBottomNav,
+    SettingsModal,
     ThemeToggle
   },
 
   data() {
     return {
       searchText: '',
+      showSettings: false
     }
   },
 
@@ -157,6 +165,27 @@ export default {
 
 .username {
   margin-left: 8px;
+}
+
+.settings-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  margin-right: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-btn:hover {
+  background: var(--background-color-high-emphasis);
+}
+
+.settings-btn i {
+  font-size: 24px;
+  color: var(--font-color-medium);
 }
 
 </style>
