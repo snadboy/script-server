@@ -5,13 +5,14 @@ from scheduling.schedule_config import ScheduleConfig
 
 
 class SchedulingJob:
-    def __init__(self, id, user, schedule_config, script_name, parameter_values, description=None) -> None:
+    def __init__(self, id, user, schedule_config, script_name, parameter_values, description=None, enabled=True) -> None:
         self.id = str(id)
         self.user = user  # type: User
         self.schedule = schedule_config  # type: ScheduleConfig
         self.script_name = script_name
         self.parameter_values = parameter_values  # type: dict
         self.description = description  # type: str
+        self.enabled = enabled  # type: bool
 
     def as_serializable_dict(self):
         result = {
@@ -19,7 +20,8 @@ class SchedulingJob:
             'user': self.user.as_serializable_dict(),
             'schedule': self.schedule.as_serializable_dict(),
             'script_name': self.script_name,
-            'parameter_values': self.parameter_values
+            'parameter_values': self.parameter_values,
+            'enabled': self.enabled
         }
         if self.description:
             result['description'] = self.description
@@ -36,5 +38,6 @@ def from_dict(job_as_dict):
     script_name = job_as_dict['script_name']
     parameter_values = job_as_dict['parameter_values']
     description = job_as_dict.get('description')
+    enabled = job_as_dict.get('enabled', True)  # Default to enabled for backwards compatibility
 
-    return SchedulingJob(id, parsed_user, schedule, script_name, parameter_values, description)
+    return SchedulingJob(id, parsed_user, schedule, script_name, parameter_values, description, enabled)

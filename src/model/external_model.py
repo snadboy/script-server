@@ -138,5 +138,6 @@ def parse_external_schedule(external_schedule):
         'repeat_unit': external_schedule.get('repeatUnit'),
         'repeat_period': external_schedule.get('repeatPeriod'),
         'weekdays': external_schedule.get('weekDays'),
-        'description': external_schedule.get('description')
+        'description': external_schedule.get('description'),
+        'enabled': external_schedule.get('enabled', True)
     }

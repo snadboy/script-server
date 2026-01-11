@@ -138,6 +138,14 @@
               <div v-if="weekdaysError" class="weekdays-error">{{ weekdaysError }}</div>
             </div>
           </div>
+
+          <div class="enabled-toggle-row">
+            <label class="enabled-toggle-label">
+              <input type="checkbox" v-model="scheduleEnabled" class="filled-in" />
+              <span>Start enabled</span>
+            </label>
+            <span class="enabled-hint">Disabled schedules won't run until enabled</span>
+          </div>
         </div>
 
         <div v-if="errors.length > 0 || apiError" class="schedule-errors">
@@ -220,7 +228,8 @@ export default {
       apiError: null,
       boundFixOverlayDimensions: null,
       originalParent: null,
-      description: ''
+      description: '',
+      scheduleEnabled: true
     }
   },
 
@@ -296,6 +305,7 @@ export default {
         {'day': 'Sunday', active: currentDay === 0}
       ];
       this.description = '';
+      this.scheduleEnabled = true;
       this.errors = [];
       this.apiError = null;
       this.$nextTick(() => M.updateTextFields());
@@ -330,7 +340,8 @@ export default {
         repeatUnit: this.repeatTimeUnit,
         repeatPeriod: this.repeatPeriod,
         weekDays: weekDays,
-        description: this.description
+        description: this.description,
+        enabled: this.oneTimeSchedule ? true : this.scheduleEnabled
       };
     },
 
@@ -365,6 +376,7 @@ export default {
       this.errors = [];
       this.apiError = null;
       this.description = '';
+      this.scheduleEnabled = true;
     },
 
     checkErrors() {
@@ -743,5 +755,30 @@ input[type="radio"]:not(:checked) + span:before {
   .repeat-weekday-panel {
     gap: 2px;
   }
+}
+
+.enabled-toggle-row {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--separator-color);
+}
+
+.enabled-toggle-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.enabled-toggle-label span {
+  font-size: 14px;
+  color: var(--font-color-main);
+}
+
+.enabled-hint {
+  display: block;
+  font-size: 12px;
+  color: var(--font-color-medium);
+  margin-top: 4px;
+  margin-left: 30px;
 }
 </style>

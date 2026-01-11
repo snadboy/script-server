@@ -791,6 +791,36 @@ class DeleteSchedule(BaseRequestHandler):
             raise tornado.web.HTTPError(403, reason=str(e))
 
 
+class ToggleScheduleEnabled(BaseRequestHandler):
+    @check_authorization
+    @inject_user
+    def post(self, user, schedule_id):
+        try:
+            body = json.loads(self.request.body.decode('utf-8'))
+            enabled = body.get('enabled', True)
+
+            job = self.application.schedule_service.toggle_job_enabled(schedule_id, enabled, user)
+
+            schedule_config = job.schedule
+            response = {
+                'id': job.id,
+                'enabled': job.enabled,
+                'script_name': job.script_name
+            }
+
+            # Include next_execution if enabled and has upcoming execution
+            if job.enabled and schedule_config.repeatable:
+                next_time = schedule_config.get_next_time()
+                if next_time:
+                    response['next_execution'] = next_time.isoformat()
+
+            self.write(json.dumps(response))
+        except JobNotFoundException as e:
+            raise tornado.web.HTTPError(404, reason=str(e))
+        except AccessDeniedException as e:
+            raise tornado.web.HTTPError(403, reason=str(e))
+
+
 # User Management Handlers
 class GetUsersHandler(BaseRequestHandler):
     @requires_admin_rights
@@ -1039,6 +1069,7 @@ def init(server_config: ServerConfig,
                 (r'/schedule', AddSchedule),
                 (r'/schedules', GetSchedules),
                 (r'/schedules/([^/]+)', DeleteSchedule),
+                (r'/schedules/([^/]+)/enabled', ToggleScheduleEnabled),
                 (r'/auth/info', AuthInfoHandler),
                 (r'/result_files/(.*)',
                  DownloadResultFile,

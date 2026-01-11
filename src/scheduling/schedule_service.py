@@ -91,7 +91,8 @@ class ScheduleService:
                 normalized_values[parameter_name] = value_wrapper.user_value
 
         description = incoming_schedule_config.get('description')
-        job = SchedulingJob(id, user, schedule_config, script_name, normalized_values, description)
+        enabled = incoming_schedule_config.get('enabled', True)
+        job = SchedulingJob(id, user, schedule_config, script_name, normalized_values, description, enabled)
 
         job_path = self.save_job(job)
 
@@ -112,12 +113,17 @@ class ScheduleService:
     def schedule_job(self, job: SchedulingJob, job_path):
         schedule = job.schedule
 
+        # Skip disabled jobs
+        if not job.enabled:
+            LOGGER.info(f'Skipping disabled job {job.get_log_name()}')
+            return
+
         if not schedule.repeatable and date_utils.is_past(schedule.start_datetime):
             return
-        
+
         if schedule.end_option == 'max_executions' and schedule.end_arg <= schedule.executions_count:
-            return                
-        
+            return
+
         next_datetime = schedule.get_next_time()
 
         if schedule.end_option == 'end_datetime':
@@ -248,6 +254,34 @@ class ScheduleService:
         os.remove(job_path)
 
         LOGGER.info(f'Deleted schedule {job_id} for script {job.script_name} by user {user.get_audit_name()}')
+
+        return job
+
+    def toggle_job_enabled(self, job_id: str, enabled: bool, user: User):
+        """Toggle the enabled state of a scheduled job."""
+        if user is None:
+            raise InvalidUserException('User id is missing')
+
+        job, job_path = self.get_job(job_id)
+
+        if job is None:
+            raise JobNotFoundException(f'Schedule {job_id} not found')
+
+        # Update the enabled state
+        job.enabled = enabled
+
+        # Cancel any existing scheduled execution
+        self.scheduler.cancel(job_path)
+
+        # Save the updated job
+        self.save_job(job)
+
+        # If enabling, reschedule the job
+        if enabled:
+            self.schedule_job(job, job_path)
+            LOGGER.info(f'Enabled schedule {job_id} for script {job.script_name} by user {user.get_audit_name()}')
+        else:
+            LOGGER.info(f'Disabled schedule {job_id} for script {job.script_name} by user {user.get_audit_name()}')
 
         return job
 

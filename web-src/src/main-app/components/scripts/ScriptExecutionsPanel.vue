@@ -114,13 +114,16 @@
 
         <div v-else-if="!scheduledCollapsed" class="scheduled-list">
           <div v-for="schedule in scriptSchedules" :key="'schedule-' + schedule.id"
-               class="schedule-card">
+               class="schedule-card" :class="{ 'schedule-disabled': schedule.enabled === false }">
             <div class="card-header">
-              <span v-if="schedule.schedule.repeatable" class="status-badge status-recurring">
-                <i class="material-icons">repeat</i>
-                Recurring
-              </span>
-              <span v-else class="status-badge status-once">One-time</span>
+              <div class="badge-container">
+                <span v-if="schedule.schedule.repeatable" class="status-badge status-recurring">
+                  <i class="material-icons">repeat</i>
+                  Recurring
+                </span>
+                <span v-else class="status-badge status-once">One-time</span>
+                <span v-if="schedule.enabled === false" class="status-badge status-disabled">Disabled</span>
+              </div>
             </div>
             <div class="card-body">
               <div class="card-info">
@@ -133,7 +136,9 @@
                 </div>
                 <div class="card-row">
                   <span class="label">Next run:</span>
-                  <span class="value next-run">{{ formatNextExecution(schedule) }}</span>
+                  <span class="value next-run" :class="{ 'disabled-text': schedule.enabled === false }">
+                    {{ schedule.enabled === false ? 'Disabled' : formatNextExecution(schedule) }}
+                  </span>
                 </div>
                 <div v-if="schedule.schedule.repeatable" class="card-row">
                   <span class="label">Repeats:</span>
@@ -145,6 +150,15 @@
                 </div>
               </div>
               <div class="card-actions">
+                <button v-if="schedule.schedule.repeatable"
+                        class="action-btn toggle-btn waves-effect"
+                        :disabled="togglingSchedule === schedule.id"
+                        @click.stop="handleToggleScheduleEnabled(schedule)"
+                        :title="schedule.enabled === false ? 'Enable schedule' : 'Disable schedule'">
+                  <i v-if="togglingSchedule === schedule.id" class="material-icons rotating">refresh</i>
+                  <i v-else-if="schedule.enabled === false" class="material-icons">play_arrow</i>
+                  <i v-else class="material-icons">pause</i>
+                </button>
                 <button class="action-btn delete-btn waves-effect"
                         :disabled="deletingSchedule === schedule.id"
                         @click.stop="confirmDeleteSchedule(schedule)"
@@ -214,6 +228,7 @@ export default {
       selectedExecutionId: null,
       selectedExecutionDetails: null,
       deletingSchedule: null,
+      togglingSchedule: null,
       liveLogConnection: null,
       runningCollapsed: this.loadCollapsedState('running'),
       scheduledCollapsed: this.loadCollapsedState('scheduled'),
@@ -284,7 +299,7 @@ export default {
   },
 
   methods: {
-    ...mapActions('allSchedules', ['fetchAllSchedules', 'deleteSchedule']),
+    ...mapActions('allSchedules', ['fetchAllSchedules', 'deleteSchedule', 'toggleScheduleEnabled']),
     ...mapActions('history', {selectHistoryExecution: 'selectExecution'}),
 
     loadCollapsedState(section) {
@@ -434,6 +449,21 @@ export default {
             this.deletingSchedule = null;
           });
       }
+    },
+
+    handleToggleScheduleEnabled(schedule) {
+      const newEnabled = schedule.enabled === false;
+      this.togglingSchedule = schedule.id;
+      this.toggleScheduleEnabled({scheduleId: schedule.id, enabled: newEnabled})
+        .then(() => {
+          M.toast({html: newEnabled ? 'Schedule enabled' : 'Schedule disabled'});
+        })
+        .catch(e => {
+          M.toast({html: e.userMessage || 'Failed to update schedule'});
+        })
+        .finally(() => {
+          this.togglingSchedule = null;
+        });
     },
 
     formatParamValue(value) {
@@ -953,5 +983,24 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+/* Disabled schedule styles */
+.schedule-card.schedule-disabled {
+  opacity: 0.6;
+}
+
+.status-disabled {
+  background: rgba(158, 158, 158, 0.2);
+  color: #9e9e9e;
+}
+
+.disabled-text {
+  color: #9e9e9e !important;
+  font-weight: normal !important;
+}
+
+.toggle-btn:hover i {
+  color: var(--primary-color);
 }
 </style>

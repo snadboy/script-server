@@ -19,6 +19,15 @@ export default {
         },
         REMOVE_SCHEDULE(state, scheduleId) {
             state.schedules = state.schedules.filter(s => s.id !== scheduleId);
+        },
+        UPDATE_SCHEDULE_ENABLED(state, {scheduleId, enabled, nextExecution}) {
+            const schedule = state.schedules.find(s => String(s.id) === String(scheduleId));
+            if (schedule) {
+                schedule.enabled = enabled;
+                if (nextExecution) {
+                    schedule.next_execution = nextExecution;
+                }
+            }
         }
     },
     actions: {
@@ -64,6 +73,26 @@ export default {
                     if (scriptName) {
                         dispatch('scriptSchedule/fetchSchedules', {scriptName}, {root: true});
                     }
+                    return response.data;
+                })
+                .catch(e => {
+                    if (e.response && e.response.status === 404) {
+                        e.userMessage = 'Schedule not found';
+                    } else if (e.response && e.response.status === 403) {
+                        e.userMessage = 'Access denied';
+                    }
+                    throw e;
+                });
+        },
+
+        toggleScheduleEnabled({commit}, {scheduleId, enabled}) {
+            return axiosInstance.post(`schedules/${scheduleId}/enabled`, {enabled})
+                .then(response => {
+                    commit('UPDATE_SCHEDULE_ENABLED', {
+                        scheduleId,
+                        enabled: response.data.enabled,
+                        nextExecution: response.data.next_execution
+                    });
                     return response.data;
                 })
                 .catch(e => {
