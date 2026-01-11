@@ -391,18 +391,25 @@ export default {
 .param-input,
 .param-select {
   width: 100%;
-  padding: 6px 8px;
-  border: 1px solid var(--separator-color);
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 4px;
-  background-color: var(--background-color);
+  background-color: var(--background-color-level-4dp);
   color: var(--font-color-main);
   font-size: 13px;
   box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.param-input:hover,
+.param-select:hover {
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .param-input:focus,
 .param-select:focus {
   border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(38, 166, 154, 0.2);
   outline: none;
 }
 
