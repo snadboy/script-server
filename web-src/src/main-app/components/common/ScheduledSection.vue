@@ -91,10 +91,8 @@ export default {
       });
     },
 
-    // Only show badge when count > 0 (per plan decision)
     badgeCount() {
-      const count = this.filteredSchedules.length;
-      return count > 0 ? count : null;
+      return this.filteredSchedules.length;
     },
 
     emptyMessage() {

@@ -91,10 +91,8 @@ export default {
       return result;
     },
 
-    // Only show badge when count > 0 (per plan decision)
     badgeCount() {
-      const count = this.filteredExecutions.length;
-      return count > 0 ? count : null;
+      return this.filteredExecutions.length;
     }
   },
 
