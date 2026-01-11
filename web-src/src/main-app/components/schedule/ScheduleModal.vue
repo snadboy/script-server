@@ -139,13 +139,14 @@
             </div>
           </div>
 
-          <div class="enabled-toggle-row">
-            <label class="enabled-toggle-label">
-              <input type="checkbox" v-model="scheduleEnabled" class="filled-in" />
-              <span>Start enabled</span>
-            </label>
-            <span class="enabled-hint">Disabled schedules won't run until enabled</span>
-          </div>
+        </div>
+
+        <div class="enabled-toggle-row" :class="{ 'toggle-disabled': oneTimeSchedule }">
+          <label class="enabled-toggle-label">
+            <input type="checkbox" v-model="scheduleEnabled" class="filled-in" :disabled="oneTimeSchedule" />
+            <span>Enabled</span>
+          </label>
+          <span class="enabled-hint">{{ oneTimeSchedule ? 'Only applies to recurring schedules' : 'Disabled schedules won\'t run until enabled' }}</span>
         </div>
 
         <div v-if="errors.length > 0 || apiError" class="schedule-errors">
@@ -780,5 +781,17 @@ input[type="radio"]:not(:checked) + span:before {
   color: var(--font-color-medium);
   margin-top: 4px;
   margin-left: 30px;
+}
+
+.toggle-disabled {
+  opacity: 0.5;
+}
+
+.toggle-disabled .enabled-toggle-label {
+  cursor: not-allowed;
+}
+
+.toggle-disabled input[type="checkbox"]:disabled + span {
+  color: var(--font-color-medium);
 }
 </style>
