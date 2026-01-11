@@ -2,7 +2,8 @@
 
 **Last Updated:** 2026-01-10
 **Branch:** `feature/schedule-list-and-delete`
-**Latest Commit:** `4656034` - Add Scheduled badge and description to running executions
+**Latest Commit:** `014340d` - Update session notes with Scheduled badge feature
+**Status:** ✅ All features tested and verified working
 
 ---
 
@@ -45,10 +46,8 @@
 
 ## Pending / Suggested Next Steps
 
-1. **Server Restart** - Restart server to pick up backend schedule_id tracking changes
-2. **Testing** - Test the new features on a running Script Server instance
-3. **Docker Build** - Build a Docker image from the fork for deployment
-4. **PR to Upstream** - Consider submitting PR to `bugy/script-server` if desired
+1. **Docker Build** - Build a Docker image from the fork for deployment
+2. **PR to Upstream** - Consider submitting PR to `bugy/script-server` if desired
 
 ---
 

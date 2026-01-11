@@ -15,8 +15,9 @@
 ## Current State
 
 **Branch:** `feature/schedule-list-and-delete`
-**Latest Commit:** `4656034` - Add Scheduled badge and description to running executions
+**Latest Commit:** `014340d` - Update session notes with Scheduled badge feature
 **Last Updated:** 2026-01-10
+**Status:** ✅ All features tested and verified working
 
 ### Completed Features
 
@@ -55,9 +56,8 @@
 
 ## Pending / Suggested Next Steps
 
-1. **Testing** - Test the new features on a running Script Server instance
-2. **Docker Build** - Build a Docker image from the fork for deployment
-3. **PR to Upstream** - Consider submitting PR to `bugy/script-server`
+1. **Docker Build** - Build a Docker image from the fork for deployment
+2. **PR to Upstream** - Consider submitting PR to `bugy/script-server`
 
 ---
 
@@ -98,8 +98,10 @@ docker build -t script-server:custom .
 - `web-src/src/main-app/store/scriptSchedule.js` (modified - cross-store refresh on create/delete)
 - `web-src/src/common/store/executions-module.js` (modified - added refresh action)
 - `src/scheduling/scheduling_job.py`
-- `src/scheduling/schedule_service.py`
+- `src/scheduling/schedule_service.py` (modified - passes schedule_id when executing jobs)
 - `src/scheduling/schedule_config.py` (modified - added get_last_execution_time method)
+- `src/execution/execution_service.py` (modified - added schedule_id tracking to executions)
+- `src/execution/logging.py` (modified - added schedule_id to logs and history)
 - `src/web/server.py` (modified - added last_execution to schedule API response)
-- `src/model/external_model.py`
+- `src/model/external_model.py` (modified - added scheduleId to API response)
 - `web-src/src/main-app/components/MainAppSidebar.vue` (modified - moved version to bottom)
