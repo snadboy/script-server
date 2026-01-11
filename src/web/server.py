@@ -166,7 +166,7 @@ class AdminUpdateScriptEndpoint(BaseRequestHandler):
         try:
             self.application.config_service.update_config(user, config, filename, uploaded_script)
         except (InvalidConfigException, InvalidFileException) as e:
-            raise tornado.web.HTTPError(422, str(e))
+            raise tornado.web.HTTPError(422, reason=str(e))
         except ConfigNotAllowedException:
             LOGGER.warning('Admin access to the script "' + config['name'] + '" is denied for ' + user.get_audit_name())
             respond_error(self, 403, 'Access to the script is denied')

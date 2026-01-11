@@ -77,8 +77,11 @@ export default {
                     }
                 })
                 .catch(e => {
-                    if ((e.response.status === 422) || (e.response.status === 403)) {
+                    // Extract error message from response for any error status
+                    if (e.response && e.response.data) {
                         e.userMessage = e.response.data;
+                    } else if (e.message) {
+                        e.userMessage = e.message;
                     }
                     throw e;
                 });
@@ -93,11 +96,14 @@ export default {
                     return {navigate: true, path: '/admin/scripts'};
                 })
                 .catch(e => {
-                    if (e.response.status === 422) {
+                    // Extract error message from response for any error status
+                    if (e.response && e.response.data) {
                         e.userMessage = e.response.data;
+                    } else if (e.message) {
+                        e.userMessage = e.message;
                     }
                     throw e;
-              });
+                });
           },
     },
     mutations: {
