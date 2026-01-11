@@ -215,9 +215,9 @@ export default {
       selectedExecutionDetails: null,
       deletingSchedule: null,
       liveLogConnection: null,
-      runningCollapsed: false,
-      scheduledCollapsed: false,
-      completedCollapsed: false
+      runningCollapsed: this.loadCollapsedState('running'),
+      scheduledCollapsed: this.loadCollapsedState('scheduled'),
+      completedCollapsed: this.loadCollapsedState('completed')
     };
   },
 
@@ -286,16 +286,43 @@ export default {
     ...mapActions('allSchedules', ['fetchAllSchedules', 'deleteSchedule']),
     ...mapActions('history', {selectHistoryExecution: 'selectExecution'}),
 
+    loadCollapsedState(section) {
+      try {
+        const stored = localStorage.getItem('scriptExecutionsPanel.collapsed');
+        if (stored) {
+          const state = JSON.parse(stored);
+          return state[section] === true;
+        }
+      } catch (e) {
+        // Ignore localStorage errors
+      }
+      return false;
+    },
+
+    saveCollapsedState(section, collapsed) {
+      try {
+        const stored = localStorage.getItem('scriptExecutionsPanel.collapsed');
+        const state = stored ? JSON.parse(stored) : {};
+        state[section] = collapsed;
+        localStorage.setItem('scriptExecutionsPanel.collapsed', JSON.stringify(state));
+      } catch (e) {
+        // Ignore localStorage errors
+      }
+    },
+
     toggleRunningSection() {
       this.runningCollapsed = !this.runningCollapsed;
+      this.saveCollapsedState('running', this.runningCollapsed);
     },
 
     toggleScheduledSection() {
       this.scheduledCollapsed = !this.scheduledCollapsed;
+      this.saveCollapsedState('scheduled', this.scheduledCollapsed);
     },
 
     toggleCompletedSection() {
       this.completedCollapsed = !this.completedCollapsed;
+      this.saveCollapsedState('completed', this.completedCollapsed);
     },
 
     selectExecution(execution) {
