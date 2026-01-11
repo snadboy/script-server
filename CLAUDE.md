@@ -15,8 +15,8 @@
 ## Current State
 
 **Branch:** `feature/schedule-list-and-delete`
-**Latest Commit:** `92d5c92` - Fix script save error messages not showing to user
-**Last Updated:** 2026-01-10
+**Latest Commit:** `34d7c08` - Add enable/disable toggle for recurring schedules
+**Last Updated:** 2026-01-11
 **Status:** ✅ All features tested and verified working
 
 ### Completed Features
@@ -48,6 +48,9 @@
 | Simplify Schedule Modal | Done | Removed schedule list from Schedule Execution dialog |
 | Execute Modal | Done | Modal dialog for script execution with instance name and parameters |
 | Error Message Display | Done | Backend errors now show actual message instead of generic "Failed to save" |
+| Collapsed State Persistence | Done | Running/Scheduled/Completed sections remember collapsed state via localStorage |
+| Settings Modal | Done | Configurable completed executions limit via gear icon in sidebar |
+| Schedule Enable/Disable | Done | Toggle button on schedule rows, checkbox in Schedule modal for recurring schedules |
 
 ### Test Infrastructure
 
@@ -111,4 +114,6 @@ docker build -t script-server:custom .
 - `src/model/external_model.py` (modified - added scheduleId to API response)
 - `web-src/src/main-app/components/MainAppSidebar.vue` (modified - moved version to bottom)
 - `web-src/src/admin/store/script-config-module.js` (modified - improved error handling for save/delete)
-- `src/web/server.py` (modified - fixed HTTPError reason parameter for proper error message display)
+- `src/web/server.py` (modified - fixed HTTPError reason parameter, added schedule enable toggle API)
+- `web-src/src/main-app/components/SettingsModal.vue` (new - settings dialog)
+- `web-src/src/main-app/store/settings.js` (new - settings state with localStorage persistence)
