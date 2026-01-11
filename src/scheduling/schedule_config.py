@@ -78,6 +78,7 @@ def read_schedule_config(incoming_schedule_config):
     if repeatable:
 
         prepared_schedule_config.executions_count = model_helper.read_int_from_config('executions_count', incoming_schedule_config, default=0)
+        prepared_schedule_config.last_execution_time = model_helper.read_datetime_from_config('last_execution_time', incoming_schedule_config)
 
         prepared_schedule_config.end_option, prepared_schedule_config.end_arg = _read_end_args(incoming_schedule_config)
 
@@ -98,6 +99,7 @@ class ScheduleConfig:
         self.end_option = None
         self.end_arg = None
         self.executions_count = None
+        self.last_execution_time = None  # type: datetime
         self.repeat_unit = None
         self.repeat_period = None
         self.weekdays = None
@@ -117,6 +119,8 @@ class ScheduleConfig:
 
         if self.repeatable:
             result['executions_count'] = self.executions_count
+            if self.last_execution_time:
+                result['last_execution_time'] = date_utils.to_iso_string(self.last_execution_time)
 
         if self.repeat_unit is not None:
             result['repeat_unit'] = self.repeat_unit
@@ -192,40 +196,10 @@ class ScheduleConfig:
                 raise Exception('Endless loop in calc next time')
 
     def get_last_execution_time(self):
-        """Calculate the last execution time based on executions_count for recurring schedules."""
-        if not self.repeatable or self.executions_count is None or self.executions_count <= 0:
+        """Return the actual last execution time for recurring schedules."""
+        if not self.repeatable:
             return None
-
-        # For recurring schedules, calculate when the last execution happened
-        # by finding the (executions_count - 1)th iteration from start
-        count = self.executions_count
-
-        if self.repeat_unit == 'minutes':
-            return self.start_datetime + timedelta(minutes=self.repeat_period * (count - 1))
-        elif self.repeat_unit == 'hours':
-            return self.start_datetime + timedelta(hours=self.repeat_period * (count - 1))
-        elif self.repeat_unit == 'days':
-            return self.start_datetime + timedelta(days=self.repeat_period * (count - 1))
-        elif self.repeat_unit == 'months':
-            return date_utils.add_months(self.start_datetime, self.repeat_period * (count - 1))
-        elif self.repeat_unit == 'weeks':
-            # For weekly schedules with specific weekdays, this is more complex
-            # Approximate by calculating based on period and count
-            weeks_completed = (count - 1) // len(self.weekdays) if self.weekdays else count - 1
-            weekday_index = (count - 1) % len(self.weekdays) if self.weekdays else 0
-
-            if self.weekdays:
-                weekday_name = self.weekdays[weekday_index]
-                weekday_num = ALLOWED_WEEKDAYS.index(weekday_name)
-                start_weekday = self.start_datetime.weekday()
-
-                return self.start_datetime \
-                       + timedelta(weeks=self.repeat_period * weeks_completed) \
-                       + timedelta(days=(weekday_num - start_weekday))
-            else:
-                return self.start_datetime + timedelta(weeks=self.repeat_period * (count - 1))
-
-        return None
+        return self.last_execution_time
 
 
 class InvalidScheduleException(Exception):

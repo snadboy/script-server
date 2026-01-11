@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from datetime import timezone
 
 from auth.user import User
 from config.config_service import ConfigService
@@ -161,6 +162,7 @@ class ScheduleService:
 
             if job.schedule.repeatable:
                 job.schedule.executions_count += 1
+                job.schedule.last_execution_time = date_utils.now(tz=timezone.utc)
 
                 self.save_job(job)
 
