@@ -2,7 +2,7 @@
   <div v-if="visible" class="modal-overlay">
     <div class="modal-content schedule-modal card">
       <div class="modal-header">
-        <span class="modal-title">Schedule Execution</span>
+        <span class="modal-title">{{ isEditMode ? 'Edit Schedule' : 'Schedule Execution' }}</span>
         <span class="modal-subtitle">{{ scriptName }}</span>
       </div>
 
@@ -160,7 +160,7 @@
         <PromisableButton :click="runScheduleAction"
                           :enabled="errors.length === 0"
                           :preloaderStyle="{ width: '20px', height: '20px' }"
-                          title="Schedule"/>
+                          :title="isEditMode ? 'Save' : 'Schedule'"/>
       </div>
     </div>
   </div>
@@ -192,6 +192,10 @@ export default {
     scriptName: {
       type: String,
       default: ''
+    },
+    editSchedule: {
+      type: Object,
+      default: null
     }
   },
 
@@ -241,6 +245,7 @@ export default {
   methods: {
     ...mapActions('scriptSchedule', ['schedule']),
     ...mapActions('scriptSetup', ['setParameterValue']),
+    ...mapActions('allSchedules', ['updateSchedule']),
 
     fixOverlayDimensions() {
       // Fix for display scaling causing 100vh to be larger than viewport
@@ -262,22 +267,46 @@ export default {
     runScheduleAction() {
       this.apiError = null;
       const scheduleSetup = this.buildScheduleSetup();
-      return this.schedule({scheduleSetup})
-          .then(({data: response}) => {
-            M.toast({html: 'Scheduled #' + response['id']});
-            // Reset form to allow creating another schedule
-            this.resetScheduleFields();
-          })
-          .catch((e) => {
-            if (e.response && e.response.data) {
-              this.apiError = e.response.data;
-            } else if (e.userMessage) {
-              this.apiError = e.userMessage;
-            } else {
-              this.apiError = 'Failed to schedule';
-            }
-            throw e;
-          });
+
+      if (this.isEditMode) {
+        // Update existing schedule
+        return this.updateSchedule({
+          scheduleId: this.editSchedule.id,
+          scheduleConfig: scheduleSetup
+        })
+            .then((response) => {
+              M.toast({html: 'Schedule updated'});
+              this.close();
+            })
+            .catch((e) => {
+              if (e.response && e.response.data) {
+                this.apiError = e.response.data;
+              } else if (e.userMessage) {
+                this.apiError = e.userMessage;
+              } else {
+                this.apiError = 'Failed to update schedule';
+              }
+              throw e;
+            });
+      } else {
+        // Create new schedule
+        return this.schedule({scheduleSetup})
+            .then(({data: response}) => {
+              M.toast({html: 'Scheduled #' + response['id']});
+              // Reset form to allow creating another schedule
+              this.resetScheduleFields();
+            })
+            .catch((e) => {
+              if (e.response && e.response.data) {
+                this.apiError = e.response.data;
+              } else if (e.userMessage) {
+                this.apiError = e.userMessage;
+              } else {
+                this.apiError = 'Failed to schedule';
+              }
+              throw e;
+            });
+      }
     },
 
     resetScheduleFields() {
@@ -351,33 +380,95 @@ export default {
     },
 
     resetForm() {
-      const now = new Date();
-      const currentDay = now.getDay();
-      const endDay = new Date(now);
-      endDay.setDate(now.getDate() + 1);
+      if (this.editSchedule) {
+        // Edit mode - populate form with existing schedule data
+        this.populateFromSchedule(this.editSchedule);
+      } else {
+        // Create mode - reset to defaults
+        const now = new Date();
+        const currentDay = now.getDay();
+        const endDay = new Date(now);
+        endDay.setDate(now.getDate() + 1);
 
-      this.oneTimeSchedule = true;
-      this.startDate = now;
-      this.startTime = now.toTimeString().substr(0, 5);
-      this.endOption = 'never';
-      this.endDate = endDay;
-      this.endTime = endDay.toTimeString().substr(0, 5);
-      this.repeatPeriod = 1;
-      this.maxExecuteCount = 1;
-      this.repeatTimeUnit = 'days';
-      this.weekDays = [
-        {'day': 'Monday', active: currentDay === 1},
-        {'day': 'Tuesday', active: currentDay === 2},
-        {'day': 'Wednesday', active: currentDay === 3},
-        {'day': 'Thursday', active: currentDay === 4},
-        {'day': 'Friday', active: currentDay === 5},
-        {'day': 'Saturday', active: currentDay === 6},
-        {'day': 'Sunday', active: currentDay === 0}
-      ];
+        this.oneTimeSchedule = true;
+        this.startDate = now;
+        this.startTime = now.toTimeString().substr(0, 5);
+        this.endOption = 'never';
+        this.endDate = endDay;
+        this.endTime = endDay.toTimeString().substr(0, 5);
+        this.repeatPeriod = 1;
+        this.maxExecuteCount = 1;
+        this.repeatTimeUnit = 'days';
+        this.weekDays = [
+          {'day': 'Monday', active: currentDay === 1},
+          {'day': 'Tuesday', active: currentDay === 2},
+          {'day': 'Wednesday', active: currentDay === 3},
+          {'day': 'Thursday', active: currentDay === 4},
+          {'day': 'Friday', active: currentDay === 5},
+          {'day': 'Saturday', active: currentDay === 6},
+          {'day': 'Sunday', active: currentDay === 0}
+        ];
+        this.description = '';
+        this.scheduleEnabled = true;
+      }
       this.errors = [];
       this.apiError = null;
-      this.description = '';
-      this.scheduleEnabled = true;
+    },
+
+    populateFromSchedule(schedule) {
+      const sched = schedule.schedule;
+
+      this.oneTimeSchedule = !sched.repeatable;
+      this.description = schedule.description || '';
+      this.scheduleEnabled = schedule.enabled !== false;
+
+      // Parse start datetime
+      const startDatetime = new Date(sched.start_datetime);
+      this.startDate = startDatetime;
+      this.startTime = startDatetime.toTimeString().substr(0, 5);
+
+      // Repeat settings
+      if (sched.repeatable) {
+        this.repeatPeriod = sched.repeat_period || 1;
+        this.repeatTimeUnit = sched.repeat_unit || 'days';
+
+        // End option
+        if (sched.end_option === 'max_executions') {
+          this.endOption = 'maxExecuteCount';
+          this.maxExecuteCount = sched.end_arg || 1;
+        } else if (sched.end_option === 'end_datetime') {
+          this.endOption = 'endDatetime';
+          const endDatetime = new Date(sched.end_arg);
+          this.endDate = endDatetime;
+          this.endTime = endDatetime.toTimeString().substr(0, 5);
+        } else {
+          this.endOption = 'never';
+        }
+
+        // Weekdays (for weekly schedules)
+        if (sched.weekdays && sched.weekdays.length > 0) {
+          this.weekDays = [
+            {'day': 'Monday', active: sched.weekdays.includes('Monday')},
+            {'day': 'Tuesday', active: sched.weekdays.includes('Tuesday')},
+            {'day': 'Wednesday', active: sched.weekdays.includes('Wednesday')},
+            {'day': 'Thursday', active: sched.weekdays.includes('Thursday')},
+            {'day': 'Friday', active: sched.weekdays.includes('Friday')},
+            {'day': 'Saturday', active: sched.weekdays.includes('Saturday')},
+            {'day': 'Sunday', active: sched.weekdays.includes('Sunday')}
+          ];
+        } else {
+          const currentDay = new Date().getDay();
+          this.weekDays = [
+            {'day': 'Monday', active: currentDay === 1},
+            {'day': 'Tuesday', active: currentDay === 2},
+            {'day': 'Wednesday', active: currentDay === 3},
+            {'day': 'Thursday', active: currentDay === 4},
+            {'day': 'Friday', active: currentDay === 5},
+            {'day': 'Saturday', active: currentDay === 6},
+            {'day': 'Sunday', active: currentDay === 0}
+          ];
+        }
+      }
     },
 
     checkErrors() {
@@ -409,6 +500,10 @@ export default {
 
     hasParameters() {
       return this.parameters && this.parameters.length > 0;
+    },
+
+    isEditMode() {
+      return this.editSchedule !== null;
     },
 
     weekdaysError() {

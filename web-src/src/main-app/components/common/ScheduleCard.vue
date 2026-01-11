@@ -16,9 +16,9 @@
         <div v-if="schedule.description" class="card-row description-row">
           <span class="description-text">{{ schedule.description }}</span>
         </div>
-        <div v-if="schedule.schedule.repeatable && schedule.last_execution" class="card-row">
+        <div v-if="schedule.schedule.repeatable" class="card-row">
           <span class="label">Last run:</span>
-          <span class="value">{{ formattedLastExecution }}</span>
+          <span class="value">{{ schedule.last_execution ? formattedLastExecution : 'No prior runs' }}</span>
         </div>
         <div class="card-row">
           <span class="label">Next run:</span>
@@ -42,6 +42,11 @@
                 @click.stop="$emit('toggle-params')"
                 title="Show parameters">
           <i class="material-icons">tune</i>
+        </button>
+        <button class="action-btn edit-btn waves-effect"
+                @click.stop="$emit('edit')"
+                title="Edit schedule">
+          <i class="material-icons">edit</i>
         </button>
         <button v-if="schedule.schedule.repeatable"
                 class="action-btn toggle-btn waves-effect"
@@ -292,6 +297,10 @@ export default {
 
 .params-btn:hover i,
 .params-btn.active i {
+  color: var(--primary-color);
+}
+
+.edit-btn:hover i {
   color: var(--primary-color);
 }
 

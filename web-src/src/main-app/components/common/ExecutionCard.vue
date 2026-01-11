@@ -25,6 +25,10 @@
             <span class="label">{{ timeLabel }}:</span>
             <span class="value">{{ timeValue }}</span>
           </div>
+          <div v-if="timeLabel2 && timeValue2" class="card-row">
+            <span class="label">{{ timeLabel2 }}:</span>
+            <span class="value">{{ timeValue2 }}</span>
+          </div>
         </slot>
       </div>
       <div class="card-actions" @click.stop>
@@ -60,6 +64,14 @@ export default {
       default: ''
     },
     timeValue: {
+      type: String,
+      default: ''
+    },
+    timeLabel2: {
+      type: String,
+      default: ''
+    },
+    timeValue2: {
       type: String,
       default: ''
     },

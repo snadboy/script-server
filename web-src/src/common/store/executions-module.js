@@ -110,16 +110,17 @@ function sortExecutionLogs(logs) {
 }
 
 export function translateExecutionLog(log) {
-    log.startTimeString = getStartTimeString(log);
+    log.startTimeString = getTimeString(log.startTime);
+    log.finishTimeString = getTimeString(log.finishTime);
     log.fullStatus = getFullStatus(log);
 
     return log;
 }
 
-function getStartTimeString(log) {
-    if (!isNull(log.startTime)) {
-        const startTime = new Date(log.startTime);
-        return startTime.toLocaleDateString() + ' ' + startTime.toLocaleTimeString();
+function getTimeString(timeValue) {
+    if (!isNull(timeValue)) {
+        const time = new Date(timeValue);
+        return time.toLocaleDateString() + ' ' + time.toLocaleTimeString();
     } else {
         return '';
     }

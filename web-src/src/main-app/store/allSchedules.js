@@ -103,6 +103,25 @@ export default {
                     }
                     throw e;
                 });
+        },
+
+        updateSchedule({dispatch}, {scheduleId, scheduleConfig}) {
+            return axiosInstance.put(`schedules/${scheduleId}`, {schedule_config: scheduleConfig})
+                .then(response => {
+                    // Refresh the full schedules list to get updated data
+                    dispatch('refresh');
+                    return response.data;
+                })
+                .catch(e => {
+                    if (e.response && e.response.status === 404) {
+                        e.userMessage = 'Schedule not found';
+                    } else if (e.response && e.response.status === 422) {
+                        e.userMessage = e.response.data || 'Invalid schedule configuration';
+                    } else if (e.response && e.response.status === 403) {
+                        e.userMessage = 'Access denied';
+                    }
+                    throw e;
+                });
         }
     }
 }

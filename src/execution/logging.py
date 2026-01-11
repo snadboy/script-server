@@ -102,6 +102,7 @@ class HistoryEntry:
         self.user_name = None
         self.user_id = None
         self.start_time = None
+        self.finish_time = None
         self.script_name = None
         self.command = None
         self.output_format = None
@@ -348,6 +349,10 @@ class ExecutionLoggingService:
         if start_time:
             entry.start_time = ms_to_datetime(int(start_time))
 
+        finish_time = parameters.get('finish_time')
+        if finish_time:
+            entry.finish_time = ms_to_datetime(int(finish_time))
+
         # Parse parameter values JSON
         import json
         param_values_str = parameters.get('parameter_values')
@@ -371,6 +376,7 @@ class ExecutionLoggingService:
         file_parts = file_content.split(OUTPUT_STARTED_MARKER + os.linesep, 1)
         parameters_text = file_parts[0]
         parameters_text += 'exit_code:' + str(exit_code) + os.linesep
+        parameters_text += 'finish_time:' + str(get_current_millis()) + os.linesep
 
         new_content = parameters_text + OUTPUT_STARTED_MARKER + os.linesep + file_parts[1]
         file_utils.write_file(log_file_path, new_content.encode(ENCODING), byte_content=True)

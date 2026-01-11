@@ -85,9 +85,15 @@ def _translate_history_entry(entry, running):
     else:
         start_time = None
 
+    if entry.finish_time:
+        finish_time = date_utils.astimezone(entry.finish_time, timezone.utc).isoformat()
+    else:
+        finish_time = None
+
     result = {
         'id': entry.id,
         'startTime': start_time,
+        'finishTime': finish_time,
         'user': entry.user_name,
         'script': entry.script_name,
         'status': running_flag_to_status(running),

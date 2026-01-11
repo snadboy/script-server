@@ -1,38 +1,49 @@
 <template>
-  <CollapsibleSection
-    title="Scheduled"
-    :count="badgeCount"
-    :isEmpty="!loading && filteredSchedules.length === 0"
-    :emptyMessage="emptyMessage"
-    :collapsed="collapsed"
-    @toggle="handleToggle">
-    <template v-if="loading">
-      <div class="loading-state">
-        <div class="spinner"></div>
-      </div>
-    </template>
-    <template v-else>
-      <ScheduleCard
-        v-for="schedule in filteredSchedules"
-        :key="'schedule-' + schedule.id"
-        :schedule="schedule"
-        :showScriptName="showScriptName"
-        :showParams="showParams"
-        :paramsExpanded="expandedParams === schedule.id"
-        :deleting="deleting === schedule.id"
-        :toggling="toggling === schedule.id"
-        @toggle-params="toggleParams(schedule.id)"
-        @toggle-enabled="handleToggleEnabled(schedule)"
-        @delete="confirmDelete(schedule)"
-      />
-    </template>
-  </CollapsibleSection>
+  <div>
+    <CollapsibleSection
+      title="Scheduled"
+      :count="badgeCount"
+      :isEmpty="!loading && filteredSchedules.length === 0"
+      :emptyMessage="emptyMessage"
+      :collapsed="collapsed"
+      @toggle="handleToggle">
+      <template v-if="loading">
+        <div class="loading-state">
+          <div class="spinner"></div>
+        </div>
+      </template>
+      <template v-else>
+        <ScheduleCard
+          v-for="schedule in filteredSchedules"
+          :key="'schedule-' + schedule.id"
+          :schedule="schedule"
+          :showScriptName="showScriptName"
+          :showParams="showParams"
+          :paramsExpanded="expandedParams === schedule.id"
+          :deleting="deleting === schedule.id"
+          :toggling="toggling === schedule.id"
+          @toggle-params="toggleParams(schedule.id)"
+          @toggle-enabled="handleToggleEnabled(schedule)"
+          @edit="handleEdit(schedule)"
+          @delete="confirmDelete(schedule)"
+        />
+      </template>
+    </CollapsibleSection>
+
+    <ScheduleModal
+      :visible="showEditModal"
+      :scriptName="editingSchedule ? editingSchedule.script_name : ''"
+      :editSchedule="editingSchedule"
+      @close="closeEditModal"
+    />
+  </div>
 </template>
 
 <script>
 import {mapState, mapActions} from 'vuex';
 import CollapsibleSection from './CollapsibleSection';
 import ScheduleCard from './ScheduleCard';
+import ScheduleModal from '@/main-app/components/schedule/ScheduleModal';
 import {formatNextExecution} from '@/main-app/utils/executionFormatters';
 
 const STORAGE_KEY = 'executionSections.collapsed.scheduled';
@@ -42,7 +53,8 @@ export default {
 
   components: {
     CollapsibleSection,
-    ScheduleCard
+    ScheduleCard,
+    ScheduleModal
   },
 
   props: {
@@ -65,7 +77,9 @@ export default {
       collapsed: this.loadCollapsedState(),
       expandedParams: null,
       deleting: null,
-      toggling: null
+      toggling: null,
+      showEditModal: false,
+      editingSchedule: null
     };
   },
 
@@ -168,6 +182,16 @@ export default {
         .finally(() => {
           this.toggling = null;
         });
+    },
+
+    handleEdit(schedule) {
+      this.editingSchedule = schedule;
+      this.showEditModal = true;
+    },
+
+    closeEditModal() {
+      this.showEditModal = false;
+      this.editingSchedule = null;
     }
   }
 };

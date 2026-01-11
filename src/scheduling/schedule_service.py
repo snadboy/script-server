@@ -285,6 +285,51 @@ class ScheduleService:
 
         return job
 
+    def update_job(self, job_id: str, incoming_schedule_config, user: User):
+        """Update a scheduled job's configuration."""
+        if user is None:
+            raise InvalidUserException('User id is missing')
+
+        job, job_path = self.get_job(job_id)
+
+        if job is None:
+            raise JobNotFoundException(f'Schedule {job_id} not found')
+
+        # Parse the new schedule configuration
+        schedule_config = read_schedule_config(incoming_schedule_config)
+
+        if not schedule_config.repeatable and date_utils.is_past(schedule_config.start_datetime):
+            raise InvalidScheduleException('Start date should be in the future')
+
+        if schedule_config.end_option == 'end_datetime':
+            if schedule_config.start_datetime > schedule_config.end_arg:
+                raise InvalidScheduleException('End date should be after start date')
+
+        if schedule_config.end_option == 'max_executions' and schedule_config.end_arg <= 0:
+            raise InvalidScheduleException('Count should be greater than 0!')
+
+        # Cancel the old scheduled execution
+        self.scheduler.cancel(job_path)
+
+        # Update job properties
+        job.schedule = schedule_config
+        job.description = incoming_schedule_config.get('description')
+        job.enabled = incoming_schedule_config.get('enabled', True)
+
+        # Save the updated job
+        new_job_path = self.save_job(job)
+
+        # If file path changed (shouldn't happen for update), remove old file
+        if new_job_path != job_path and os.path.exists(job_path):
+            os.remove(job_path)
+
+        # Reschedule if enabled
+        self.schedule_job(job, new_job_path)
+
+        LOGGER.info(f'Updated schedule {job_id} for script {job.script_name} by user {user.get_audit_name()}')
+
+        return job
+
     def stop(self):
         self.scheduler.stop()
 

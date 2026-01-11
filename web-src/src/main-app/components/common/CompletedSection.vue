@@ -20,8 +20,10 @@
         :status="getStatus(execution)"
         :statusText="execution.fullStatus || execution.status"
         :user="execution.user"
-        timeLabel="Completed"
+        timeLabel="Started"
         :timeValue="execution.startTimeString"
+        timeLabel2="Completed"
+        :timeValue2="execution.finishTimeString"
         @click="handleClick(execution)">
       </ExecutionCard>
     </template>
