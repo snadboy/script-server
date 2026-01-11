@@ -110,6 +110,7 @@ class HistoryEntry:
         self.exit_code = None
         self.parameter_values = None
         self.schedule_id = None
+        self.instance_name = None
 
 
 class ExecutionLoggingService:
@@ -135,7 +136,8 @@ class ExecutionLoggingService:
                       script_config,
                       parameter_value_wrappers,
                       start_time_millis=None,
-                      schedule_id=None):
+                      schedule_id=None,
+                      instance_name=None):
         
         if script_config.logging_config:
             if not script_config.logging_config.enabled:
@@ -168,6 +170,8 @@ class ExecutionLoggingService:
         output_logger.write_line('output_format:' + script_config.output_format)
         if schedule_id:
             output_logger.write_line('schedule_id:' + str(schedule_id))
+        if instance_name:
+            output_logger.write_line('instance_name:' + str(instance_name))
 
         # Store parameter values as JSON
         import json
@@ -367,6 +371,9 @@ class ExecutionLoggingService:
         # Parse schedule_id if present
         entry.schedule_id = parameters.get('schedule_id')
 
+        # Parse instance_name if present
+        entry.instance_name = parameters.get('instance_name')
+
         return entry
 
     @staticmethod
@@ -466,6 +473,7 @@ class ExecutionLoggingController:
             audit_command = execution_service.get_audit_command(execution_id)
             parameter_value_wrappers = script_config.parameter_values
             schedule_id = execution_service.get_schedule_id(execution_id)
+            instance_name = execution_service.get_instance_name(execution_id)
 
             logging_service.start_logging(
                 execution_id,
@@ -476,7 +484,8 @@ class ExecutionLoggingController:
                 all_audit_names,
                 script_config,
                 parameter_value_wrappers,
-                schedule_id=schedule_id)
+                schedule_id=schedule_id,
+                instance_name=instance_name)
 
         def finished(execution_id, user):
             exit_code = execution_service.get_exit_code(execution_id)

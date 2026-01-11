@@ -2,7 +2,7 @@
   <div class="activity-page">
     <RunningSection :showScriptName="true" />
     <ScheduledSection :showScriptName="true" :showParams="true" />
-    <CompletedSection :showScriptName="true" />
+    <CompletedSection />
   </div>
 </template>
 

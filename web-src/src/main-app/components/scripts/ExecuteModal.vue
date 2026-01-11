@@ -214,7 +214,9 @@ export default {
 
       // Small delay to let values propagate, then start execution
       this.$nextTick(() => {
-        this.$store.dispatch('scriptExecutionManager/startExecution');
+        this.$store.dispatch('scriptExecutionManager/startExecution', {
+          instanceName: this.instanceName || null
+        });
         this.close();
       });
     }

@@ -7,6 +7,7 @@ class ExecutionInfo(object):
     def __init__(self):
         self.param_values = {}
         self.script = None
+        self.instance_name = None
 
 
 def config_to_external(config, id, external_id=None):
@@ -102,6 +103,8 @@ def _translate_history_entry(entry, running):
     }
     if entry.schedule_id:
         result['scheduleId'] = entry.schedule_id
+    if entry.instance_name:
+        result['instanceName'] = entry.instance_name
     return result
 
 
@@ -111,17 +114,20 @@ def running_flag_to_status(running):
 
 def to_execution_info(request_parameters):
     NAME_KEY = '__script_name'
+    INSTANCE_KEY = '__instance_name'
 
     script_name = request_parameters.get(NAME_KEY)
+    instance_name = request_parameters.get(INSTANCE_KEY)
 
     param_values = {}
     for name, value in request_parameters.items():
-        if name == NAME_KEY:
+        if name in (NAME_KEY, INSTANCE_KEY):
             continue
         param_values[name] = value
 
     info = ExecutionInfo()
     info.script = script_name
+    info.instance_name = instance_name
     info.param_values = param_values
 
     return info

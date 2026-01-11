@@ -117,18 +117,22 @@ export default {
             dispatch('selectExecutor', selectedExecutor);
         },
 
-        startExecution({rootState, commit, dispatch}) {
+        startExecution({rootState, commit, dispatch}, payload = {}) {
             console.log('[scriptExecutionManager] startExecution called');
             const store = this;
 
             const parameterValues = clone(rootState.scriptSetup.parameterValues);
             const scriptName = rootState.scriptConfig.scriptConfig.name;
+            const instanceName = payload.instanceName || null;
 
             // Save parameter history when script is executed
             saveParameterHistory(scriptName, parameterValues);
 
             const formData = parametersToFormData(parameterValues);
             formData.append('__script_name', scriptName);
+            if (instanceName) {
+                formData.append('__instance_name', instanceName);
+            }
 
             const executor = scriptExecutor(null, scriptName, parameterValues);
             store.registerModule(['executions', 'temp'], executor);

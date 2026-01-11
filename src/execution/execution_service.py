@@ -15,8 +15,8 @@ from utils.exceptions.not_found_exception import NotFoundException
 LOGGER = logging.getLogger('script_server.execution_service')
 
 _ExecutionInfo = namedtuple('_ExecutionInfo',
-                            ['execution_id', 'owner_user', 'audit_name', 'config', 'audit_command', 'schedule_id'],
-                            defaults=[None])
+                            ['execution_id', 'owner_user', 'audit_name', 'config', 'audit_command', 'schedule_id', 'instance_name'],
+                            defaults=[None, None])
 
 
 class ExecutionService:
@@ -44,7 +44,7 @@ class ExecutionService:
 
         return self._executors.get(execution_id)
 
-    def start_script(self, config, user: User, schedule_id=None):
+    def start_script(self, config, user: User, schedule_id=None, instance_name=None):
         audit_name = user.get_audit_name()
 
         executor = ScriptExecutor(config, self._env_vars)
@@ -61,7 +61,8 @@ class ExecutionService:
             audit_name=audit_name,
             audit_command=audit_command,
             config=config,
-            schedule_id=schedule_id)
+            schedule_id=schedule_id,
+            instance_name=instance_name)
         self._active_executor_ids.add(execution_id)
 
         self._fire_execution_started(execution_id, user)
@@ -174,6 +175,10 @@ class ExecutionService:
     def get_schedule_id(self, execution_id):
         return self._get_for_execution_info(execution_id,
                                             lambda i: i.schedule_id)
+
+    def get_instance_name(self, execution_id):
+        return self._get_for_execution_info(execution_id,
+                                            lambda i: i.instance_name)
 
     def get_all_audit_names(self, execution_id):
         return self._get_for_execution_info(execution_id,

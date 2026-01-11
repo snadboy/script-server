@@ -67,7 +67,6 @@
       />
       <CompletedSection
         :scriptFilter="selectedScript"
-        :showScriptName="false"
         :limit="completedExecutionsLimit"
         @select="selectExecution"
       />

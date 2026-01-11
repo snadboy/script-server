@@ -16,10 +16,11 @@
       <ExecutionCard
         v-for="execution in displayedExecutions"
         :key="'completed-' + execution.id"
-        :title="showScriptName ? execution.script : 'Execution #' + execution.id"
+        :title="execution.script + ' (Execution ID: ' + execution.id + ')'"
         :status="getStatus(execution)"
         :statusText="execution.fullStatus || execution.status"
         :user="execution.user"
+        :description="getExecutionDescription(execution)"
         timeLabel="Started"
         :timeValue="execution.startTimeString"
         timeLabel2="Ended"
@@ -34,7 +35,7 @@
 import {mapState} from 'vuex';
 import CollapsibleSection from './CollapsibleSection';
 import ExecutionCard from './ExecutionCard';
-import {getExecutionStatus} from '@/main-app/utils/executionFormatters';
+import {getExecutionStatus, getScheduleDescription} from '@/main-app/utils/executionFormatters';
 
 const STORAGE_KEY = 'executionSections.collapsed.completed';
 
@@ -50,10 +51,6 @@ export default {
     scriptFilter: {
       type: String,
       default: null
-    },
-    showScriptName: {
-      type: Boolean,
-      default: true
     },
     limit: {
       type: Number,
@@ -71,6 +68,9 @@ export default {
     ...mapState('history', {
       executions: 'executions',
       loading: 'loading'
+    }),
+    ...mapState('allSchedules', {
+      schedules: 'schedules'
     }),
 
     filteredExecutions() {
@@ -139,6 +139,25 @@ export default {
 
     getStatus(execution) {
       return getExecutionStatus(execution);
+    },
+
+    getExecutionDescription(execution) {
+      const parts = [];
+
+      // Add instance name if present
+      if (execution.instanceName) {
+        parts.push(`Instance: ${execution.instanceName}`);
+      }
+
+      // Get schedule description if this was a scheduled execution
+      if (execution.scheduleId) {
+        const scheduleDesc = getScheduleDescription(execution.scheduleId, this.schedules);
+        if (scheduleDesc) {
+          parts.push(scheduleDesc);
+        }
+      }
+
+      return parts.join(' | ');
     }
   }
 };

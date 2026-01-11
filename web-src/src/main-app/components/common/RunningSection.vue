@@ -19,6 +19,7 @@
         status="running"
         statusText="Running"
         :user="execution.user"
+        :description="getExecutionDescription(execution)"
         timeLabel="Started"
         :timeValue="execution.startTimeString"
         :isScheduled="!!execution.scheduleId"
@@ -129,6 +130,14 @@ export default {
 
     getScheduleDesc(scheduleId) {
       return getScheduleDescription(scheduleId, this.schedules);
+    },
+
+    getExecutionDescription(execution) {
+      // Show instance name if present
+      if (execution.instanceName) {
+        return `Instance: ${execution.instanceName}`;
+      }
+      return '';
     }
   }
 };
