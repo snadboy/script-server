@@ -15,7 +15,7 @@
 ## Current State
 
 **Branch:** `feature/schedule-list-and-delete`
-**Latest Commit:** `0b1faaa` - Add Edit Script modal with tabbed wizard UI
+**Latest Commit:** `34d3dde` - Add unified Activity page, live updates, and UI fixes
 **Last Updated:** 2026-01-10
 
 ### Completed Features
@@ -41,6 +41,7 @@
 | Live List Updates | Done | Running/Scheduled/Completed lists auto-refresh when executions start/complete |
 | Schedule Last Run | Done | Shows last execution time for recurring schedules in lists |
 | Sidebar Version Move | Done | Version/build number moved to bottom of sidebar |
+| Sidebar Icon Alignment | Done | Fixed nav icon alignment (override global min-height CSS) |
 
 ### Test Infrastructure
 
