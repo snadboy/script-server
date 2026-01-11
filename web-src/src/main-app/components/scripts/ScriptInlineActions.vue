@@ -2,18 +2,14 @@
   <div class="script-inline-actions" v-if="visible" @click.stop>
     <button
         class="action-btn execute-btn waves-effect waves-light"
-        :class="{ 'stop-mode': isExecuting, 'kill-mode': killEnabled }"
-        :title="executeButtonTitle"
-        @click="handleExecuteClick">
-      <i class="material-icons">{{ executeButtonIcon }}</i>
-      <span v-if="killTimeoutSec && isExecuting" class="timeout-badge">{{ killTimeoutSec }}</span>
+        title="Execute script"
+        @click="openExecuteModal">
+      <i class="material-icons">play_arrow</i>
     </button>
 
     <button
         v-if="isSchedulable"
         class="action-btn schedule-btn waves-effect waves-light"
-        :class="{ disabled: !canSchedule }"
-        :disabled="!canSchedule"
         title="Schedule execution"
         @click="openScheduleModal">
       <i class="material-icons">date_range</i>
@@ -26,6 +22,11 @@
         @click="openEditModal">
       <i class="material-icons">edit</i>
     </button>
+
+    <ExecuteModal
+        :visible="showExecuteModal"
+        :script-name="scriptName"
+        @close="showExecuteModal = false"/>
 
     <ScheduleModal
         :visible="showScheduleModal"
@@ -42,10 +43,9 @@
 </template>
 
 <script>
-import {forEachKeyValue, isNull} from '@/common/utils/common';
 import {scriptNameToHash} from '../../utils/model_helper';
-import {STATUS_EXECUTING, STATUS_INITIALIZING, STATUS_FINISHED, STATUS_DISCONNECTED, STATUS_ERROR} from '../../store/scriptExecutor';
 import {mapState} from 'vuex';
+import ExecuteModal from '@/main-app/components/scripts/ExecuteModal';
 import ScheduleModal from '@/main-app/components/schedule/ScheduleModal';
 import EditScriptModal from '@/main-app/components/scripts/EditScriptModal';
 
@@ -53,6 +53,7 @@ export default {
   name: 'ScriptInlineActions',
 
   components: {
+    ExecuteModal,
     ScheduleModal,
     EditScriptModal
   },
@@ -70,6 +71,7 @@ export default {
 
   data() {
     return {
+      showExecuteModal: false,
       showScheduleModal: false,
       showEditModal: false
     };
@@ -92,52 +94,6 @@ export default {
       return scriptNameToHash(this.scriptName);
     },
 
-    executor() {
-      // Find any executor for this script
-      let foundExecutor = null;
-      forEachKeyValue(this.$store.state.executions.executors, (id, executor) => {
-        if (executor.state.scriptName === this.scriptName) {
-          foundExecutor = executor;
-        }
-      });
-      return foundExecutor;
-    },
-
-    isExecuting() {
-      if (!this.executor) return false;
-      const status = this.executor.state.status;
-      return status === STATUS_EXECUTING || status === STATUS_INITIALIZING;
-    },
-
-    canExecute() {
-      if (!this.executor) return true;
-      const status = this.executor.state.status;
-      return status === STATUS_FINISHED ||
-             status === STATUS_DISCONNECTED ||
-             status === STATUS_ERROR;
-    },
-
-    killEnabled() {
-      return !isNull(this.executor) && this.executor.state.killEnabled;
-    },
-
-    killTimeoutSec() {
-      return isNull(this.executor) ? null : this.executor.state.killTimeoutSec;
-    },
-
-    executeButtonIcon() {
-      if (!this.isExecuting) return 'play_arrow';
-      if (this.killEnabled) return 'dangerous';
-      return 'stop';
-    },
-
-    executeButtonTitle() {
-      if (!this.isExecuting) return 'Execute script';
-      if (this.killEnabled) return 'Kill script';
-      if (this.killTimeoutSec) return `Stop (${this.killTimeoutSec}s to kill)`;
-      return 'Stop script';
-    },
-
     isSchedulable() {
       // Only show schedule button for the currently selected script
       // and only if that script is schedulable
@@ -145,42 +101,26 @@ export default {
         return false;
       }
       return this.scriptConfig && this.scriptConfig.schedulable;
-    },
-
-    canSchedule() {
-      // Can schedule when not currently executing
-      return this.canExecute;
     }
   },
 
   methods: {
-    handleExecuteClick() {
-      console.log('[ScriptInlineActions] handleExecuteClick called, isExecuting:', this.isExecuting, 'canExecute:', this.canExecute);
-      if (this.isExecuting) {
-        // Stop/Kill the script
-        if (!this.executor) return;
-
-        const executionId = this.executor.state.id;
-        if (this.killEnabled) {
-          this.$store.dispatch('executions/' + executionId + '/killExecution');
-        } else {
-          this.$store.dispatch('executions/' + executionId + '/stopExecution');
-        }
-      } else {
-        // Execute the script
-        if (!this.canExecute) return;
-
-        console.log('[ScriptInlineActions] Setting pendingAutoExecute=true and navigating to:', '/' + this.scriptHash);
-        // Set flag in store for auto-execution
-        this.$store.commit('scripts/SET_PENDING_AUTO_EXECUTE', true);
-
-        // Navigate to the script
+    openExecuteModal() {
+      // Navigate to the script first to load its config
+      if (this.selectedScript !== this.scriptName) {
         this.$router.push('/' + this.scriptHash);
+        // Wait for navigation and script load before showing modal
+        this.$nextTick(() => {
+          setTimeout(() => {
+            this.showExecuteModal = true;
+          }, 100);
+        });
+      } else {
+        this.showExecuteModal = true;
       }
     },
 
     openScheduleModal() {
-      if (!this.canSchedule) return;
       this.showScheduleModal = true;
     },
 
@@ -246,53 +186,15 @@ export default {
   border: 1px solid var(--separator-color);
 }
 
-.execute-btn:hover:not(.disabled):not(.stop-mode),
-.edit-btn:hover:not(.disabled),
-.schedule-btn:hover:not(.disabled) {
+.execute-btn:hover,
+.edit-btn:hover,
+.schedule-btn:hover {
   background-color: var(--hover-color);
   color: var(--primary-color);
-}
-
-.execute-btn.stop-mode {
-  background-color: #e57373;
-  color: white;
-  border-color: #e57373;
-}
-
-.execute-btn.stop-mode:hover {
-  background-color: #ef5350;
-  border-color: #ef5350;
-}
-
-.execute-btn.kill-mode {
-  background-color: #c62828;
-  border-color: #c62828;
-}
-
-.execute-btn.kill-mode:hover {
-  background-color: #b71c1c;
-  border-color: #b71c1c;
 }
 
 .action-btn.disabled {
   opacity: 0.4;
   cursor: not-allowed;
-}
-
-.timeout-badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  background: #c62828;
-  color: white;
-  font-size: 10px;
-  font-weight: bold;
-  min-width: 16px;
-  height: 16px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 4px;
 }
 </style>
