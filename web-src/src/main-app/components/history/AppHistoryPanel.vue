@@ -2,15 +2,15 @@
   <div class="app-history-panel">
     <!-- Running Scripts Section -->
     <section class="running-section">
-      <h6 class="section-title">
-        <i class="material-icons">play_circle_filled</i>
+      <h6 class="section-title" @click="toggleRunningSection">
+        <i class="material-icons expand-icon" :class="{ collapsed: runningCollapsed }">expand_more</i>
         Running
         <span v-if="runningExecutions.length" class="badge">{{ runningExecutions.length }}</span>
       </h6>
-      <div v-if="runningExecutions.length === 0" class="empty-state">
+      <div v-if="!runningCollapsed && runningExecutions.length === 0" class="empty-state">
         <p>No scripts currently running</p>
       </div>
-      <div v-else class="running-list">
+      <div v-else-if="!runningCollapsed" class="running-list">
         <div v-for="execution in runningExecutions" :key="'running-' + execution.id"
              class="execution-card"
              @click="viewExecution(execution)">
@@ -44,12 +44,12 @@
     </section>
 
     <!-- History Section -->
-    <section class="history-section">
-      <h6 class="section-title">
-        <i class="material-icons">history</i>
+    <section class="history-section" :class="{ collapsed: historyCollapsed }">
+      <h6 class="section-title" @click="toggleHistorySection">
+        <i class="material-icons expand-icon" :class="{ collapsed: historyCollapsed }">expand_more</i>
         Completed
       </h6>
-      <ExecutionsLogPage :disableProgressIndicator="true" :excludeRunning="true" class="main-app-executions-log"/>
+      <ExecutionsLogPage v-if="!historyCollapsed" :disableProgressIndicator="true" :excludeRunning="true" class="main-app-executions-log"/>
     </section>
   </div>
 </template>
@@ -66,11 +66,21 @@ export default {
 
   data() {
     return {
-      stoppingExecutions: {}  // { executionId: { killEnabled: false, killTimeout: null, intervalId: null } }
+      stoppingExecutions: {},  // { executionId: { killEnabled: false, killTimeout: null, intervalId: null } }
+      runningCollapsed: false,
+      historyCollapsed: false
     };
   },
 
   methods: {
+    toggleRunningSection() {
+      this.runningCollapsed = !this.runningCollapsed;
+    },
+
+    toggleHistorySection() {
+      this.historyCollapsed = !this.historyCollapsed;
+    },
+
     ...mapActions('page', ['setLoading']),
 
     updateLoadingIndicator() {
@@ -254,11 +264,25 @@ export default {
   font-size: 14px;
   font-weight: 500;
   color: var(--font-color-main);
+  cursor: pointer;
+  user-select: none;
+}
+
+.section-title:hover {
+  color: var(--primary-color);
 }
 
 .section-title i {
   font-size: 20px;
   color: var(--primary-color);
+}
+
+.section-title .expand-icon {
+  transition: transform 0.2s ease;
+}
+
+.section-title .expand-icon.collapsed {
+  transform: rotate(-90deg);
 }
 
 .section-title .badge {
@@ -424,6 +448,10 @@ export default {
   min-height: 0;
   display: flex;
   flex-direction: column;
+}
+
+.history-section.collapsed {
+  flex: 0;
 }
 
 .history-section .section-title {

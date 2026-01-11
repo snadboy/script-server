@@ -191,6 +191,42 @@ class ScheduleConfig:
             if i > max_iterations:
                 raise Exception('Endless loop in calc next time')
 
+    def get_last_execution_time(self):
+        """Calculate the last execution time based on executions_count for recurring schedules."""
+        if not self.repeatable or self.executions_count is None or self.executions_count <= 0:
+            return None
+
+        # For recurring schedules, calculate when the last execution happened
+        # by finding the (executions_count - 1)th iteration from start
+        count = self.executions_count
+
+        if self.repeat_unit == 'minutes':
+            return self.start_datetime + timedelta(minutes=self.repeat_period * (count - 1))
+        elif self.repeat_unit == 'hours':
+            return self.start_datetime + timedelta(hours=self.repeat_period * (count - 1))
+        elif self.repeat_unit == 'days':
+            return self.start_datetime + timedelta(days=self.repeat_period * (count - 1))
+        elif self.repeat_unit == 'months':
+            return date_utils.add_months(self.start_datetime, self.repeat_period * (count - 1))
+        elif self.repeat_unit == 'weeks':
+            # For weekly schedules with specific weekdays, this is more complex
+            # Approximate by calculating based on period and count
+            weeks_completed = (count - 1) // len(self.weekdays) if self.weekdays else count - 1
+            weekday_index = (count - 1) % len(self.weekdays) if self.weekdays else 0
+
+            if self.weekdays:
+                weekday_name = self.weekdays[weekday_index]
+                weekday_num = ALLOWED_WEEKDAYS.index(weekday_name)
+                start_weekday = self.start_datetime.weekday()
+
+                return self.start_datetime \
+                       + timedelta(weeks=self.repeat_period * weeks_completed) \
+                       + timedelta(days=(weekday_num - start_weekday))
+            else:
+                return self.start_datetime + timedelta(weeks=self.repeat_period * (count - 1))
+
+        return None
+
 
 class InvalidScheduleException(Exception):
     def __init__(self, message) -> None:

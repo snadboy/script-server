@@ -2,18 +2,18 @@
   <div class="scheduled-page">
       <!-- Running Scripts Section -->
       <section class="running-section">
-        <h6 class="section-title">
-          <i class="material-icons">play_circle_filled</i>
+        <h6 class="section-title" @click="toggleRunningSection">
+          <i class="material-icons expand-icon" :class="{ collapsed: runningCollapsed }">expand_more</i>
           Running
           <span v-if="runningExecutions.length" class="badge">{{ runningExecutions.length }}</span>
         </h6>
-        <div v-if="executionsLoading" class="loading-state">
+        <div v-if="!runningCollapsed && executionsLoading" class="loading-state">
           <div class="spinner"></div>
         </div>
-        <div v-else-if="runningExecutions.length === 0" class="empty-state">
+        <div v-else-if="!runningCollapsed && runningExecutions.length === 0" class="empty-state">
           <p>No scripts currently running</p>
         </div>
-        <div v-else class="running-list">
+        <div v-else-if="!runningCollapsed" class="running-list">
           <div v-for="execution in runningExecutions" :key="execution.id"
                class="execution-card"
                @click="viewExecution(execution)">
@@ -47,13 +47,13 @@
       </section>
 
       <!-- Scheduled Scripts Section -->
-      <section class="scheduled-section">
-        <h6 class="section-title">
-          <i class="material-icons">schedule</i>
+      <section class="scheduled-section" :class="{ collapsed: scheduledCollapsed }">
+        <h6 class="section-title" @click="toggleScheduledSection">
+          <i class="material-icons expand-icon" :class="{ collapsed: scheduledCollapsed }">expand_more</i>
           Scheduled
         </h6>
         <!-- Search -->
-        <div class="search-container">
+        <div v-if="!scheduledCollapsed" class="search-container">
           <div class="search-panel">
             <input ref="searchField" autocomplete="off" class="search-field"
                    name="searchField"
@@ -65,13 +65,13 @@
                  @click="searchIconClickHandler">
           </div>
         </div>
-        <div v-if="schedulesLoading" class="loading-state">
+        <div v-if="!scheduledCollapsed && schedulesLoading" class="loading-state">
           <div class="spinner"></div>
         </div>
-        <div v-else-if="filteredSchedules.length === 0" class="empty-state">
+        <div v-else-if="!scheduledCollapsed && filteredSchedules.length === 0" class="empty-state">
           <p>{{ searchText ? 'No schedules match your search' : 'No scheduled executions' }}</p>
         </div>
-        <div v-else class="schedule-list">
+        <div v-else-if="!scheduledCollapsed" class="schedule-list">
           <div v-for="schedule in filteredSchedules" :key="schedule.id" class="schedule-card card-elevated">
             <div class="card-header">
               <span class="script-name">{{ schedule.script_name }}</span>
@@ -153,7 +153,9 @@ export default {
       expandedParams: null,
       deleting: null,
       searchText: '',
-      stoppingExecutions: {}  // { executionId: { killEnabled: false, killTimeout: null, intervalId: null } }
+      stoppingExecutions: {},  // { executionId: { killEnabled: false, killTimeout: null, intervalId: null } }
+      runningCollapsed: false,
+      scheduledCollapsed: false
     };
   },
 
@@ -220,6 +222,14 @@ export default {
 
   methods: {
     ...mapActions('allSchedules', ['fetchAllSchedules', 'deleteSchedule']),
+
+    toggleRunningSection() {
+      this.runningCollapsed = !this.runningCollapsed;
+    },
+
+    toggleScheduledSection() {
+      this.scheduledCollapsed = !this.scheduledCollapsed;
+    },
 
     searchIconClickHandler() {
       if (this.searchText !== '') {
@@ -447,6 +457,10 @@ export default {
   flex-direction: column;
 }
 
+.scheduled-section.collapsed {
+  flex: 0;
+}
+
 .scheduled-section .section-title {
   padding: 0 16px;
   margin-bottom: 8px;
@@ -518,11 +532,25 @@ export default {
   font-size: 14px;
   font-weight: 500;
   color: var(--font-color-main);
+  cursor: pointer;
+  user-select: none;
+}
+
+.section-title:hover {
+  color: var(--primary-color);
 }
 
 .section-title i {
   font-size: 20px;
   color: var(--primary-color);
+}
+
+.section-title .expand-icon {
+  transition: transform 0.2s ease;
+}
+
+.section-title .expand-icon.collapsed {
+  transform: rotate(-90deg);
 }
 
 .section-title .badge {

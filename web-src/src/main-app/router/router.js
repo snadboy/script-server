@@ -2,10 +2,8 @@ import {routerChildren as executionRouterChildren} from '@/common/components/his
 import Vue from 'vue';
 import VueRouter from 'vue-router';
 import AppWelcomePanel from '../components/AppWelcomePanel';
-import AppHistoryHeader from '../components/history/AppHistoryHeader';
-import AppHistoryPanel from '../components/history/AppHistoryPanel';
-import ScheduledPage from '../components/scheduled/ScheduledPage';
-import ScheduledHeader from '../components/scheduled/ScheduledHeader';
+import ActivityPage from '../components/activity/ActivityPage';
+import ActivityHeader from '../components/activity/ActivityHeader';
 import MainAppContent from '../components/scripts/MainAppContent';
 import ScriptHeader from '../components/scripts/ScriptHeader';
 
@@ -50,19 +48,12 @@ const router = new VueRouter({
         },
         // Main app routes
         {
-            path: '/history',
+            path: '/activity',
             components: {
-                default: AppHistoryPanel,
-                header: AppHistoryHeader
+                default: ActivityPage,
+                header: ActivityHeader
             },
             children: executionRouterChildren
-        },
-        {
-            path: '/scheduled',
-            components: {
-                default: ScheduledPage,
-                header: ScheduledHeader
-            }
         },
         {
             path: '/:scriptName',
@@ -75,8 +66,8 @@ const router = new VueRouter({
         {
             path: '',
             components: {
-                default: AppHistoryPanel,
-                header: AppHistoryHeader
+                default: ActivityPage,
+                header: ActivityHeader
             },
             children: executionRouterChildren
         }

@@ -41,10 +41,29 @@ export default {
                 });
         },
 
-        deleteSchedule({commit}, {scheduleId}) {
+        refresh({commit}) {
+            // Silently refresh schedules list without loading indicator
+            // to avoid disrupting the UI (e.g., closing modals)
+            return axiosInstance.get('schedules')
+                .then(response => {
+                    commit('SET_SCHEDULES', response.data.schedules || []);
+                    return response.data.schedules;
+                })
+                .catch(e => {
+                    // Silent refresh - don't update error state
+                    console.error('Failed to refresh schedules:', e);
+                });
+        },
+
+        deleteSchedule({commit, dispatch, rootState}, {scheduleId}) {
             return axiosInstance.delete(`schedules/${scheduleId}`)
                 .then(response => {
                     commit('REMOVE_SCHEDULE', scheduleId);
+                    // Also refresh scriptSchedule store for the current script view
+                    const scriptName = rootState.scriptConfig.scriptConfig && rootState.scriptConfig.scriptConfig.name;
+                    if (scriptName) {
+                        dispatch('scriptSchedule/fetchSchedules', {scriptName}, {root: true});
+                    }
                     return response.data;
                 })
                 .catch(e => {

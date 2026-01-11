@@ -768,6 +768,11 @@ class GetSchedules(BaseRequestHandler):
             next_time = job.schedule.get_next_time()
             if next_time:
                 schedule_data['next_execution'] = next_time.isoformat()
+            # Add last execution time for recurring schedules
+            if job.schedule.repeatable and job.schedule.executions_count > 0:
+                last_time = job.schedule.get_last_execution_time()
+                if last_time:
+                    schedule_data['last_execution'] = last_time.isoformat()
             schedules.append(schedule_data)
 
         self.write(json.dumps({'schedules': schedules}))

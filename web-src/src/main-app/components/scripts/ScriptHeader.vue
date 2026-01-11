@@ -1,7 +1,7 @@
 <template>
   <div class="script-header main-content-header">
     <h2 v-show="selectedScript" class="header">{{ selectedScript }}</h2>
-    <ExecutionInstanceTabs/>
+    <!-- ExecutionInstanceTabs removed - replaced by ScriptExecutionsPanel -->
     <div class="spacer"></div>
     <button class="button-history btn btn-flat"
             @click="openParameterHistory"
@@ -13,19 +13,17 @@
 </template>
 
 <script>
-import ExecutionInstanceTabs from '@/main-app/components/scripts/ExecutionInstanceTabs';
 import ParameterHistoryModal from '@/main-app/components/scripts/ParameterHistoryModal';
 import {mapState} from 'vuex';
 
 export default {
   name: 'ScriptHeader',
 
-  components: {ExecutionInstanceTabs, ParameterHistoryModal},
+  components: {ParameterHistoryModal},
   computed: {
     ...mapState('scripts', {
       selectedScript: 'selectedScript'
-    }),
-    ...mapState('executions', ['currentExecutor', 'executors'])
+    })
   },
   methods: {
     openParameterHistory() {
@@ -56,11 +54,6 @@ export default {
 
   line-height: 1.7em;
   font-size: 1.7em;
-}
-
-.execution-instance-tabs {
-  flex: 1 1 0;
-  min-width: 0;
 }
 
 .spacer {

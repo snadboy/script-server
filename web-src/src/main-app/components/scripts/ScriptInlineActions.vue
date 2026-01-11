@@ -155,6 +155,7 @@ export default {
 
   methods: {
     handleExecuteClick() {
+      console.log('[ScriptInlineActions] handleExecuteClick called, isExecuting:', this.isExecuting, 'canExecute:', this.canExecute);
       if (this.isExecuting) {
         // Stop/Kill the script
         if (!this.executor) return;
@@ -169,6 +170,7 @@ export default {
         // Execute the script
         if (!this.canExecute) return;
 
+        console.log('[ScriptInlineActions] Setting pendingAutoExecute=true and navigating to:', '/' + this.scriptHash);
         // Set flag in store for auto-execution
         this.$store.commit('scripts/SET_PENDING_AUTO_EXECUTE', true);
 

@@ -24,6 +24,17 @@ const store = () => ({
             });
         },
 
+        refresh({commit, state}) {
+            // Silently refresh executions list without loading indicator
+            // to avoid disrupting the UI (e.g., closing modals)
+            axiosInstance.get('history/execution_log/short').then(({data}) => {
+                sortExecutionLogs(data);
+
+                let executions = data.map(log => translateExecutionLog(log));
+                commit('SET_EXECUTIONS', executions);
+            });
+        },
+
         selectExecution({commit, state}, executionId) {
             if (isEmptyString(executionId)) {
                 commit('SET_EXECUTION_DETAILS', {id: executionId, execution: null});

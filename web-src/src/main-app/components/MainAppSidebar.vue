@@ -1,18 +1,15 @@
 <template>
   <div class="main-app-sidebar">
     <div class="list-header">
-      <div class="header-container">
-        <router-link :class="{
-                      'header-gt-15-chars' : serverName && serverName.length >= 15,
-                     'header-gt-18-chars' : serverName && serverName.length >= 18,
-                     'header-gt-21-chars' : serverName && serverName.length >= 21
-        }" :title="versionString"
-                     class="header server-header"
-                     to="/">
-          {{ serverName || 'Script server' }}
-        </router-link>
-        <div class="fork-version"><strong>snadboy-fork</strong> v1.0.0 <span class="build-number">build {{ buildTimestamp }}</span></div>
-      </div>
+      <router-link :class="{
+                    'header-gt-15-chars' : serverName && serverName.length >= 15,
+                   'header-gt-18-chars' : serverName && serverName.length >= 18,
+                   'header-gt-21-chars' : serverName && serverName.length >= 21
+      }" :title="versionString"
+                   class="header server-header"
+                   to="/">
+        {{ serverName || 'Script server' }}
+      </router-link>
 
       <SearchPanel v-model="searchText"/>
     </div>
@@ -21,12 +18,15 @@
 
     <ScriptsList :search-text="searchText"/>
 
-    <div class="logout-panel bottom-panel">
-      <ThemeToggle />
-      <span v-if="authEnabled" class="username">{{ username }}</span>
-      <a v-if="authEnabled" class="btn-icon-flat waves-effect logout-button waves-circle" @click="logout">
-        <i class="material-icons primary-color-text">power_settings_new</i>
-      </a>
+    <div class="bottom-panels">
+      <div class="fork-version"><strong>snadboy-fork</strong> v1.0.0 <span class="build-number">build {{ buildTimestamp }}</span></div>
+      <div class="logout-panel">
+        <ThemeToggle />
+        <span v-if="authEnabled" class="username">{{ username }}</span>
+        <a v-if="authEnabled" class="btn-icon-flat waves-effect logout-button waves-circle" @click="logout">
+          <i class="material-icons primary-color-text">power_settings_new</i>
+        </a>
+      </div>
     </div>
   </div>
 </template>
@@ -117,23 +117,6 @@ export default {
   font-size: 1.2rem;
 }
 
-.header-container {
-  flex-grow: 1;
-  min-width: 0;
-}
-
-.fork-version {
-  font-size: 0.85rem;
-  color: var(--font-color-main);
-  margin-left: 1.2rem;
-  margin-top: -0.3rem;
-}
-
-.fork-version .build-number {
-  font-weight: bold;
-  color: var(--primary-color);
-}
-
 .main-app-sidebar {
   height: 100%;
 
@@ -143,15 +126,25 @@ export default {
   flex-direction: column;
 }
 
-.bottom-panel {
-  height: 3em;
-  width: 100%;
-  border-top: 1px solid var(--separator-color);
-
+.bottom-panels {
   flex-shrink: 0;
+  border-top: 1px solid var(--separator-color);
+}
+
+.fork-version {
+  font-size: 0.75rem;
+  color: var(--font-color-medium);
+  text-align: center;
+  padding: 6px 8px 2px;
+}
+
+.fork-version .build-number {
+  font-weight: bold;
+  color: var(--primary-color);
 }
 
 .logout-panel {
+  height: 2.5em;
   display: flex;
   flex-direction: row;
   justify-content: center;

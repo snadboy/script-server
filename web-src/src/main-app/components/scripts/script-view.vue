@@ -3,42 +3,21 @@
     <ScriptLoadingText v-if="loading && !scriptConfig" :loading="loading" :script="selectedScript"/>
     <p v-show="scriptDescription" class="script-description" v-html="formattedDescription"/>
     <ScriptParametersView ref="parametersView"/>
-    <LogPanel v-show="showLog && !hasErrors && !hideExecutionControls" ref="logPanel" :outputFormat="outputFormat"/>
-    <LogPanel v-if="preloadOutput && !showLog && !hasErrors && !hideExecutionControls"
-              ref="preloadOutputPanel"
-              :output-format="preloadOutputFormat"/>
     <div v-if="hasErrors" v-show="!hideExecutionControls" class="validation-panel">
       <h6 class="header">Validation failed. Errors list:</h6>
       <ul class="validation-errors-list">
         <li v-for="error in shownErrors">{{ error }}</li>
       </ul>
     </div>
-    <div v-if="downloadableFiles && (downloadableFiles.length > 0)" v-show="!hideExecutionControls"
-         class="files-download-panel">
-      <a v-for="file in downloadableFiles"
-         :download="file.filename"
-         :href="file.url"
-         class="waves-effect btn-flat"
-         target="_blank">
-        {{ file.filename }}
-        <i class="material-icons right">file_download</i>
-      </a>
-    </div>
-    <div v-if="inputPromptText" v-show="!hideExecutionControls" class="script-input-panel input-field">
-      <label :for="'inputField-' + id" class="script-input-label">{{ inputPromptText }}</label>
-      <input :id="'inputField-' + id" ref="inputField"
-             class="script-input-field"
-             type="text"
-             v-on:keyup="inputKeyUpHandler">
-    </div>
+    <ScriptExecutionsPanel v-if="!hideExecutionControls && scriptConfig" class="executions-panel"/>
   </div>
 </template>
 
 <script>
 
-import LogPanel from '@/common/components/log_panel'
-import {deepCloneObject, forEachKeyValue, isEmptyObject, isEmptyString, isNull} from '@/common/utils/common';
+import {forEachKeyValue, isEmptyObject, isEmptyString, isNull} from '@/common/utils/common';
 import ScriptLoadingText from '@/main-app/components/scripts/ScriptLoadingText';
+import ScriptExecutionsPanel from '@/main-app/components/scripts/ScriptExecutionsPanel';
 import DOMPurify from 'dompurify';
 import {marked} from 'marked';
 import {mapActions, mapState} from 'vuex'
@@ -49,10 +28,8 @@ export default {
   data: function () {
     return {
       id: null,
-      everStarted: false,
       shownErrors: [],
-      nextLogIndex: 0,
-      lastInlineImages: {}
+      executionInProgress: false
     }
   },
 
@@ -66,7 +43,7 @@ export default {
 
   components: {
     ScriptLoadingText,
-    LogPanel,
+    ScriptExecutionsPanel,
     ScriptParametersView
   },
 
@@ -74,10 +51,7 @@ export default {
     ...mapState('scriptConfig', {
       scriptDescription: state => state.scriptConfig ? state.scriptConfig.description : '',
       loading: 'loading',
-      scriptConfig: 'scriptConfig',
-      outputFormat: state => state.scriptConfig ? state.scriptConfig.outputFormat : undefined,
-      preloadOutput: state => state.preloadScript?.['output'],
-      preloadOutputFormat: state => state.preloadScript?.['format']
+      scriptConfig: 'scriptConfig'
     }),
     ...mapState('scriptSetup', {
       parameterErrors: 'errors'
@@ -134,236 +108,70 @@ export default {
           || this.currentExecutor.state.status === STATUS_ERROR;
     },
 
-    enableStopButton() {
-      return this.status === STATUS_EXECUTING;
-    },
-
-    stopButtonLabel() {
-      if (this.status === STATUS_EXECUTING) {
-        if (this.killEnabled) {
-          return 'Kill';
-        }
-
-        if (!isNull(this.killEnabledTimeout)) {
-          return 'Stop (' + this.killEnabledTimeout + ')';
-        }
-      }
-
-      return 'Stop';
-    },
-
     status() {
       return isNull(this.currentExecutor) ? null : this.currentExecutor.state.status;
-    },
-
-    showLog() {
-      return !isNull(this.currentExecutor);
-    },
-
-    downloadableFiles() {
-      if (!this.currentExecutor) {
-        return [];
-      }
-
-      return this.currentExecutor.state.downloadableFiles;
-    },
-
-    inlineImages() {
-      if (!this.currentExecutor) {
-        return {};
-      }
-
-      return this.currentExecutor.state.inlineImages;
-    },
-
-    inputPromptText() {
-      if (this.status !== STATUS_EXECUTING) {
-        return null;
-      }
-
-      return this.currentExecutor.state.inputPromptText;
-    },
-
-    logChunks() {
-      if (!this.currentExecutor) {
-        return [];
-      }
-
-      return this.currentExecutor.state.logChunks;
-    },
-
-    killEnabled() {
-      return !isNull(this.currentExecutor) && this.currentExecutor.state.killEnabled;
-    },
-
-    killEnabledTimeout() {
-      return isNull(this.currentExecutor) ? null : this.currentExecutor.state.killTimeoutSec;
     }
   },
 
   methods: {
-    inputKeyUpHandler: function (event) {
-      if (event.keyCode === 13) {
-        const inputField = this.$refs.inputField;
-
-        this.sendUserInput(inputField.value);
-
-        inputField.value = '';
-      }
-    },
-
     validatePreExecution: function () {
+      console.log('[script-view] validatePreExecution called');
       this.shownErrors = [];
 
       const errors = this.parameterErrors;
+      console.log('[script-view] parameterErrors:', errors);
       if (!isEmptyObject(errors)) {
         forEachKeyValue(errors, (paramName, error) => {
           this.shownErrors.push(paramName + ': ' + error);
         });
+        console.log('[script-view] Validation failed:', this.shownErrors);
         return false;
       }
 
+      console.log('[script-view] Validation passed');
       return true;
     },
 
     executeScript: function () {
+      console.log('[script-view] executeScript called, executionInProgress:', this.executionInProgress);
+      // Prevent double execution
+      if (this.executionInProgress) {
+        console.log('[script-view] Execution already in progress, skipping');
+        return;
+      }
+
       if (!this.validatePreExecution()) {
         return;
       }
 
+      console.log('[script-view] Calling startExecution');
+      this.executionInProgress = true;
       this.startExecution();
+
+      // Reset flag after a short delay to allow for subsequent executions
+      setTimeout(() => {
+        this.executionInProgress = false;
+      }, 1000);
     },
 
     ...mapActions('executions', {
       startExecution: 'startExecution'
-    }),
-
-    stopScript() {
-      if (isNull(this.currentExecutor)) {
-        return;
-      }
-
-      if (this.killEnabled) {
-        this.$store.dispatch('executions/' + this.currentExecutor.state.id + '/killExecution');
-      } else {
-        this.$store.dispatch('executions/' + this.currentExecutor.state.id + '/stopExecution');
-      }
-    },
-
-    sendUserInput(value) {
-      if (isNull(this.currentExecutor)) {
-        return;
-      }
-
-      this.$store.dispatch('executions/' + this.currentExecutor.state.id + '/sendUserInput', value);
-    },
-
-    setLog: function (text) {
-      this.$refs.logPanel.setLog(text);
-    },
-
-    appendLog: function (text) {
-      this.$refs.logPanel.appendLog(text);
-    },
-
-
+    })
   },
 
   watch: {
-    inputPromptText: function (value) {
-      if (isNull(value) && isNull(this.$refs.inputField)) {
-        return;
-      }
-
-      var fieldUpdater = function () {
-        this.$refs.inputField.value = '';
-        if (!isNull(value)) {
-          this.$refs.inputField.focus();
-        }
-      }.bind(this);
-
-      if (this.$refs.inputField) {
-        fieldUpdater();
-      } else {
-        this.$nextTick(fieldUpdater);
-      }
-    },
-
-    logChunks: {
-      immediate: true,
-      handler(newValue, oldValue) {
-        const updateLog = () => {
-          if (isNull(newValue)) {
-            this.setLog('');
-            this.nextLogIndex = 0;
-
-            return;
-          }
-
-          if (newValue !== oldValue) {
-            this.setLog('');
-            this.nextLogIndex = 0;
-          }
-
-          for (; this.nextLogIndex < newValue.length; this.nextLogIndex++) {
-            const logChunk = newValue[this.nextLogIndex];
-
-            this.appendLog(logChunk);
-          }
-        }
-
-        if (isNull(this.$refs.logPanel)) {
-          this.$nextTick(updateLog);
-        } else {
-          updateLog();
-        }
-      }
-    },
-
-    preloadOutput: {
-      handler(newValue, _) {
-        this.$nextTick(() => {
-          if (this.$refs.preloadOutputPanel) {
-            this.$refs.preloadOutputPanel.setLog(newValue);
-          }
-        })
-      }
-    },
-
-    inlineImages: {
-      handler(newValue, oldValue) {
-        const logPanel = this.$refs.logPanel;
-
-        forEachKeyValue(this.lastInlineImages, (key, value) => {
-          if (!newValue.hasOwnProperty(key)) {
-            logPanel.removeInlineImage(key);
-          } else if (value !== newValue[key]) {
-            logPanel.setInlineImage(key, value);
-          }
-        });
-
-        forEachKeyValue(newValue, (key, value) => {
-          if (!this.lastInlineImages.hasOwnProperty(key)) {
-            logPanel.setInlineImage(key, value);
-          }
-        });
-
-        this.lastInlineImages = deepCloneObject(newValue);
-      }
-    },
-
     scriptConfig: {
       immediate: true,
       handler(newConfig) {
         this.shownErrors = []
-
-        this.$nextTick(() => {
-          // Auto-execute if pending (from inline execute button in sidebar)
-          if (this.pendingAutoExecute && newConfig && this.enableExecuteButton) {
-            this.$store.commit('scripts/SET_PENDING_AUTO_EXECUTE', false);
+        // Check for pending auto-execute when config loads (handles navigation case)
+        if (newConfig && this.pendingAutoExecute && this.enableExecuteButton) {
+          console.log('[script-view] scriptConfig loaded while pendingAutoExecute=true, triggering execute');
+          this.$store.commit('scripts/SET_PENDING_AUTO_EXECUTE', false);
+          this.$nextTick(() => {
             this.executeScript();
-          }
-        })
+          });
+        }
       }
     },
 
@@ -376,9 +184,12 @@ export default {
     },
 
     // Watch for auto-execute flag (from sidebar inline execute button)
+    // This handles the case when script is already loaded
     pendingAutoExecute: {
       handler(newValue) {
+        console.log('[script-view] pendingAutoExecute watcher fired:', newValue, 'scriptConfig:', !!this.scriptConfig, 'enableExecuteButton:', this.enableExecuteButton);
         if (newValue && this.scriptConfig && this.enableExecuteButton) {
+          console.log('[script-view] All conditions met, calling executeScript');
           this.$store.commit('scripts/SET_PENDING_AUTO_EXECUTE', false);
           this.executeScript();
         }
@@ -395,7 +206,6 @@ export default {
   flex-direction: column;
   flex: 1 1 0;
 
-
   /* (firefox)
       we have to specify min-size explicitly, because by default it's content size.
       It means, that when child content is larger than parent, it will grow out of parent
@@ -405,41 +215,14 @@ export default {
   min-height: 0;
 }
 
-.files-download-panel {
-  flex: 0 0 content;
-}
-
 .script-description,
 .script-loading-text {
   margin: 0;
 }
 
-.script-input-panel {
-  margin-top: 20px;
-  margin-bottom: 0;
-}
-
-.script-input-panel input[type=text] {
-  margin: 0;
-  width: 100%;
-  height: 1.5em;
-  font-size: 1rem;
-}
-
-.script-input-panel > label {
-  transform: translateY(-30%);
-  margin-left: 2px;
-}
-
-.script-input-panel.input-field > label.active {
-  color: var(--primary-color);
-  transform: translateY(-70%) scale(0.8);
-}
-
 .validation-panel {
   overflow-y: auto;
-  flex: 1;
-
+  flex-shrink: 0;
   margin: 20px 0 8px;
 }
 
@@ -456,27 +239,8 @@ export default {
   color: #F44336;
 }
 
-.files-download-panel {
-  margin-top: 12px;
-}
-
-.files-download-panel a {
-  color: var(--primary-color);
-  padding-left: 16px;
-  padding-right: 16px;
-  margin-right: 8px;
-  text-transform: none;
-}
-
-.files-download-panel a > i {
-  margin-left: 8px;
-  vertical-align: middle;
-  font-size: 1.5em;
-  line-height: 2em;
-}
-
-.script-view >>> .log-panel {
-  margin-top: 12px;
+.executions-panel {
+  margin-top: 16px;
 }
 
 </style>

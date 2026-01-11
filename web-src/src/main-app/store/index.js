@@ -44,6 +44,27 @@ const store = new Vuex.Store({
             dispatch('serverConfig/init');
             dispatch('scripts/init');
             dispatch('executions/init');
+            dispatch('history/init');
+            dispatch('allSchedules/fetchAllSchedules');
+
+            // Start periodic polling for scheduled task updates
+            // This catches executions started by the backend scheduler
+            dispatch('startScheduledTaskPolling');
+        },
+
+        startScheduledTaskPolling({dispatch}) {
+            // Poll every 5 seconds for updates from scheduled tasks
+            // This catches executions started by the backend scheduler and keeps
+            // schedule countdowns, last run times, and execution counts up to date
+            const POLL_INTERVAL = 5000;
+
+            setInterval(() => {
+                // Always refresh both history and schedules
+                // - History: catches new running tasks and completed tasks
+                // - Schedules: updates next run countdown, last run time, execution count
+                dispatch('history/refresh');
+                dispatch('allSchedules/refresh');
+            }, POLL_INTERVAL);
         },
 
         resetScript({dispatch, state}) {
@@ -85,6 +106,33 @@ store.watch((state) => state.scriptConfig.parameters, (parameters) => {
     const scriptName = scriptConfig ? scriptConfig.name : null;
     store.dispatch('scriptSetup/initFromParameters', {scriptName, parameters, scriptConfig});
 });
+
+// Watch for executor changes (count and status) to refresh history and schedules lists
+store.watch(
+    (state) => {
+        const executors = state.executions.executors;
+        const ids = Object.keys(executors);
+        const statuses = {};
+        for (const id of ids) {
+            if (executors[id] && executors[id].state) {
+                statuses[id] = executors[id].state.status;
+            }
+        }
+        // Include count to detect when executors are added
+        return JSON.stringify({ count: ids.length, statuses });
+    },
+    () => {
+        // Debounce the refresh to avoid multiple calls
+        if (store._historyRefreshTimeout) {
+            clearTimeout(store._historyRefreshTimeout);
+        }
+        store._historyRefreshTimeout = setTimeout(() => {
+            store.dispatch('history/refresh');
+            // Also refresh schedules - one-time schedules are removed after execution
+            store.dispatch('allSchedules/refresh');
+        }, 500);
+    }
+);
 
 axiosInstance.interceptors.response.use((response) => response, (error) => {
     if (get(error, 'response.status') === 401) {

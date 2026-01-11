@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-01-09
 **Branch:** `feature/schedule-list-and-delete`
-**Latest Commit:** `efc4aa2` - Fix edit script link to use unified SPA router
+**Latest Commit:** `0b1faaa` - Add Edit Script modal with tabbed wizard UI
 
 ---
 

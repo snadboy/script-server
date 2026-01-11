@@ -36,6 +36,8 @@ export default {
                 .then(response => {
                     // Refresh schedules after creating a new one
                     dispatch('fetchSchedules', {scriptName});
+                    // Also refresh allSchedules store for Activity page and other views
+                    dispatch('allSchedules/refresh', null, {root: true});
                     return response;
                 })
                 .catch(e => {
@@ -67,10 +69,12 @@ export default {
                 });
         },
 
-        deleteSchedule({commit}, {scheduleId}) {
+        deleteSchedule({commit, dispatch}, {scheduleId}) {
             return axiosInstance.delete(`schedules/${scheduleId}`)
                 .then(response => {
                     commit('REMOVE_SCHEDULE', scheduleId);
+                    // Also refresh allSchedules store for Activity page and other views
+                    dispatch('allSchedules/refresh', null, {root: true});
                     return response.data;
                 })
                 .catch(e => {
