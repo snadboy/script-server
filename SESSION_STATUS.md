@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-01-10
 **Branch:** `feature/schedule-list-and-delete`
-**Latest Commit:** `014340d` - Update session notes with Scheduled badge feature
+**Latest Commit:** `4223ed2` - Remove parameter history button and schedule list from modal
 **Status:** ✅ All features tested and verified working
 
 ---
@@ -34,6 +34,8 @@
 | Sidebar Version Move | Done | Version/build number moved to bottom of sidebar |
 | Sidebar Icon Alignment | Done | Fixed nav icon alignment (override global min-height CSS) |
 | Scheduled Badge on Running | Done | Purple "Scheduled" badge shown on running executions triggered by schedules |
+| Remove Parameter History | Done | Removed history button from script header |
+| Simplify Schedule Modal | Done | Removed schedule list from Schedule Execution dialog |
 
 ### Test Infrastructure
 
