@@ -2,11 +2,12 @@
   <div class="activity-page">
     <RunningSection :showScriptName="true" />
     <ScheduledSection :showScriptName="true" :showParams="true" />
-    <CompletedSection />
+    <CompletedSection :limit="completedExecutionsLimit" />
   </div>
 </template>
 
 <script>
+import {mapState} from 'vuex';
 import RunningSection from '../common/RunningSection';
 import ScheduledSection from '../common/ScheduledSection';
 import CompletedSection from '../common/CompletedSection';
@@ -18,6 +19,10 @@ export default {
     RunningSection,
     ScheduledSection,
     CompletedSection
+  },
+
+  computed: {
+    ...mapState('settings', ['completedExecutionsLimit'])
   }
 };
 </script>

@@ -24,6 +24,19 @@
               class="setting-input"
             />
           </div>
+
+          <div class="setting-row">
+            <label for="logSizeLimit">Log entries to keep (max 250)</label>
+            <input
+              id="logSizeLimit"
+              v-model.number="localSettings.logSizeLimit"
+              type="number"
+              min="50"
+              max="250"
+              step="10"
+              class="setting-input"
+            />
+          </div>
         </div>
       </div>
 
@@ -51,13 +64,14 @@ export default {
   data() {
     return {
       localSettings: {
-        completedExecutionsLimit: 50
+        completedExecutionsLimit: 50,
+        logSizeLimit: 250
       }
     };
   },
 
   computed: {
-    ...mapState('settings', ['completedExecutionsLimit'])
+    ...mapState('settings', ['completedExecutionsLimit', 'logSizeLimit'])
   },
 
   watch: {
@@ -65,6 +79,7 @@ export default {
       if (newVal) {
         // Load current settings when modal opens
         this.localSettings.completedExecutionsLimit = this.completedExecutionsLimit;
+        this.localSettings.logSizeLimit = this.logSizeLimit;
       }
     }
   },
@@ -78,7 +93,8 @@ export default {
 
     save() {
       this.updateSettings({
-        completedExecutionsLimit: this.localSettings.completedExecutionsLimit
+        completedExecutionsLimit: this.localSettings.completedExecutionsLimit,
+        logSizeLimit: this.localSettings.logSizeLimit
       });
       this.close();
     }

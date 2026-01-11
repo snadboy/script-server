@@ -1,7 +1,8 @@
 const STORAGE_KEY = 'scriptServer.settings';
 
 const DEFAULT_SETTINGS = {
-  completedExecutionsLimit: 50
+  completedExecutionsLimit: 50,
+  logSizeLimit: 250
 };
 
 function loadSettings() {

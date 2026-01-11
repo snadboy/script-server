@@ -11,12 +11,18 @@ const store = () => ({
     },
     namespaced: true,
     actions: {
-        init({commit}) {
+        init({commit, rootState}) {
             commit('SET_LOADING', true);
             commit('SET_EXECUTION_DETAILS', {execution: null, id: null});
 
             axiosInstance.get('history/execution_log/short').then(({data}) => {
                 sortExecutionLogs(data);
+
+                // Apply log size limit from settings
+                const logSizeLimit = rootState.settings?.logSizeLimit || 250;
+                if (data.length > logSizeLimit) {
+                    data = data.slice(0, logSizeLimit);
+                }
 
                 let executions = data.map(log => translateExecutionLog(log));
                 commit('SET_EXECUTIONS', executions);
@@ -24,11 +30,17 @@ const store = () => ({
             });
         },
 
-        refresh({commit, state}) {
+        refresh({commit, state, rootState}) {
             // Silently refresh executions list without loading indicator
             // to avoid disrupting the UI (e.g., closing modals)
             axiosInstance.get('history/execution_log/short').then(({data}) => {
                 sortExecutionLogs(data);
+
+                // Apply log size limit from settings
+                const logSizeLimit = rootState.settings?.logSizeLimit || 250;
+                if (data.length > logSizeLimit) {
+                    data = data.slice(0, logSizeLimit);
+                }
 
                 let executions = data.map(log => translateExecutionLog(log));
                 commit('SET_EXECUTIONS', executions);
