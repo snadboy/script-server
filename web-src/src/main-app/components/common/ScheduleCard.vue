@@ -1,15 +1,12 @@
 <template>
   <div class="schedule-card" :class="{ 'schedule-disabled': schedule.enabled === false }">
     <div class="card-header">
+      <span v-if="showScriptName" class="script-name">{{ schedule.script_name }}</span>
       <div class="badge-container">
-        <span v-if="schedule.schedule.repeatable" class="status-badge status-recurring">
-          <i class="material-icons">repeat</i>
-          Recurring
-        </span>
+        <span v-if="schedule.schedule.repeatable" class="status-badge status-recurring">Recurring</span>
         <span v-else class="status-badge status-once">One-time</span>
         <span v-if="schedule.enabled === false" class="status-badge status-disabled">Disabled</span>
       </div>
-      <span v-if="showScriptName" class="script-name">{{ schedule.script_name }}</span>
     </div>
     <div class="card-body">
       <div class="card-info">
@@ -169,16 +166,20 @@ export default {
 .card-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
   padding: 10px 14px;
   border-bottom: 1px solid var(--separator-color);
+}
+
+.card-header:not(:has(.script-name)) {
+  justify-content: flex-end;
 }
 
 .script-name {
   font-weight: 500;
   font-size: 14px;
   color: var(--font-color-main);
-  flex: 1;
 }
 
 .badge-container {
@@ -198,25 +199,18 @@ export default {
 }
 
 .status-recurring {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: var(--primary-color-light-color);
-  color: var(--primary-color);
-}
-
-.status-recurring i {
-  font-size: 14px;
+  background: var(--status-scheduled-bg);
+  color: var(--status-scheduled-color);
 }
 
 .status-once {
-  background: var(--background-color-high-emphasis);
-  color: var(--font-color-medium);
+  background: var(--status-disabled-bg);
+  color: var(--status-disabled-color);
 }
 
 .status-disabled {
-  background: var(--status-disabled-bg);
-  color: var(--status-disabled-color);
+  background: var(--status-error-bg);
+  color: var(--status-error-color);
 }
 
 .card-body {

@@ -1,11 +1,11 @@
 <template>
   <div class="execution-card" :class="cardClasses" @click="$emit('click', $event)">
     <div class="card-header">
+      <span class="script-name">{{ title }}</span>
       <div class="badge-container">
         <span class="status-badge" :class="statusClass">{{ statusText }}</span>
         <span v-if="isScheduled" class="scheduled-badge">Scheduled</span>
       </div>
-      <span class="script-name">{{ title }}</span>
     </div>
     <div class="card-body">
       <div class="card-info">
@@ -126,6 +126,7 @@ export default {
 .card-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
   padding: 10px 14px;
   border-bottom: 1px solid var(--separator-color);
@@ -135,7 +136,6 @@ export default {
   font-weight: 500;
   font-size: 14px;
   color: var(--font-color-main);
-  flex: 1;
 }
 
 .badge-container {
