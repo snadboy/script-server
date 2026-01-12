@@ -15,7 +15,7 @@
       <ExecutionCard
         v-for="execution in filteredExecutions"
         :key="'running-' + execution.id"
-        :title="showScriptName ? execution.script : 'Execution #' + execution.id"
+        :title="getExecutionTitle(execution)"
         status="running"
         statusText="Running"
         :user="execution.user"
@@ -132,12 +132,30 @@ export default {
       return getScheduleDescription(scheduleId, this.schedules);
     },
 
-    getExecutionDescription(execution) {
-      // Show instance name if present
-      if (execution.instanceName) {
-        return `Instance: ${execution.instanceName}`;
+    getExecutionTitle(execution) {
+      if (this.showScriptName) {
+        return `${execution.script} (Execution ID: ${execution.id})`;
       }
-      return '';
+      return `Execution ID: ${execution.id}`;
+    },
+
+    getExecutionDescription(execution) {
+      const parts = [];
+
+      // Add instance name if present
+      if (execution.instanceName) {
+        parts.push(`Instance: ${execution.instanceName}`);
+      }
+
+      // Get schedule description if this was a scheduled execution
+      if (execution.scheduleId) {
+        const scheduleDesc = getScheduleDescription(execution.scheduleId, this.schedules);
+        if (scheduleDesc) {
+          parts.push(scheduleDesc);
+        }
+      }
+
+      return parts.join(' | ');
     }
   }
 };
