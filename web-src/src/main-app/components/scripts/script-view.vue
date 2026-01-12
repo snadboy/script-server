@@ -115,28 +115,22 @@ export default {
 
   methods: {
     validatePreExecution: function () {
-      console.log('[script-view] validatePreExecution called');
       this.shownErrors = [];
 
       const errors = this.parameterErrors;
-      console.log('[script-view] parameterErrors:', errors);
       if (!isEmptyObject(errors)) {
         forEachKeyValue(errors, (paramName, error) => {
           this.shownErrors.push(paramName + ': ' + error);
         });
-        console.log('[script-view] Validation failed:', this.shownErrors);
         return false;
       }
 
-      console.log('[script-view] Validation passed');
       return true;
     },
 
     executeScript: function () {
-      console.log('[script-view] executeScript called, executionInProgress:', this.executionInProgress);
       // Prevent double execution
       if (this.executionInProgress) {
-        console.log('[script-view] Execution already in progress, skipping');
         return;
       }
 
@@ -144,7 +138,6 @@ export default {
         return;
       }
 
-      console.log('[script-view] Calling startExecution');
       this.executionInProgress = true;
       this.startExecution();
 
@@ -166,7 +159,6 @@ export default {
         this.shownErrors = []
         // Check for pending auto-execute when config loads (handles navigation case)
         if (newConfig && this.pendingAutoExecute && this.enableExecuteButton) {
-          console.log('[script-view] scriptConfig loaded while pendingAutoExecute=true, triggering execute');
           this.$store.commit('scripts/SET_PENDING_AUTO_EXECUTE', false);
           this.$nextTick(() => {
             this.executeScript();
@@ -187,9 +179,7 @@ export default {
     // This handles the case when script is already loaded
     pendingAutoExecute: {
       handler(newValue) {
-        console.log('[script-view] pendingAutoExecute watcher fired:', newValue, 'scriptConfig:', !!this.scriptConfig, 'enableExecuteButton:', this.enableExecuteButton);
         if (newValue && this.scriptConfig && this.enableExecuteButton) {
-          console.log('[script-view] All conditions met, calling executeScript');
           this.$store.commit('scripts/SET_PENDING_AUTO_EXECUTE', false);
           this.executeScript();
         }
@@ -236,7 +226,7 @@ export default {
 }
 
 .validation-errors-list li {
-  color: #F44336;
+  color: var(--status-error-color);
 }
 
 .executions-panel {

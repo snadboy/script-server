@@ -146,7 +146,7 @@ export default {
 .status-badge {
   font-size: 10px;
   padding: 2px 8px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 500;
@@ -155,32 +155,32 @@ export default {
 .scheduled-badge {
   font-size: 10px;
   padding: 2px 8px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 500;
-  background: rgba(156, 39, 176, 0.2);
-  color: #ba68c8;
+  background: var(--status-scheduled-bg);
+  color: var(--status-scheduled-color);
 }
 
 .status-badge.status-running {
-  background: rgba(33, 150, 243, 0.2);
-  color: #64b5f6;
+  background: var(--status-running-bg);
+  color: var(--status-running-color);
 }
 
 .status-badge.status-scheduled {
-  background: rgba(156, 39, 176, 0.2);
-  color: #ba68c8;
+  background: var(--status-scheduled-bg);
+  color: var(--status-scheduled-color);
 }
 
 .status-badge.status-success {
-  background: rgba(76, 175, 80, 0.2);
-  color: #81c784;
+  background: var(--status-success-bg);
+  color: var(--status-success-color);
 }
 
 .status-badge.status-error {
-  background: rgba(244, 67, 54, 0.2);
-  color: #e57373;
+  background: var(--status-error-bg);
+  color: var(--status-error-color);
 }
 
 .card-body {
@@ -231,7 +231,7 @@ export default {
 }
 
 .schedule-label {
-  color: #ba68c8;
+  color: var(--status-scheduled-color);
   min-width: 55px;
 }
 

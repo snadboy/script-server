@@ -115,24 +115,24 @@ export default {
   width: 32px;
   height: 32px;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  background-color: #e57373;
+  background-color: var(--stop-button-bg);
   color: white;
   position: relative;
-  transition: background-color 0.2s ease;
+  transition: background-color var(--transition-fast);
 }
 
 .stop-btn:hover {
-  background-color: #ef5350;
+  background-color: var(--stop-button-hover-bg);
 }
 
 .stop-btn.kill-mode {
-  background-color: #c62828;
+  background-color: var(--stop-button-kill-bg);
 }
 
 .stop-btn.kill-mode:hover {
-  background-color: #b71c1c;
+  background-color: var(--stop-button-kill-hover-bg);
 }
 
 .stop-btn i {
@@ -143,7 +143,7 @@ export default {
   position: absolute;
   top: -4px;
   right: -4px;
-  background: #c62828;
+  background: var(--stop-button-kill-bg);
   color: white;
   font-size: 10px;
   font-weight: bold;

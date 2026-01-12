@@ -189,7 +189,7 @@ export default {
 .status-badge {
   font-size: 10px;
   padding: 2px 8px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 500;
@@ -213,8 +213,8 @@ export default {
 }
 
 .status-disabled {
-  background: rgba(158, 158, 158, 0.2);
-  color: #9e9e9e;
+  background: var(--status-disabled-bg);
+  color: var(--status-disabled-color);
 }
 
 .card-body {
@@ -266,7 +266,7 @@ export default {
 }
 
 .disabled-text {
-  color: #9e9e9e !important;
+  color: var(--status-disabled-color) !important;
   font-weight: normal !important;
 }
 
@@ -283,7 +283,7 @@ export default {
   width: 32px;
   height: 32px;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   background: transparent;
   padding: 0;
@@ -309,7 +309,7 @@ export default {
 }
 
 .delete-btn:hover i {
-  color: var(--error-color);
+  color: var(--status-error-color);
 }
 
 .rotating {

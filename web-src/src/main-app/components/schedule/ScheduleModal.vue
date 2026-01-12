@@ -792,18 +792,20 @@ input[type="radio"]:not(:checked) + span:before {
 .schedule-parameters-section .param-input,
 .schedule-parameters-section .param-select {
   width: 100%;
-  padding: 4px 8px;
+  padding: 6px 8px;
   border: 1px solid var(--separator-color);
-  border-radius: 4px;
-  background-color: var(--background-color);
+  border-radius: var(--radius-sm);
+  background-color: var(--background-color-level-4dp);
   color: var(--font-color-main);
   font-size: 13px;
   box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .schedule-parameters-section .param-input:focus,
 .schedule-parameters-section .param-select:focus {
   border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(38, 166, 154, 0.2);
   outline: none;
 }
 
@@ -815,14 +817,15 @@ input[type="radio"]:not(:checked) + span:before {
 
 .schedule-errors {
   padding: 8px 16px;
-  background-color: rgba(244, 67, 54, 0.1);
-  border-left: 3px solid #F44336;
+  background-color: var(--status-error-bg);
+  border-left: 3px solid var(--status-error-color);
   margin: 8px 0;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
 
 .schedule-errors .error-message {
   display: block;
-  color: #F44336;
+  color: var(--status-error-color);
   font-size: 14px;
 }
 

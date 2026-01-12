@@ -349,7 +349,7 @@ export default {
 .params-table th,
 .params-table td {
   text-align: left;
-  padding: 8px;
+  padding: 6px 8px;
   vertical-align: middle;
 }
 
@@ -381,7 +381,7 @@ export default {
 }
 
 .required-marker {
-  color: var(--error-color);
+  color: var(--status-error-color);
   font-weight: bold;
   margin-left: 2px;
 }
@@ -393,9 +393,9 @@ export default {
 .param-input,
 .param-select {
   width: 100%;
-  padding: 8px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
+  padding: 6px 8px;
+  border: 1px solid var(--separator-color);
+  border-radius: var(--radius-sm);
   background-color: var(--background-color-level-4dp);
   color: var(--font-color-main);
   font-size: 13px;
@@ -440,19 +440,19 @@ export default {
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  background-color: rgba(244, 67, 54, 0.1);
-  border-left: 3px solid var(--error-color);
-  border-radius: 0 4px 4px 0;
+  background-color: var(--status-error-bg);
+  border-left: 3px solid var(--status-error-color);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   margin-top: 16px;
 }
 
 .validation-error i {
-  color: var(--error-color);
+  color: var(--status-error-color);
   font-size: 20px;
 }
 
 .validation-error span {
-  color: var(--error-color);
+  color: var(--status-error-color);
   font-size: 13px;
 }
 

@@ -2,10 +2,7 @@
   <div v-if="visible" class="settings-modal-overlay" @click.self="close">
     <div class="settings-modal">
       <div class="modal-header">
-        <h5>Settings</h5>
-        <button class="close-btn" @click="close">
-          <i class="material-icons">close</i>
-        </button>
+        <span class="modal-title">Settings</span>
       </div>
 
       <div class="modal-body">
@@ -107,9 +104,9 @@ export default {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -118,51 +115,32 @@ export default {
 
 .settings-modal {
   background: var(--background-color);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xl);
-  width: 400px;
-  max-width: 90vw;
-  max-height: 80vh;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  width: 85%;
+  max-width: 400px;
+  max-height: 85vh;
   display: flex;
   flex-direction: column;
 }
 
 .modal-header {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
+  padding: 16px 24px;
   border-bottom: 1px solid var(--separator-color);
+  flex-shrink: 0;
 }
 
-.modal-header h5 {
-  margin: 0;
-  font-size: 18px;
+.modal-title {
+  font-size: 1.4em;
   font-weight: 500;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.close-btn:hover {
-  background: var(--background-color-high-emphasis);
-}
-
-.close-btn i {
-  font-size: 24px;
-  color: var(--font-color-medium);
+  color: var(--font-color-main);
 }
 
 .modal-body {
-  padding: 20px;
+  padding: 16px 24px;
   overflow-y: auto;
   flex: 1;
 }
@@ -190,26 +168,34 @@ export default {
 
 .setting-input {
   width: 80px;
-  padding: 8px 12px;
+  padding: 8px 10px;
   border: 1px solid var(--separator-color);
   border-radius: var(--radius-sm);
-  background: var(--background-color-slight-emphasis);
+  background: var(--background-color-level-4dp);
   color: var(--font-color-main);
   font-size: 14px;
   text-align: center;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.setting-input:hover {
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .setting-input:focus {
   outline: none;
   border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(38, 166, 154, 0.2);
 }
 
 .modal-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  padding: 16px 20px;
+  gap: 12px;
+  padding: 16px 24px;
   border-top: 1px solid var(--separator-color);
+  flex-shrink: 0;
+  background: var(--background-color-level-16dp);
 }
 
 .btn {
@@ -233,6 +219,17 @@ export default {
 }
 
 .btn-primary:hover {
-  background: var(--primary-color-dark);
+  background: var(--primary-color-dark-color);
+}
+
+@media screen and (max-width: 768px) {
+  .settings-modal {
+    width: 95%;
+    max-height: 95vh;
+  }
+
+  .modal-body {
+    padding: 16px;
+  }
 }
 </style>
