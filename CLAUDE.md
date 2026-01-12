@@ -15,7 +15,7 @@
 ## Current State
 
 **Branch:** `feature/schedule-list-and-delete`
-**Latest Commit:** `b22a721` - Add log size limit setting and fix Activity completedExecutionsLimit
+**Latest Commit:** `378c918` - Unify UI/UX consistency across modals and components
 **Last Updated:** 2026-01-11
 
 ### Completed Features
@@ -58,6 +58,7 @@
 | Accurate Last Run Time | Done | Records actual execution time instead of calculated from schedule math |
 | Log Size Limit Setting | Done | Configurable limit (max 250) for fetched execution history entries |
 | Activity Completed Limit | Done | ActivityPage now uses completedExecutionsLimit setting (was missing) |
+| UI/UX Consistency | Done | Unified modal patterns, CSS variables for colors/radius/shadows, standardized inputs |
 
 ### Test Infrastructure
 
@@ -129,3 +130,5 @@ docker build -t script-server:custom .
 - `src/web/server.py` (modified - fixed HTTPError reason parameter, added schedule enable toggle API)
 - `web-src/src/main-app/components/SettingsModal.vue` (new - settings dialog)
 - `web-src/src/main-app/store/settings.js` (new - settings state with localStorage persistence)
+- `samples/themes/dark/theme.css` (modified - added status/stop button/radius/shadow/transition CSS variables)
+- `samples/themes/orange/theme.css` (modified - added same CSS variables for light theme)
