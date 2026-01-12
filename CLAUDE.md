@@ -15,7 +15,7 @@
 ## Current State
 
 **Branch:** `feature/schedule-list-and-delete`
-**Latest Commit:** `768d681` - Unify execution title format between Running and Completed sections
+**Latest Commit:** `e75362a` - Improve card consistency: badges on left, schedule descriptions, better visibility
 **Last Updated:** 2026-01-11
 
 ### Completed Features
@@ -60,6 +60,7 @@
 | Activity Completed Limit | Done | ActivityPage now uses completedExecutionsLimit setting (was missing) |
 | UI/UX Consistency | Done | Unified modal patterns, CSS variables for colors/radius/shadows, standardized inputs |
 | Consistent Title Format | Done | Running and Completed sections use same "ScriptName (Execution ID: nnn)" format |
+| Card Layout Consistency | Done | Badges on left, schedule timing shown, increased badge visibility (opacity 0.35) |
 
 ### Test Infrastructure
 
