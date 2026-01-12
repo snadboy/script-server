@@ -15,7 +15,7 @@
 ## Current State
 
 **Branch:** `feature/schedule-list-and-delete`
-**Latest Commit:** `ad165f8` - Add schedule editing and execution time tracking
+**Latest Commit:** `b22a721` - Add log size limit setting and fix Activity completedExecutionsLimit
 **Last Updated:** 2026-01-11
 
 ### Completed Features
@@ -53,6 +53,11 @@
 | Unified Section Components | Done | Single implementation for Running/Scheduled/Completed sections used by both Activity and Script views |
 | Schedule Editing | Done | PUT /schedules/{id} endpoint, edit button on schedule cards opens ScheduleModal in edit mode |
 | Execution Finish Time | Done | Tracks finish_time in logs, shows Started/Completed times on completed execution cards |
+| Instance Name Tracking | Done | Optional instance name for executions, stored in logs, displayed in Running/Completed sections |
+| Unified Date Format | Done | Consistent M/D/YYYY @ HH:MM format across all date displays |
+| Accurate Last Run Time | Done | Records actual execution time instead of calculated from schedule math |
+| Log Size Limit Setting | Done | Configurable limit (max 250) for fetched execution history entries |
+| Activity Completed Limit | Done | ActivityPage now uses completedExecutionsLimit setting (was missing) |
 
 ### Test Infrastructure
 
