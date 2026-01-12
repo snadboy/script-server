@@ -15,7 +15,7 @@
 ## Current State
 
 **Branch:** `feature/schedule-list-and-delete`
-**Latest Commit:** `378c918` - Unify UI/UX consistency across modals and components
+**Latest Commit:** `768d681` - Unify execution title format between Running and Completed sections
 **Last Updated:** 2026-01-11
 
 ### Completed Features
@@ -59,6 +59,7 @@
 | Log Size Limit Setting | Done | Configurable limit (max 250) for fetched execution history entries |
 | Activity Completed Limit | Done | ActivityPage now uses completedExecutionsLimit setting (was missing) |
 | UI/UX Consistency | Done | Unified modal patterns, CSS variables for colors/radius/shadows, standardized inputs |
+| Consistent Title Format | Done | Running and Completed sections use same "ScriptName (Execution ID: nnn)" format |
 
 ### Test Infrastructure
 
