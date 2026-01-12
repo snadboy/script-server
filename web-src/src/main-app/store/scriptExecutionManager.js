@@ -118,7 +118,6 @@ export default {
         },
 
         startExecution({rootState, commit, dispatch}, payload = {}) {
-            console.log('[scriptExecutionManager] startExecution called');
             const store = this;
 
             const parameterValues = clone(rootState.scriptSetup.parameterValues);
@@ -140,10 +139,8 @@ export default {
 
             dispatch('selectExecutor', executor);
 
-            console.log('[scriptExecutionManager] Posting to executions/start');
             axiosInstance.post('executions/start', formData)
                 .then(({data: executionId}) => {
-                    console.log('[scriptExecutionManager] POST succeeded, executionId:', executionId);
                     store.unregisterModule(['executions', 'temp']);
                     store.registerModule(['executions', executionId], executor);
 
@@ -153,12 +150,10 @@ export default {
                     commit('ADD_EXECUTOR', executor);
 
                     // Refresh history and schedules lists to show new running execution
-                    console.log('[scriptExecutionManager] Dispatching refresh for history and allSchedules');
                     store.dispatch('history/refresh');
                     store.dispatch('allSchedules/refresh');
                 })
                 .catch(error => {
-                    console.log('[scriptExecutionManager] POST failed:', error);
                     const status = get(error, 'response.status');
                     let data = get(error, 'response.data');
                     if (isNull(error.response) || isEmptyString(data)) {
