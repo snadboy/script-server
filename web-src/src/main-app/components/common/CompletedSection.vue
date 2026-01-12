@@ -21,6 +21,8 @@
         :statusText="execution.fullStatus || execution.status"
         :user="execution.user"
         :description="getExecutionDescription(execution)"
+        :isScheduled="!!execution.scheduleId"
+        :scheduleDescription="getScheduleDesc(execution.scheduleId)"
         timeLabel="Started"
         :timeValue="execution.startTimeString"
         timeLabel2="Ended"
@@ -142,22 +144,15 @@ export default {
     },
 
     getExecutionDescription(execution) {
-      const parts = [];
-
-      // Add instance name if present
+      // Only show instance name in description - schedule description is shown separately
       if (execution.instanceName) {
-        parts.push(`Instance: ${execution.instanceName}`);
+        return `Instance: ${execution.instanceName}`;
       }
+      return '';
+    },
 
-      // Get schedule description if this was a scheduled execution
-      if (execution.scheduleId) {
-        const scheduleDesc = getScheduleDescription(execution.scheduleId, this.schedules);
-        if (scheduleDesc) {
-          parts.push(scheduleDesc);
-        }
-      }
-
-      return parts.join(' | ');
+    getScheduleDesc(scheduleId) {
+      return getScheduleDescription(scheduleId, this.schedules);
     }
   }
 };

@@ -77,6 +77,7 @@ export function formatParamValue(value) {
 
 /**
  * Get schedule description from schedules array by ID
+ * Returns the user's custom description if set, otherwise returns timing info
  * @param {string|number} scheduleId - Schedule ID to find
  * @param {Array} schedules - Array of schedule objects
  * @returns {string} Schedule description or empty string
@@ -84,7 +85,19 @@ export function formatParamValue(value) {
 export function getScheduleDescription(scheduleId, schedules) {
   if (!scheduleId || !schedules) return '';
   const schedule = schedules.find(s => String(s.id) === String(scheduleId));
-  return schedule ? schedule.description || '' : '';
+  if (!schedule) return '';
+
+  // Return user's description if set
+  if (schedule.description) {
+    return schedule.description;
+  }
+
+  // Otherwise return timing info
+  if (schedule.schedule && schedule.schedule.repeatable) {
+    return `Every ${schedule.schedule.repeat_period} ${schedule.schedule.repeat_unit}`;
+  }
+
+  return 'One-time';
 }
 
 /**

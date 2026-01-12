@@ -140,22 +140,11 @@ export default {
     },
 
     getExecutionDescription(execution) {
-      const parts = [];
-
-      // Add instance name if present
+      // Only show instance name in description - schedule description is shown separately
       if (execution.instanceName) {
-        parts.push(`Instance: ${execution.instanceName}`);
+        return `Instance: ${execution.instanceName}`;
       }
-
-      // Get schedule description if this was a scheduled execution
-      if (execution.scheduleId) {
-        const scheduleDesc = getScheduleDescription(execution.scheduleId, this.schedules);
-        if (scheduleDesc) {
-          parts.push(scheduleDesc);
-        }
-      }
-
-      return parts.join(' | ');
+      return '';
     }
   }
 };

@@ -1,7 +1,6 @@
 <template>
   <div class="schedule-card" :class="{ 'schedule-disabled': schedule.enabled === false }">
     <div class="card-header">
-      <span v-if="showScriptName" class="script-name">{{ schedule.script_name }}</span>
       <div class="badge-container">
         <span v-if="schedule.schedule.repeatable" class="status-badge status-recurring">
           <i class="material-icons">repeat</i>
@@ -10,6 +9,7 @@
         <span v-else class="status-badge status-once">One-time</span>
         <span v-if="schedule.enabled === false" class="status-badge status-disabled">Disabled</span>
       </div>
+      <span v-if="showScriptName" class="script-name">{{ schedule.script_name }}</span>
     </div>
     <div class="card-body">
       <div class="card-info">
@@ -169,7 +169,7 @@ export default {
 .card-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 10px;
   padding: 10px 14px;
   border-bottom: 1px solid var(--separator-color);
 }
@@ -178,12 +178,14 @@ export default {
   font-weight: 500;
   font-size: 14px;
   color: var(--font-color-main);
+  flex: 1;
 }
 
 .badge-container {
   display: flex;
   gap: 6px;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .status-badge {
