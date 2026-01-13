@@ -1013,6 +1013,71 @@ class DefaultPasswordStatusHandler(BaseRequestHandler):
         }))
 
 
+# Venv Package Management Handlers
+class GetVenvStatusHandler(BaseRequestHandler):
+    @requires_admin_rights
+    def get(self):
+        venv_service = self.application.venv_service
+        if venv_service is None:
+            raise tornado.web.HTTPError(503, 'Venv service not available')
+
+        status = venv_service.get_status()
+        self.write(json.dumps(status))
+
+
+class GetVenvPackagesHandler(BaseRequestHandler):
+    @requires_admin_rights
+    def get(self):
+        venv_service = self.application.venv_service
+        if venv_service is None:
+            raise tornado.web.HTTPError(503, 'Venv service not available')
+
+        try:
+            packages = venv_service.list_packages()
+            self.write(json.dumps({'packages': packages}))
+        except RuntimeError as e:
+            raise tornado.web.HTTPError(500, reason=str(e))
+
+
+class InstallVenvPackageHandler(BaseRequestHandler):
+    @requires_admin_rights
+    def post(self):
+        venv_service = self.application.venv_service
+        if venv_service is None:
+            raise tornado.web.HTTPError(503, 'Venv service not available')
+
+        try:
+            body = json.loads(self.request.body.decode('utf-8'))
+            package = body.get('package')
+            version = body.get('version')
+
+            if not package:
+                raise tornado.web.HTTPError(400, reason='Package name is required')
+
+            result = venv_service.install_package(package, version)
+            self.write(json.dumps(result))
+        except ValueError as e:
+            raise tornado.web.HTTPError(400, reason=str(e))
+        except RuntimeError as e:
+            raise tornado.web.HTTPError(500, reason=str(e))
+
+
+class UninstallVenvPackageHandler(BaseRequestHandler):
+    @requires_admin_rights
+    def delete(self, package_name):
+        venv_service = self.application.venv_service
+        if venv_service is None:
+            raise tornado.web.HTTPError(503, 'Venv service not available')
+
+        try:
+            result = venv_service.uninstall_package(package_name)
+            self.write(json.dumps(result))
+        except ValueError as e:
+            raise tornado.web.HTTPError(400, reason=str(e))
+        except RuntimeError as e:
+            raise tornado.web.HTTPError(500, reason=str(e))
+
+
 def pipe_output_to_http(output_stream, write_callback):
     class OutputToHttpListener:
         def on_next(self, output):
@@ -1122,6 +1187,11 @@ def init(server_config: ServerConfig,
                 (r'/admin/auth/enable', EnableAuthHandler),
                 (r'/admin/auth/disable', DisableAuthHandler),
                 (r'/admin/auth/default-password-status', DefaultPasswordStatusHandler),
+                # Venv package management endpoints
+                (r'/admin/venv/status', GetVenvStatusHandler),
+                (r'/admin/venv/packages', GetVenvPackagesHandler),
+                (r'/admin/venv/packages/install', InstallVenvPackageHandler),
+                (r'/admin/venv/packages/([^/]+)', UninstallVenvPackageHandler),
                 (r"/", ProxiedRedirectHandler, {"url": "/index.html"})]
 
     if auth.is_enabled():
@@ -1166,6 +1236,11 @@ def init(server_config: ServerConfig,
     conf_json_path = os.path.join(conf_folder, 'conf.json')
     application.user_management = UserManagementService(htpasswd_path, conf_json_path)
     application.auth_initializer = auth_initializer
+
+    # Initialize venv service
+    from venv_manager.venv_service import VenvService
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    application.venv_service = VenvService(project_root)
 
     if os_utils.is_win() and env_utils.is_min_version('3.8'):
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())

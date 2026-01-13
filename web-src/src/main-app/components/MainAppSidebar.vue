@@ -12,12 +12,16 @@
       </router-link>
 
       <SearchPanel v-model="searchText"/>
+      <button v-if="adminUser" class="packages-btn waves-effect waves-circle" @click="showPackages = true" title="Package Manager">
+        <i class="material-icons">inventory_2</i>
+      </button>
       <button class="settings-btn waves-effect waves-circle" @click="showSettings = true" title="Settings">
         <i class="material-icons">settings</i>
       </button>
     </div>
 
     <SettingsModal :visible="showSettings" @close="showSettings = false" />
+    <PackagesModal v-if="adminUser" :visible="showPackages" @close="showPackages = false" />
 
     <SidebarBottomNav />
 
@@ -42,6 +46,7 @@ import ScriptsList from './scripts/ScriptsList'
 import SearchPanel from './SearchPanel';
 import SidebarBottomNav from './SidebarBottomNav';
 import SettingsModal from './SettingsModal';
+import PackagesModal from './PackagesModal';
 import ThemeToggle from '@/common/components/ThemeToggle';
 
 export default {
@@ -51,13 +56,15 @@ export default {
     ScriptsList,
     SidebarBottomNav,
     SettingsModal,
+    PackagesModal,
     ThemeToggle
   },
 
   data() {
     return {
       searchText: '',
-      showSettings: false
+      showSettings: false,
+      showPackages: false
     }
   },
 
@@ -167,7 +174,8 @@ export default {
   margin-left: 8px;
 }
 
-.settings-btn {
+.settings-btn,
+.packages-btn {
   background: none;
   border: none;
   cursor: pointer;
@@ -179,11 +187,13 @@ export default {
   justify-content: center;
 }
 
-.settings-btn:hover {
+.settings-btn:hover,
+.packages-btn:hover {
   background: var(--background-color-high-emphasis);
 }
 
-.settings-btn i {
+.settings-btn i,
+.packages-btn i {
   font-size: 24px;
   color: var(--font-color-medium);
 }

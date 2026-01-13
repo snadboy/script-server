@@ -14,9 +14,9 @@
 
 ## Current State
 
-**Branch:** `feature/schedule-list-and-delete`
-**Latest Commit:** `54ed4b5` - Add GitHub Actions workflow for Docker builds
-**Last Updated:** 2026-01-12
+**Branch:** `feature/venv-management`
+**Latest Commit:** `b9d5a5f` - Add venv package management feature
+**Last Updated:** 2026-01-13
 **Docker Image:** `ghcr.io/snadboy/script-server:latest`
 
 ### Completed Features
@@ -64,6 +64,7 @@
 | Card Layout Consistency | Done | Badges on left, schedule timing shown, increased badge visibility (opacity 0.35) |
 | Script/Instance Descriptions | Done | All cards show script description + instance name; /scripts API includes description; uses computed scriptsMap for reactivity |
 | GitHub Actions Docker Build | Done | Auto-builds and pushes to ghcr.io/snadboy/script-server on push to master |
+| Venv Package Management | Done | Admin UI for managing Python packages in common venv; auto-creates venv; install/uninstall packages |
 
 ### Test Infrastructure
 
@@ -138,3 +139,8 @@ docker build -t script-server:custom .
 - `samples/themes/dark/theme.css` (modified - added status/stop button/radius/shadow/transition CSS variables)
 - `samples/themes/orange/theme.css` (modified - added same CSS variables for light theme)
 - `.github/workflows/docker.yml` (new - GitHub Actions workflow for Docker builds)
+- `src/venv/__init__.py` (new - venv package module)
+- `src/venv/venv_service.py` (new - venv package management service)
+- `web-src/src/main-app/components/PackagesModal.vue` (new - admin UI for package management)
+- `web-src/src/main-app/components/MainAppSidebar.vue` (modified - added packages button for admins)
+- `src/web/server.py` (modified - added venv API endpoints)
