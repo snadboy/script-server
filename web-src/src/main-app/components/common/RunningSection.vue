@@ -38,7 +38,7 @@ import {mapState, mapActions} from 'vuex';
 import CollapsibleSection from './CollapsibleSection';
 import ExecutionCard from './ExecutionCard';
 import StopButton from './StopButton';
-import {getScheduleDescription} from '@/main-app/utils/executionFormatters';
+import {getScheduleDescription, getScriptDescription} from '@/main-app/utils/executionFormatters';
 
 const STORAGE_KEY = 'executionSections.collapsed.running';
 
@@ -76,6 +76,9 @@ export default {
     ...mapState('allSchedules', {
       schedules: 'schedules'
     }),
+    ...mapState('scripts', {
+      scripts: 'scripts'
+    }),
 
     filteredExecutions() {
       if (!this.executions) return [];
@@ -94,6 +97,17 @@ export default {
 
     badgeCount() {
       return this.filteredExecutions.length;
+    },
+
+    // Create a map for efficient script description lookups (and ensure reactivity)
+    scriptsMap() {
+      const map = {};
+      if (this.scripts && this.scripts.length > 0) {
+        this.scripts.forEach(s => {
+          map[s.name] = s.description || '';
+        });
+      }
+      return map;
     }
   },
 
@@ -140,11 +154,17 @@ export default {
     },
 
     getExecutionDescription(execution) {
-      // Only show instance name in description - schedule description is shown separately
-      if (execution.instanceName) {
-        return `Instance: ${execution.instanceName}`;
+      const parts = [];
+      // Add script description if available (use computed scriptsMap for reactivity)
+      const scriptDesc = this.scriptsMap[execution.script];
+      if (scriptDesc) {
+        parts.push(scriptDesc);
       }
-      return '';
+      // Add instance name if available
+      if (execution.instanceName) {
+        parts.push(`Instance: ${execution.instanceName}`);
+      }
+      return parts.join(' | ');
     }
   }
 };

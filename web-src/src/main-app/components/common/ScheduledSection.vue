@@ -19,6 +19,7 @@
           :schedule="schedule"
           :showScriptName="showScriptName"
           :showParams="showParams"
+          :scriptDescription="getScriptDesc(schedule.script_name)"
           :paramsExpanded="expandedParams === schedule.id"
           :deleting="deleting === schedule.id"
           :toggling="toggling === schedule.id"
@@ -44,7 +45,7 @@ import {mapState, mapActions} from 'vuex';
 import CollapsibleSection from './CollapsibleSection';
 import ScheduleCard from './ScheduleCard';
 import ScheduleModal from '@/main-app/components/schedule/ScheduleModal';
-import {formatNextExecution} from '@/main-app/utils/executionFormatters';
+import {formatNextExecution, getScriptDescription} from '@/main-app/utils/executionFormatters';
 
 const STORAGE_KEY = 'executionSections.collapsed.scheduled';
 
@@ -88,6 +89,9 @@ export default {
       schedules: 'schedules',
       loading: 'loading'
     }),
+    ...mapState('scripts', {
+      scripts: 'scripts'
+    }),
 
     filteredSchedules() {
       let result = this.schedules ? [...this.schedules] : [];
@@ -113,6 +117,17 @@ export default {
       return this.scriptFilter
         ? 'No scheduled executions for this script'
         : 'No scheduled executions';
+    },
+
+    // Create a map for efficient script description lookups (and ensure reactivity)
+    scriptsMap() {
+      const map = {};
+      if (this.scripts && this.scripts.length > 0) {
+        this.scripts.forEach(s => {
+          map[s.name] = s.description || '';
+        });
+      }
+      return map;
     }
   },
 
@@ -192,6 +207,10 @@ export default {
     closeEditModal() {
       this.showEditModal = false;
       this.editingSchedule = null;
+    },
+
+    getScriptDesc(scriptName) {
+      return this.scriptsMap[scriptName] || '';
     }
   }
 };

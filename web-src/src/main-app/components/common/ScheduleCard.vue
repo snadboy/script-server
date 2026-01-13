@@ -10,8 +10,12 @@
     </div>
     <div class="card-body">
       <div class="card-info">
-        <div v-if="schedule.description" class="card-row description-row">
-          <span class="description-text">{{ schedule.description }}</span>
+        <div v-if="scriptDescription" class="card-row description-row">
+          <span class="description-text">{{ scriptDescription }}</span>
+        </div>
+        <div v-if="schedule.description" class="card-row schedule-desc-row">
+          <span class="schedule-label">Schedule:</span>
+          <span class="schedule-text">{{ schedule.description }}</span>
         </div>
         <div v-if="schedule.schedule.repeatable" class="card-row">
           <span class="label">Last run:</span>
@@ -108,6 +112,10 @@ export default {
     showParams: {
       type: Boolean,
       default: true
+    },
+    scriptDescription: {
+      type: String,
+      default: ''
     },
     paramsExpanded: {
       type: Boolean,
@@ -259,6 +267,20 @@ export default {
 .description-text {
   font-style: italic;
   color: var(--font-color-medium);
+}
+
+.card-row.schedule-desc-row {
+  margin-bottom: 4px;
+}
+
+.schedule-label {
+  color: var(--status-scheduled-color);
+  min-width: 55px;
+}
+
+.schedule-text {
+  color: var(--font-color-medium);
+  font-style: italic;
 }
 
 .disabled-text {

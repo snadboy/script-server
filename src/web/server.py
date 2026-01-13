@@ -138,7 +138,7 @@ class GetScripts(BaseRequestHandler):
 
         configs = self.application.config_service.list_configs(user, mode)
 
-        scripts = [{'name': conf.name, 'group': conf.group, 'parsing_failed': conf.parsing_failed} for conf in configs]
+        scripts = [{'name': conf.name, 'group': conf.group, 'parsing_failed': conf.parsing_failed, 'description': conf.description} for conf in configs]
 
         self.write(json.dumps({'scripts': scripts}))
 

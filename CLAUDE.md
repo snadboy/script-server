@@ -15,8 +15,8 @@
 ## Current State
 
 **Branch:** `feature/schedule-list-and-delete`
-**Latest Commit:** `e75362a` - Improve card consistency: badges on left, schedule descriptions, better visibility
-**Last Updated:** 2026-01-11
+**Latest Commit:** `f818d80` - Fix badge position and unify styling across card types
+**Last Updated:** 2026-01-12
 
 ### Completed Features
 
@@ -61,6 +61,7 @@
 | UI/UX Consistency | Done | Unified modal patterns, CSS variables for colors/radius/shadows, standardized inputs |
 | Consistent Title Format | Done | Running and Completed sections use same "ScriptName (Execution ID: nnn)" format |
 | Card Layout Consistency | Done | Badges on left, schedule timing shown, increased badge visibility (opacity 0.35) |
+| Script/Instance Descriptions | Done | All cards show script description + instance name; /scripts API includes description; uses computed scriptsMap for reactivity |
 
 ### Test Infrastructure
 

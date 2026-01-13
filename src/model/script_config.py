@@ -28,6 +28,7 @@ LOGGER = logging.getLogger('script_server.script_config')
 class ShortConfig:
     name: str
     group: str = None
+    description: str = None
     allowed_users: List[str] = field(default_factory=list)
     admin_users: List[str] = field(default_factory=list)
     parsing_failed: bool = False
@@ -369,6 +370,7 @@ def read_short(file_path, json_object, group_by_folders: bool, script_configs_fo
     name = _read_name(file_path, json_object)
     allowed_users = json_object.get('allowed_users')
     admin_users = json_object.get('admin_users')
+    description = read_str_from_config(json_object, 'description', blank_to_none=True)
     group = read_str_from_config(json_object, 'group', blank_to_none=True)
     if ('group' not in json_object) and group_by_folders:
         relative_path = file_utils.relative_path(file_path, script_configs_folder)
@@ -390,7 +392,7 @@ def read_short(file_path, json_object, group_by_folders: bool, script_configs_fo
     elif (admin_users == '*') or ('*' in admin_users):
         admin_users = ANY_USER
 
-    return ShortConfig(name=name, group=group, allowed_users=allowed_users, admin_users=admin_users)
+    return ShortConfig(name=name, group=group, description=description, allowed_users=allowed_users, admin_users=admin_users)
 
 
 class ParameterNotFoundException(Exception):

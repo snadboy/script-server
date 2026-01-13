@@ -57,7 +57,6 @@
     <div v-else class="list-view">
       <RunningSection
         :scriptFilter="selectedScript"
-        :showScriptName="false"
         @select="selectExecution"
       />
       <ScheduledSection

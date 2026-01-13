@@ -123,3 +123,15 @@ export function getExecutionStatus(execution) {
 export function hasParameters(schedule) {
   return schedule.parameter_values && Object.keys(schedule.parameter_values).length > 0;
 }
+
+/**
+ * Get script description from scripts array by name
+ * @param {string} scriptName - Script name to find
+ * @param {Array} scripts - Array of script objects from scripts store
+ * @returns {string} Script description or empty string
+ */
+export function getScriptDescription(scriptName, scripts) {
+  if (!scriptName || !scripts) return '';
+  const script = scripts.find(s => s.name === scriptName);
+  return script?.description || '';
+}
