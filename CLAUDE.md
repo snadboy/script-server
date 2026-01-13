@@ -15,7 +15,7 @@
 ## Current State
 
 **Branch:** `feature/schedule-list-and-delete`
-**Latest Commit:** `f818d80` - Fix badge position and unify styling across card types
+**Latest Commit:** `02593c4` - Show script description and instance name on execution cards
 **Last Updated:** 2026-01-12
 
 ### Completed Features
