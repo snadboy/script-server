@@ -15,8 +15,9 @@
 ## Current State
 
 **Branch:** `feature/schedule-list-and-delete`
-**Latest Commit:** `02593c4` - Show script description and instance name on execution cards
+**Latest Commit:** `54ed4b5` - Add GitHub Actions workflow for Docker builds
 **Last Updated:** 2026-01-12
+**Docker Image:** `ghcr.io/snadboy/script-server:latest`
 
 ### Completed Features
 
@@ -62,6 +63,7 @@
 | Consistent Title Format | Done | Running and Completed sections use same "ScriptName (Execution ID: nnn)" format |
 | Card Layout Consistency | Done | Badges on left, schedule timing shown, increased badge visibility (opacity 0.35) |
 | Script/Instance Descriptions | Done | All cards show script description + instance name; /scripts API includes description; uses computed scriptsMap for reactivity |
+| GitHub Actions Docker Build | Done | Auto-builds and pushes to ghcr.io/snadboy/script-server on push to master |
 
 ### Test Infrastructure
 
@@ -135,3 +137,4 @@ docker build -t script-server:custom .
 - `web-src/src/main-app/store/settings.js` (new - settings state with localStorage persistence)
 - `samples/themes/dark/theme.css` (modified - added status/stop button/radius/shadow/transition CSS variables)
 - `samples/themes/orange/theme.css` (modified - added same CSS variables for light theme)
+- `.github/workflows/docker.yml` (new - GitHub Actions workflow for Docker builds)
