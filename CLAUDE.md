@@ -91,6 +91,8 @@
 - typer
 - pyyaml
 
+**Documentation:** See `docs/wrapping-python-projects.md` for detailed guide on wrapping external Python projects.
+
 ---
 
 ## Pending / Suggested Next Steps
