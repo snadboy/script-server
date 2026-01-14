@@ -1078,6 +1078,173 @@ class UninstallVenvPackageHandler(BaseRequestHandler):
             raise tornado.web.HTTPError(500, reason=str(e))
 
 
+# Project Management Handlers
+class ListProjectsHandler(BaseRequestHandler):
+    @requires_admin_rights
+    def get(self):
+        project_service = self.application.project_service
+        if project_service is None:
+            raise tornado.web.HTTPError(503, 'Project service not available')
+
+        projects = project_service.list_projects()
+        self.write(json.dumps({'projects': projects}))
+
+
+class ImportProjectHandler(BaseRequestHandler):
+    @requires_admin_rights
+    def post(self):
+        project_service = self.application.project_service
+        if project_service is None:
+            raise tornado.web.HTTPError(503, 'Project service not available')
+
+        try:
+            body = json.loads(self.request.body.decode('utf-8'))
+            import_type = body.get('type')
+
+            if import_type == 'git':
+                url = body.get('url')
+                branch = body.get('branch')
+                if not url:
+                    raise tornado.web.HTTPError(400, reason='Git URL is required')
+                result = project_service.import_from_git(url, branch)
+            elif import_type == 'zip':
+                import base64
+                file_data = body.get('file')
+                filename = body.get('filename', 'project.zip')
+                if not file_data:
+                    raise tornado.web.HTTPError(400, reason='ZIP file data is required')
+                file_bytes = base64.b64decode(file_data)
+                result = project_service.import_from_zip(file_bytes, filename)
+            else:
+                raise tornado.web.HTTPError(400, reason='Invalid import type. Use "git" or "zip"')
+
+            self.write(json.dumps(result))
+        except Exception as e:
+            raise tornado.web.HTTPError(500, reason=str(e))
+
+
+class GetProjectHandler(BaseRequestHandler):
+    @requires_admin_rights
+    def get(self, project_id):
+        project_service = self.application.project_service
+        if project_service is None:
+            raise tornado.web.HTTPError(503, 'Project service not available')
+
+        project = project_service.get_project(project_id)
+        if project is None:
+            raise tornado.web.HTTPError(404, reason='Project not found')
+        self.write(json.dumps(project))
+
+
+class DeleteProjectHandler(BaseRequestHandler):
+    @requires_admin_rights
+    def delete(self, project_id):
+        project_service = self.application.project_service
+        if project_service is None:
+            raise tornado.web.HTTPError(503, 'Project service not available')
+
+        try:
+            deleted = project_service.delete_project(project_id)
+            if not deleted:
+                raise tornado.web.HTTPError(404, reason='Project not found')
+            self.write(json.dumps({'success': True}))
+        except Exception as e:
+            raise tornado.web.HTTPError(500, reason=str(e))
+
+
+class GetProjectDependenciesHandler(BaseRequestHandler):
+    @requires_admin_rights
+    def get(self, project_id):
+        project_service = self.application.project_service
+        if project_service is None:
+            raise tornado.web.HTTPError(503, 'Project service not available')
+
+        project = project_service.get_project(project_id)
+        if project is None:
+            raise tornado.web.HTTPError(404, reason='Project not found')
+
+        self.write(json.dumps({'dependencies': project.get('dependencies', [])}))
+
+
+class GetProjectEntryPointsHandler(BaseRequestHandler):
+    @requires_admin_rights
+    def get(self, project_id):
+        project_service = self.application.project_service
+        if project_service is None:
+            raise tornado.web.HTTPError(503, 'Project service not available')
+
+        project = project_service.get_project(project_id)
+        if project is None:
+            raise tornado.web.HTTPError(404, reason='Project not found')
+
+        self.write(json.dumps({'entry_points': project.get('entry_points', [])}))
+
+
+class GenerateWrapperHandler(BaseRequestHandler):
+    @requires_admin_rights
+    def post(self, project_id):
+        project_service = self.application.project_service
+        if project_service is None:
+            raise tornado.web.HTTPError(503, 'Project service not available')
+
+        try:
+            body = json.loads(self.request.body.decode('utf-8'))
+            entry_point = body.get('entry_point')
+            config_path = body.get('config_path')
+            config_cmd = body.get('config_cmd')
+            script_name = body.get('script_name')
+            description = body.get('description')
+            group = body.get('group', 'Imported Projects')
+            parameters = body.get('parameters')
+
+            if not entry_point:
+                raise tornado.web.HTTPError(400, reason='Entry point is required')
+            if not script_name:
+                raise tornado.web.HTTPError(400, reason='Script name is required')
+
+            # Generate wrapper script
+            wrapper_path = project_service.generate_wrapper(
+                project_id, entry_point, config_path, config_cmd
+            )
+
+            # Generate runner config
+            config_path = project_service.generate_runner_config(
+                project_id, script_name, description, group, parameters
+            )
+
+            self.write(json.dumps({
+                'wrapper_path': wrapper_path,
+                'config_path': config_path
+            }))
+        except Exception as e:
+            raise tornado.web.HTTPError(500, reason=str(e))
+
+
+class GetWrapperPreviewHandler(BaseRequestHandler):
+    @requires_admin_rights
+    def post(self, project_id):
+        project_service = self.application.project_service
+        if project_service is None:
+            raise tornado.web.HTTPError(503, 'Project service not available')
+
+        try:
+            body = json.loads(self.request.body.decode('utf-8'))
+            entry_point = body.get('entry_point')
+            config_path = body.get('config_path')
+            config_cmd = body.get('config_cmd')
+
+            if not entry_point:
+                raise tornado.web.HTTPError(400, reason='Entry point is required')
+
+            preview = project_service.get_wrapper_preview(
+                project_id, entry_point, config_path, config_cmd
+            )
+
+            self.write(json.dumps({'wrapper_content': preview}))
+        except Exception as e:
+            raise tornado.web.HTTPError(500, reason=str(e))
+
+
 def pipe_output_to_http(output_stream, write_callback):
     class OutputToHttpListener:
         def on_next(self, output):
@@ -1192,6 +1359,15 @@ def init(server_config: ServerConfig,
                 (r'/admin/venv/packages', GetVenvPackagesHandler),
                 (r'/admin/venv/packages/install', InstallVenvPackageHandler),
                 (r'/admin/venv/packages/([^/]+)', UninstallVenvPackageHandler),
+                # Project management endpoints
+                (r'/admin/projects', ListProjectsHandler),
+                (r'/admin/projects/import', ImportProjectHandler),
+                (r'/admin/projects/([^/]+)', GetProjectHandler),
+                (r'/admin/projects/([^/]+)/delete', DeleteProjectHandler),
+                (r'/admin/projects/([^/]+)/dependencies', GetProjectDependenciesHandler),
+                (r'/admin/projects/([^/]+)/entry-points', GetProjectEntryPointsHandler),
+                (r'/admin/projects/([^/]+)/wrapper', GenerateWrapperHandler),
+                (r'/admin/projects/([^/]+)/wrapper-preview', GetWrapperPreviewHandler),
                 (r"/", ProxiedRedirectHandler, {"url": "/index.html"})]
 
     if auth.is_enabled():
@@ -1241,6 +1417,10 @@ def init(server_config: ServerConfig,
     from venv_manager.venv_service import VenvService
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     application.venv_service = VenvService(project_root)
+
+    # Initialize project manager service
+    from project_manager.project_service import ProjectService
+    application.project_service = ProjectService(project_root)
 
     if os_utils.is_win() and env_utils.is_min_version('3.8'):
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())

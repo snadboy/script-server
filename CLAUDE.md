@@ -15,7 +15,7 @@
 ## Current State
 
 **Branch:** `feature/venv-management`
-**Latest Commit:** `522024b` - Add venv package management feature
+**Latest Commit:** (uncommitted) - Add Project Manager feature
 **Last Updated:** 2026-01-13
 **Docker Image:** `ghcr.io/snadboy/script-server:latest`
 
@@ -65,6 +65,7 @@
 | Script/Instance Descriptions | Done | All cards show script description + instance name; /scripts API includes description; uses computed scriptsMap for reactivity |
 | GitHub Actions Docker Build | Done | Auto-builds and pushes to ghcr.io/snadboy/script-server on push to master |
 | Venv Package Management | Done | Admin UI for managing Python packages in common venv; auto-creates venv; install/uninstall packages |
+| Project Manager | Done | Import external Python projects via Git/ZIP; auto-detect dependencies & entry points; generate wrapper scripts |
 
 ### Test Infrastructure
 
@@ -159,8 +160,11 @@ docker build -t script-server:custom .
 - `samples/themes/dark/theme.css` (modified - added status/stop button/radius/shadow/transition CSS variables)
 - `samples/themes/orange/theme.css` (modified - added same CSS variables for light theme)
 - `.github/workflows/docker.yml` (new - GitHub Actions workflow for Docker builds)
-- `src/venv/__init__.py` (new - venv package module)
-- `src/venv/venv_service.py` (new - venv package management service)
+- `src/venv_manager/__init__.py` (new - venv package module)
+- `src/venv_manager/venv_service.py` (new - venv package management service)
 - `web-src/src/main-app/components/PackagesModal.vue` (new - admin UI for package management)
-- `web-src/src/main-app/components/MainAppSidebar.vue` (modified - added packages button for admins)
-- `src/web/server.py` (modified - added venv API endpoints)
+- `web-src/src/main-app/components/MainAppSidebar.vue` (modified - added packages/projects buttons for admins)
+- `src/web/server.py` (modified - added venv and project management API endpoints)
+- `src/project_manager/__init__.py` (new - project manager module)
+- `src/project_manager/project_service.py` (new - project import/management service)
+- `web-src/src/main-app/components/ProjectsModal.vue` (new - admin UI for project management)

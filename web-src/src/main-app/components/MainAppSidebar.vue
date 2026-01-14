@@ -12,6 +12,9 @@
       </router-link>
 
       <SearchPanel v-model="searchText"/>
+      <button v-if="adminUser" class="projects-btn waves-effect waves-circle" @click="showProjects = true" title="Project Manager">
+        <i class="material-icons">folder_special</i>
+      </button>
       <button v-if="adminUser" class="packages-btn waves-effect waves-circle" @click="showPackages = true" title="Package Manager">
         <i class="material-icons">inventory_2</i>
       </button>
@@ -22,6 +25,7 @@
 
     <SettingsModal :visible="showSettings" @close="showSettings = false" />
     <PackagesModal v-if="adminUser" :visible="showPackages" @close="showPackages = false" />
+    <ProjectsModal v-if="adminUser" :visible="showProjects" @close="showProjects = false" />
 
     <SidebarBottomNav />
 
@@ -47,6 +51,7 @@ import SearchPanel from './SearchPanel';
 import SidebarBottomNav from './SidebarBottomNav';
 import SettingsModal from './SettingsModal';
 import PackagesModal from './PackagesModal';
+import ProjectsModal from './ProjectsModal';
 import ThemeToggle from '@/common/components/ThemeToggle';
 
 export default {
@@ -57,6 +62,7 @@ export default {
     SidebarBottomNav,
     SettingsModal,
     PackagesModal,
+    ProjectsModal,
     ThemeToggle
   },
 
@@ -64,7 +70,8 @@ export default {
     return {
       searchText: '',
       showSettings: false,
-      showPackages: false
+      showPackages: false,
+      showProjects: false
     }
   },
 
@@ -175,7 +182,8 @@ export default {
 }
 
 .settings-btn,
-.packages-btn {
+.packages-btn,
+.projects-btn {
   background: none;
   border: none;
   cursor: pointer;
@@ -188,12 +196,14 @@ export default {
 }
 
 .settings-btn:hover,
-.packages-btn:hover {
+.packages-btn:hover,
+.projects-btn:hover {
   background: var(--background-color-high-emphasis);
 }
 
 .settings-btn i,
-.packages-btn i {
+.packages-btn i,
+.projects-btn i {
   font-size: 24px;
   color: var(--font-color-medium);
 }
