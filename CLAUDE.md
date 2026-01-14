@@ -15,7 +15,7 @@
 ## Current State
 
 **Branch:** `feature/venv-management`
-**Latest Commit:** `b9d5a5f` - Add venv package management feature
+**Latest Commit:** `522024b` - Add venv package management feature
 **Last Updated:** 2026-01-13
 **Docker Image:** `ghcr.io/snadboy/script-server:latest`
 
@@ -72,6 +72,24 @@
 |------|----------|-------------|
 | Long Running Script | `samples/scripts/long_running.py` | 30-second test script with progress bar |
 | Script Config | `conf/runners/long_running.json` | Config with scheduling enabled (gitignored) |
+
+### Gmail Cleanup Integration
+
+| Item | Location | Description |
+|------|----------|-------------|
+| Wrapper Script | `samples/scripts/gmail_cleanup.py` | Runs gm project via common venv |
+| Script Config | `conf/runners/gmail_cleanup.json` | Script-server config with run/labels/groups/config commands |
+| Source Project | `/home/snadboy/projects/gm` | Gmail auto-cleanup source |
+
+**Required packages** (install via Package Manager):
+- google-api-python-client
+- google-auth-oauthlib
+- google-auth
+- pydantic
+- pydantic-settings
+- structlog
+- typer
+- pyyaml
 
 ---
 
