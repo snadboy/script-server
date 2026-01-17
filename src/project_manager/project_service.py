@@ -281,6 +281,66 @@ class ProjectService:
 
         return meta
 
+    def import_from_local(self, local_path: str) -> dict:
+        """
+        Import a project from a local directory.
+
+        Args:
+            local_path: Path to the local project directory
+
+        Returns:
+            Project metadata dictionary
+
+        Raises:
+            Exception: If path doesn't exist or copy fails
+        """
+        self._ensure_projects_dir()
+
+        source_path = Path(local_path).resolve()
+
+        # Validate source path
+        if not source_path.exists():
+            raise Exception(f"Path does not exist: {local_path}")
+        if not source_path.is_dir():
+            raise Exception(f"Path is not a directory: {local_path}")
+
+        # Extract project name from directory name
+        dir_name = source_path.name
+        project_id = self._sanitize_project_id(dir_name)
+
+        # Ensure unique project ID
+        base_id = project_id
+        counter = 1
+        while (self.projects_dir / project_id).exists():
+            project_id = f"{base_id}-{counter}"
+            counter += 1
+
+        project_path = self.projects_dir / project_id
+
+        # Copy directory to projects folder
+        LOGGER.info(f"Copying {source_path} to {project_path}")
+        shutil.copytree(str(source_path), str(project_path))
+
+        # Detect dependencies and entry points
+        dependencies = self.detect_dependencies(project_path)
+        entry_points = self.detect_entry_points(project_path)
+
+        # Create metadata
+        meta = {
+            'id': project_id,
+            'name': dir_name.replace('-', ' ').replace('_', ' ').title(),
+            'import_type': 'local',
+            'source_url': str(source_path),
+            'imported_at': datetime.now().isoformat(),
+            'entry_points': entry_points,
+            'dependencies': dependencies,
+            'wrapper_script': None,
+            'runner_config': None
+        }
+        self._save_meta(project_path, meta)
+
+        return meta
+
     def delete_project(self, project_id: str) -> bool:
         """
         Delete an imported project and its generated files.

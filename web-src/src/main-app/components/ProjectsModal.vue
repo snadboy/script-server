@@ -103,6 +103,13 @@
                 <i class="material-icons">folder_zip</i>
                 ZIP Upload
               </button>
+              <button
+                :class="['type-btn', { active: importType === 'local' }]"
+                @click="importType = 'local'"
+              >
+                <i class="material-icons">folder_open</i>
+                Local Path
+              </button>
             </div>
 
             <!-- Git Import -->
@@ -161,6 +168,30 @@
                 @click="importFromZip"
               >
                 {{ importing ? 'Extracting...' : 'Upload & Extract' }}
+              </button>
+            </div>
+
+            <!-- Local Path Import -->
+            <div v-if="importType === 'local'" class="import-form">
+              <div class="form-group">
+                <label>Local Directory Path</label>
+                <input
+                  v-model="localPath"
+                  type="text"
+                  placeholder="/path/to/project"
+                  class="form-input"
+                  :disabled="importing"
+                />
+                <div class="form-help">
+                  Enter the absolute path to a local Python project directory
+                </div>
+              </div>
+              <button
+                class="btn btn-primary import-btn"
+                :disabled="!localPath || importing"
+                @click="importFromLocal"
+              >
+                {{ importing ? 'Copying...' : 'Import Project' }}
               </button>
             </div>
           </div>
@@ -328,6 +359,7 @@ export default {
       gitUrl: '',
       gitBranch: '',
       selectedFile: null,
+      localPath: '',
 
       // Configure form
       selectedProject: null,
@@ -476,6 +508,31 @@ export default {
         this.activeTab = 'configure';
       } catch (e) {
         this.error = e.response?.data || 'Failed to extract ZIP file';
+      } finally {
+        this.importing = false;
+      }
+    },
+
+    async importFromLocal() {
+      if (!this.localPath) return;
+
+      this.importing = true;
+      this.error = null;
+      this.success = null;
+
+      try {
+        const response = await axiosInstance.post('admin/projects/import', {
+          type: 'local',
+          path: this.localPath.trim()
+        });
+
+        this.success = `Successfully imported ${response.data.name}`;
+        this.localPath = '';
+        this.selectedProject = response.data;
+        await this.loadProjects();
+        this.activeTab = 'configure';
+      } catch (e) {
+        this.error = e.response?.data || 'Failed to import from local path';
       } finally {
         this.importing = false;
       }

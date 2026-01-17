@@ -1115,8 +1115,13 @@ class ImportProjectHandler(BaseRequestHandler):
                     raise tornado.web.HTTPError(400, reason='ZIP file data is required')
                 file_bytes = base64.b64decode(file_data)
                 result = project_service.import_from_zip(file_bytes, filename)
+            elif import_type == 'local':
+                local_path = body.get('path')
+                if not local_path:
+                    raise tornado.web.HTTPError(400, reason='Local path is required')
+                result = project_service.import_from_local(local_path)
             else:
-                raise tornado.web.HTTPError(400, reason='Invalid import type. Use "git" or "zip"')
+                raise tornado.web.HTTPError(400, reason='Invalid import type. Use "git", "zip", or "local"')
 
             self.write(json.dumps(result))
         except Exception as e:
