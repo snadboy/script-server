@@ -480,39 +480,56 @@ class ProjectService:
             if module_name and module_name != '.':
                 entry_points.append(f"{module_name}.__main__")
 
-        # 3. Scan for typer/click apps in main.py or cli.py files
-        for pattern in ['**/main.py', '**/cli.py', '**/*_cli.py']:
-            for py_file in src_dir.glob(pattern):
+        # 3. Scan Python files for CLI patterns
+        for py_file in src_dir.glob('**/*.py'):
+            if py_file.name.startswith('_') and py_file.name != '__main__.py':
+                continue
+
+            try:
+                content = py_file.read_text()
+                rel_path = py_file.relative_to(src_dir)
+                module_name = str(rel_path.with_suffix('')).replace(os.sep, '.')
+
+                # Look for typer app
+                if 'typer.Typer()' in content or 'typer.Typer(' in content:
+                    match = re.search(r'(\w+)\s*=\s*typer\.Typer\(', content)
+                    if match:
+                        entry_points.append(f"{module_name}:{match.group(1)}")
+                    else:
+                        entry_points.append(f"{module_name}:app")
+
+                # Look for click app
+                elif '@click.command' in content or '@click.group' in content:
+                    if 'def main(' in content:
+                        entry_points.append(f"{module_name}:main")
+                    elif 'def cli(' in content:
+                        entry_points.append(f"{module_name}:cli")
+
+                # Look for standard Python CLI pattern: if __name__ == "__main__" with main()
+                elif "if __name__" in content and "__main__" in content:
+                    if 'def main(' in content:
+                        entry_points.append(f"{module_name}:main")
+                    # Also check for direct script execution pattern
+                    elif re.search(r'if\s+__name__\s*==\s*["\']__main__["\']\s*:', content):
+                        # This file can be run directly, add as module entry
+                        entry_points.append(f"{module_name}")
+
+            except Exception as e:
+                LOGGER.warning(f"Failed to scan {py_file} for entry points: {e}")
+
+        # 4. If no entry points found, list root-level .py files as potential entries
+        if not entry_points:
+            for py_file in src_dir.glob('*.py'):
                 if py_file.name.startswith('_'):
                     continue
-                try:
-                    content = py_file.read_text()
+                module_name = py_file.stem
+                # Prefer main.py, cli.py, app.py
+                if module_name in ('main', 'cli', 'app'):
+                    entry_points.insert(0, f"{module_name}:main")
+                else:
+                    entry_points.append(f"{module_name}")
 
-                    # Look for typer app
-                    if 'typer.Typer()' in content or 'typer.Typer(' in content:
-                        rel_path = py_file.relative_to(src_dir)
-                        module_name = str(rel_path.with_suffix('')).replace(os.sep, '.')
-                        # Try to find the app variable name
-                        match = re.search(r'(\w+)\s*=\s*typer\.Typer\(', content)
-                        if match:
-                            entry_points.append(f"{module_name}:{match.group(1)}")
-                        else:
-                            entry_points.append(f"{module_name}:app")
-
-                    # Look for click app
-                    elif '@click.command' in content or '@click.group' in content:
-                        rel_path = py_file.relative_to(src_dir)
-                        module_name = str(rel_path.with_suffix('')).replace(os.sep, '.')
-                        # Look for main function or cli function
-                        if 'def main(' in content:
-                            entry_points.append(f"{module_name}:main")
-                        elif 'def cli(' in content:
-                            entry_points.append(f"{module_name}:cli")
-
-                except Exception as e:
-                    LOGGER.warning(f"Failed to scan {py_file} for entry points: {e}")
-
-        return list(set(entry_points))
+        return list(dict.fromkeys(entry_points))  # Remove duplicates, preserve order
 
     def generate_wrapper(
         self,

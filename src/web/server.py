@@ -1078,6 +1078,60 @@ class UninstallVenvPackageHandler(BaseRequestHandler):
             raise tornado.web.HTTPError(500, reason=str(e))
 
 
+# Filesystem Browser Handler
+class FilesystemBrowseHandler(BaseRequestHandler):
+    @requires_admin_rights
+    def get(self):
+        """Browse server filesystem directories for local project import."""
+        import os
+        from pathlib import Path
+
+        path = self.get_argument('path', '/')
+
+        try:
+            target = Path(path).resolve()
+
+            if not target.exists():
+                raise tornado.web.HTTPError(404, reason=f'Path does not exist: {path}')
+            if not target.is_dir():
+                raise tornado.web.HTTPError(400, reason=f'Path is not a directory: {path}')
+
+            entries = []
+            for item in sorted(target.iterdir()):
+                # Skip hidden files/dirs
+                if item.name.startswith('.'):
+                    continue
+                try:
+                    entries.append({
+                        'name': item.name,
+                        'path': str(item),
+                        'is_dir': item.is_dir(),
+                        'is_python_project': item.is_dir() and (
+                            (item / 'requirements.txt').exists() or
+                            (item / 'pyproject.toml').exists() or
+                            (item / 'setup.py').exists()
+                        )
+                    })
+                except PermissionError:
+                    # Skip items we can't access
+                    continue
+
+            # Sort: directories first, then files
+            entries.sort(key=lambda x: (not x['is_dir'], x['name'].lower()))
+
+            result = {
+                'current_path': str(target),
+                'parent_path': str(target.parent) if target.parent != target else None,
+                'entries': entries
+            }
+            self.write(json.dumps(result))
+
+        except PermissionError:
+            raise tornado.web.HTTPError(403, reason=f'Permission denied: {path}')
+        except Exception as e:
+            raise tornado.web.HTTPError(500, reason=str(e))
+
+
 # Project Management Handlers
 class ListProjectsHandler(BaseRequestHandler):
     @requires_admin_rights
@@ -1364,6 +1418,8 @@ def init(server_config: ServerConfig,
                 (r'/admin/venv/packages', GetVenvPackagesHandler),
                 (r'/admin/venv/packages/install', InstallVenvPackageHandler),
                 (r'/admin/venv/packages/([^/]+)', UninstallVenvPackageHandler),
+                # Filesystem browser endpoint
+                (r'/admin/filesystem/browse', FilesystemBrowseHandler),
                 # Project management endpoints
                 (r'/admin/projects', ListProjectsHandler),
                 (r'/admin/projects/import', ImportProjectHandler),

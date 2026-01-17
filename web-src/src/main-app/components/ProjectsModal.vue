@@ -175,15 +175,25 @@
             <div v-if="importType === 'local'" class="import-form">
               <div class="form-group">
                 <label>Local Directory Path</label>
-                <input
-                  v-model="localPath"
-                  type="text"
-                  placeholder="/path/to/project"
-                  class="form-input"
-                  :disabled="importing"
-                />
+                <div class="path-input-row">
+                  <input
+                    v-model="localPath"
+                    type="text"
+                    placeholder="/path/to/project"
+                    class="form-input"
+                    :disabled="importing"
+                  />
+                  <button
+                    class="btn-browse"
+                    :disabled="importing"
+                    @click="showDirBrowser = true"
+                    title="Browse directories"
+                  >
+                    <i class="material-icons">folder_open</i>
+                  </button>
+                </div>
                 <div class="form-help">
-                  Enter the absolute path to a local Python project directory
+                  Enter a path or click the folder icon to browse
                 </div>
               </div>
               <button
@@ -194,6 +204,14 @@
                 {{ importing ? 'Copying...' : 'Import Project' }}
               </button>
             </div>
+
+            <!-- Directory Browser Modal -->
+            <DirectoryBrowserModal
+              :visible="showDirBrowser"
+              :initial-path="localPath || '/tmp'"
+              @select="onDirectorySelected"
+              @close="showDirBrowser = false"
+            />
           </div>
         </div>
 
@@ -205,18 +223,27 @@
             <!-- Dependencies -->
             <div class="config-group">
               <div class="config-group-header">
-                <span class="config-label">Dependencies ({{ selectedProject.dependencies?.length || 0 }})</span>
+                <span class="config-label">
+                  Dependencies ({{ selectedProject.dependencies?.length || 0 }})
+                  <span v-if="loadingPackages" class="loading-indicator">checking...</span>
+                  <span v-else-if="allDependenciesInstalled" class="all-installed-badge">All Installed</span>
+                </span>
                 <button
-                  v-if="selectedProject.dependencies?.length > 0"
+                  v-if="selectedProject.dependencies?.length > 0 && missingDependencies.length > 0"
                   class="btn btn-sm"
-                  :disabled="installingDeps"
+                  :disabled="installingDeps || loadingPackages"
                   @click="installAllDependencies"
                 >
-                  {{ installingDeps ? 'Installing...' : 'Install All' }}
+                  {{ installingDeps ? 'Installing...' : `Install Missing (${missingDependencies.length})` }}
                 </button>
               </div>
               <div v-if="selectedProject.dependencies?.length > 0" class="deps-list">
-                <span v-for="dep in selectedProject.dependencies" :key="dep" class="dep-tag">
+                <span
+                  v-for="dep in selectedProject.dependencies"
+                  :key="dep"
+                  :class="['dep-tag', { 'dep-installed': isPackageInstalled(dep) }]"
+                >
+                  <i v-if="isPackageInstalled(dep)" class="material-icons dep-check">check_circle</i>
                   {{ dep }}
                 </span>
               </div>
@@ -331,9 +358,14 @@
 
 <script>
 import {axiosInstance} from '@/common/utils/axios_utils';
+import DirectoryBrowserModal from './common/DirectoryBrowserModal.vue';
 
 export default {
   name: 'ProjectsModal',
+
+  components: {
+    DirectoryBrowserModal
+  },
 
   props: {
     visible: {
@@ -360,6 +392,7 @@ export default {
       gitBranch: '',
       selectedFile: null,
       localPath: '',
+      showDirBrowser: false,
 
       // Configure form
       selectedProject: null,
@@ -369,13 +402,28 @@ export default {
       configDescription: '',
       configPath: '',
       configCmd: '',
-      wrapperPreview: ''
+      wrapperPreview: '',
+      installedPackages: [],
+      loadingPackages: false
     };
   },
 
   computed: {
     effectiveEntryPoint() {
       return this.customEntryPoint || this.configEntryPoint;
+    },
+
+    missingDependencies() {
+      if (!this.selectedProject?.dependencies) return [];
+      const installedLower = this.installedPackages.map(p => p.toLowerCase());
+      return this.selectedProject.dependencies.filter(
+        dep => !installedLower.includes(dep.toLowerCase())
+      );
+    },
+
+    allDependenciesInstalled() {
+      return this.selectedProject?.dependencies?.length > 0 &&
+             this.missingDependencies.length === 0;
     }
   },
 
@@ -397,6 +445,7 @@ export default {
         this.configPath = '';
         this.configCmd = '';
         this.wrapperPreview = '';
+        this.loadInstalledPackages();
       }
     }
   },
@@ -404,6 +453,25 @@ export default {
   methods: {
     close() {
       this.$emit('close');
+    },
+
+    async loadInstalledPackages() {
+      this.loadingPackages = true;
+      try {
+        const response = await axiosInstance.get('admin/venv/packages');
+        // Extract package names from the response
+        this.installedPackages = (response.data.packages || []).map(p => p.name || p);
+      } catch (e) {
+        console.warn('Failed to load installed packages:', e);
+        this.installedPackages = [];
+      } finally {
+        this.loadingPackages = false;
+      }
+    },
+
+    isPackageInstalled(dep) {
+      const depLower = dep.toLowerCase();
+      return this.installedPackages.some(p => p.toLowerCase() === depLower);
     },
 
     async loadProjects() {
@@ -538,6 +606,10 @@ export default {
       }
     },
 
+    onDirectorySelected(path) {
+      this.localPath = path;
+    },
+
     readFileAsBase64(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -576,26 +648,40 @@ export default {
     },
 
     async installAllDependencies() {
-      if (!this.selectedProject?.dependencies?.length) return;
+      const toInstall = this.missingDependencies;
+      if (!toInstall.length) return;
 
       this.installingDeps = true;
       this.error = null;
       this.success = null;
 
+      let installed = 0;
+      let failed = 0;
+
       try {
-        for (const dep of this.selectedProject.dependencies) {
+        for (const dep of toInstall) {
           try {
             await axiosInstance.post('admin/venv/packages/install', {
               package: dep
             });
+            installed++;
           } catch (e) {
             // Continue with other packages even if one fails
             console.warn(`Failed to install ${dep}:`, e);
+            failed++;
           }
         }
-        this.success = 'Dependencies installed (check Package Manager for details)';
+
+        // Reload installed packages to update UI
+        await this.loadInstalledPackages();
+
+        if (failed === 0) {
+          this.success = `Successfully installed ${installed} package${installed !== 1 ? 's' : ''}`;
+        } else {
+          this.success = `Installed ${installed} package${installed !== 1 ? 's' : ''}, ${failed} failed`;
+        }
       } catch (e) {
-        this.error = 'Failed to install some dependencies';
+        this.error = 'Failed to install dependencies';
       } finally {
         this.installingDeps = false;
       }
@@ -919,6 +1005,44 @@ export default {
   gap: 16px;
 }
 
+.path-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.path-input-row .form-input {
+  flex: 1;
+}
+
+.btn-browse {
+  background: var(--background-color-level-4dp);
+  border: 1px solid var(--separator-color);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  cursor: pointer;
+  color: var(--font-color-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-browse:hover:not(:disabled) {
+  background: var(--background-color-level-8dp);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.btn-browse:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-browse i {
+  font-size: 20px;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;
@@ -1044,6 +1168,35 @@ export default {
   font-size: 12px;
   color: var(--font-color-main);
   font-family: monospace;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dep-tag.dep-installed {
+  background: rgba(76, 175, 80, 0.15);
+  color: #4caf50;
+}
+
+.dep-check {
+  font-size: 14px;
+}
+
+.loading-indicator {
+  font-size: 11px;
+  font-weight: normal;
+  color: var(--font-color-disabled);
+  font-style: italic;
+}
+
+.all-installed-badge {
+  font-size: 11px;
+  font-weight: normal;
+  background: rgba(76, 175, 80, 0.15);
+  color: #4caf50;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-left: 8px;
 }
 
 .no-deps {
