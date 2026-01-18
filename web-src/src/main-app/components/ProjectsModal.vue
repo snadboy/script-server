@@ -259,15 +259,24 @@
                   {{ ep }}
                 </option>
               </select>
-              <div class="form-help">
-                Or enter custom entry point:
+              <button
+                type="button"
+                class="btn-link advanced-toggle"
+                @click="showCustomEntryPoint = !showCustomEntryPoint"
+              >
+                {{ showCustomEntryPoint ? '− Hide custom entry point' : '+ Custom entry point' }}
+              </button>
+              <div v-if="showCustomEntryPoint" class="custom-entry-point">
+                <input
+                  v-model="customEntryPoint"
+                  type="text"
+                  placeholder="module.main:app"
+                  class="form-input"
+                />
+                <div class="form-help">
+                  Use if the detected entry points don't include what you need
+                </div>
               </div>
-              <input
-                v-model="customEntryPoint"
-                type="text"
-                placeholder="module.main:app"
-                class="form-input"
-              />
             </div>
 
             <!-- Script Name -->
@@ -398,6 +407,7 @@ export default {
       selectedProject: null,
       configEntryPoint: '',
       customEntryPoint: '',
+      showCustomEntryPoint: false,
       configScriptName: '',
       configDescription: '',
       configPath: '',
@@ -1097,6 +1107,32 @@ export default {
 .form-help {
   font-size: 12px;
   color: var(--font-color-disabled);
+  margin-top: 4px;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 0;
+  margin-top: 6px;
+}
+
+.btn-link:hover {
+  text-decoration: underline;
+}
+
+.advanced-toggle {
+  display: block;
+}
+
+.custom-entry-point {
+  margin-top: 8px;
+}
+
+.custom-entry-point .form-help {
   margin-top: 4px;
 }
 
