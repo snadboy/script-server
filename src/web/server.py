@@ -797,8 +797,10 @@ class ScheduleHandler(BaseRequestHandler):
         try:
             body = json.loads(self.request.body.decode('utf-8'))
             schedule_config = body.get('schedule_config', {})
+            # Convert camelCase to snake_case (same as AddSchedule)
+            parsed_config = external_model.parse_external_schedule(schedule_config)
 
-            job = self.application.schedule_service.update_job(schedule_id, schedule_config, user)
+            job = self.application.schedule_service.update_job(schedule_id, parsed_config, user)
 
             schedule = job.schedule
             response = {
