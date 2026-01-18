@@ -14,23 +14,25 @@
 
 ## Current State
 
-**Branch:** `feature/venv-management`
-**Latest Commit:** `b14c4f2` - Hide custom entry point behind toggle in Project Manager
+**Branch:** `master` (merged from `feature/venv-management`)
+**Latest Commit:** `6e65e47` - Update session notes
 **Last Updated:** 2026-01-18
-**Docker Image:** `ghcr.io/snadboy/script-server:latest`
+**Docker Image:** `ghcr.io/snadboy/script-server:latest` (auto-builds on push to master)
 
 ### Recent Session (2026-01-18)
 
-Tested entry point detection and fixed several UI issues in Project Manager:
+Tested entry point detection and fixed several UI issues:
 
 | Commit | Description |
 |--------|-------------|
 | `18e93d6` | Fix entry point dropdown selection timing |
-| `7d8313d` | Fix Entry Point dropdown visibility (Materialize CSS `select { opacity: 0 }` override) |
+| `7d8313d` | Fix Entry Point dropdown visibility (Materialize CSS override) |
 | `df82969` | Prevent modal from closing on outside click |
 | `b14c4f2` | Hide custom entry point behind toggle for cleaner UI |
+| `e8eb328` | Instance name on new line; show script names in Scheduled section |
+| `6e65e47` | Update session notes |
 
-**Test project used:** `/tmp/test-project-entrypoints` - Python project with multiple entry point patterns (pyproject.toml scripts, typer/click, `__main__.py`)
+**Merged to master** - Docker build triggered automatically via GitHub Actions
 
 ### Completed Features
 
