@@ -1,5 +1,5 @@
 <template>
-  <div v-if="visible" class="projects-modal-overlay" @click.self="close">
+  <div v-if="visible" class="projects-modal-overlay">
     <div class="projects-modal">
       <div class="modal-header">
         <span class="modal-title">Project Manager</span>
