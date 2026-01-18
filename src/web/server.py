@@ -779,7 +779,7 @@ class GetSchedules(BaseRequestHandler):
         self.write(json.dumps({'schedules': schedules}))
 
 
-class DeleteSchedule(BaseRequestHandler):
+class ScheduleHandler(BaseRequestHandler):
     @check_authorization
     @inject_user
     def delete(self, user, schedule_id):
@@ -788,6 +788,37 @@ class DeleteSchedule(BaseRequestHandler):
             self.write(json.dumps({'deleted': schedule_id, 'script_name': job.script_name}))
         except JobNotFoundException as e:
             raise tornado.web.HTTPError(404, reason=str(e))
+        except AccessDeniedException as e:
+            raise tornado.web.HTTPError(403, reason=str(e))
+
+    @check_authorization
+    @inject_user
+    def put(self, user, schedule_id):
+        try:
+            body = json.loads(self.request.body.decode('utf-8'))
+            schedule_config = body.get('schedule_config', {})
+
+            job = self.application.schedule_service.update_job(schedule_id, schedule_config, user)
+
+            schedule = job.schedule
+            response = {
+                'id': job.id,
+                'enabled': job.enabled,
+                'script_name': job.script_name,
+                'description': job.description
+            }
+
+            # Include next_execution if has upcoming execution
+            if job.enabled:
+                next_time = schedule.get_next_time()
+                if next_time:
+                    response['next_execution'] = next_time.isoformat()
+
+            self.write(json.dumps(response))
+        except JobNotFoundException as e:
+            raise tornado.web.HTTPError(404, reason=str(e))
+        except InvalidScheduleException as e:
+            raise tornado.web.HTTPError(422, reason=str(e))
         except AccessDeniedException as e:
             raise tornado.web.HTTPError(403, reason=str(e))
 
@@ -822,37 +853,6 @@ class ToggleScheduleEnabled(BaseRequestHandler):
             raise tornado.web.HTTPError(403, reason=str(e))
 
 
-class UpdateSchedule(BaseRequestHandler):
-    @check_authorization
-    @inject_user
-    def put(self, user, schedule_id):
-        try:
-            body = json.loads(self.request.body.decode('utf-8'))
-            schedule_config = body.get('schedule_config', {})
-
-            job = self.application.schedule_service.update_job(schedule_id, schedule_config, user)
-
-            schedule = job.schedule
-            response = {
-                'id': job.id,
-                'enabled': job.enabled,
-                'script_name': job.script_name,
-                'description': job.description
-            }
-
-            # Include next_execution if has upcoming execution
-            if job.enabled:
-                next_time = schedule.get_next_time()
-                if next_time:
-                    response['next_execution'] = next_time.isoformat()
-
-            self.write(json.dumps(response))
-        except JobNotFoundException as e:
-            raise tornado.web.HTTPError(404, reason=str(e))
-        except InvalidScheduleException as e:
-            raise tornado.web.HTTPError(422, reason=str(e))
-        except AccessDeniedException as e:
-            raise tornado.web.HTTPError(403, reason=str(e))
 
 
 # User Management Handlers
@@ -1394,8 +1394,7 @@ def init(server_config: ServerConfig,
                 (r'/history/execution_log/long/(.*)', GetLongHistoryEntryHandler),
                 (r'/schedule', AddSchedule),
                 (r'/schedules', GetSchedules),
-                (r'/schedules/([^/]+)', DeleteSchedule),
-                (r'/schedules/([^/]+)', UpdateSchedule),
+                (r'/schedules/([^/]+)', ScheduleHandler),
                 (r'/schedules/([^/]+)/enabled', ToggleScheduleEnabled),
                 (r'/auth/info', AuthInfoHandler),
                 (r'/result_files/(.*)',
