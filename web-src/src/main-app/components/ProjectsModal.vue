@@ -1065,6 +1065,7 @@ export default {
 
 .form-input,
 .form-select {
+  width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--separator-color);
   border-radius: var(--radius-sm);
@@ -1072,6 +1073,13 @@ export default {
   color: var(--font-color-main);
   font-size: 14px;
   transition: border-color 0.2s;
+}
+
+.form-select {
+  opacity: 1;  /* Override Materialize's select { opacity: 0 } */
+  -webkit-appearance: menulist;
+  -moz-appearance: menulist;
+  appearance: menulist;
 }
 
 .form-input:focus,
