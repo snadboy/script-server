@@ -15,7 +15,7 @@
 ## Current State
 
 **Branch:** `master` (merged from `feature/venv-management`)
-**Latest Commit:** `6e65e47` - Update session notes
+**Latest Commit:** `cd86463` - Fix schedule edit: parse external schedule format
 **Last Updated:** 2026-01-18
 **Docker Image:** `ghcr.io/snadboy/script-server:latest` (auto-builds on push to master)
 
@@ -31,6 +31,8 @@ Tested entry point detection and fixed several UI issues:
 | `b14c4f2` | Hide custom entry point behind toggle for cleaner UI |
 | `e8eb328` | Instance name on new line; show script names in Scheduled section |
 | `6e65e47` | Update session notes |
+| `f6bdf74` | Fix schedule edit: combine DELETE and PUT into single handler |
+| `cd86463` | Fix schedule edit: parse camelCase to snake_case |
 
 **Merged to master** - Docker build triggered automatically via GitHub Actions
 
@@ -128,6 +130,10 @@ Tested entry point detection and fixed several UI issues:
 # Frontend build
 cd /home/snadboy/projects/script-server/web-src
 NODE_OPTIONS=--openssl-legacy-provider npm run build
+
+# Start server (MUST use venv - tornado and other deps are installed there)
+cd /home/snadboy/projects/script-server
+source .venv/bin/activate && python launcher.py
 
 # Docker build
 cd /home/snadboy/projects/script-server
