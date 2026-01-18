@@ -15,9 +15,22 @@
 ## Current State
 
 **Branch:** `feature/venv-management`
-**Latest Commit:** `afb5981` - Add local path import option to Project Manager
-**Last Updated:** 2026-01-16
+**Latest Commit:** `b14c4f2` - Hide custom entry point behind toggle in Project Manager
+**Last Updated:** 2026-01-18
 **Docker Image:** `ghcr.io/snadboy/script-server:latest`
+
+### Recent Session (2026-01-18)
+
+Tested entry point detection and fixed several UI issues in Project Manager:
+
+| Commit | Description |
+|--------|-------------|
+| `18e93d6` | Fix entry point dropdown selection timing |
+| `7d8313d` | Fix Entry Point dropdown visibility (Materialize CSS `select { opacity: 0 }` override) |
+| `df82969` | Prevent modal from closing on outside click |
+| `b14c4f2` | Hide custom entry point behind toggle for cleaner UI |
+
+**Test project used:** `/tmp/test-project-entrypoints` - Python project with multiple entry point patterns (pyproject.toml scripts, typer/click, `__main__.py`)
 
 ### Completed Features
 
@@ -65,7 +78,7 @@
 | Script/Instance Descriptions | Done | All cards show script description + instance name; /scripts API includes description; uses computed scriptsMap for reactivity |
 | GitHub Actions Docker Build | Done | Auto-builds and pushes to ghcr.io/snadboy/script-server on push to master |
 | Venv Package Management | Done | Admin UI for managing Python packages in common venv; auto-creates venv; install/uninstall packages |
-| Project Manager | Done | Import external Python projects via Git/ZIP/Local Path; auto-detect dependencies & entry points; generate wrapper scripts |
+| Project Manager | Done | Import external Python projects via Git/ZIP/Local Path; auto-detect dependencies & entry points; generate wrapper scripts; clean entry point UI with toggle for custom input |
 
 ### Test Infrastructure
 
@@ -94,12 +107,16 @@
 
 **Documentation:** See `docs/wrapping-python-projects.md` for detailed guide on wrapping external Python projects.
 
+### Technical Notes
+
+- **Materialize CSS quirk:** The framework sets `select { opacity: 0 }` globally to hide native selects for custom styling. Custom modals using native `<select>` elements must override with `opacity: 1` and `appearance: menulist`.
+
 ---
 
 ## Pending / Suggested Next Steps
 
-1. **Docker Build** - Build a Docker image from the fork for deployment
-2. **PR to Upstream** - Consider submitting PR to `bugy/script-server`
+1. **PR to Upstream** - Consider submitting PR to `bugy/script-server`
+2. **Merge to Master** - Merge `feature/venv-management` branch to trigger Docker build
 
 ---
 
