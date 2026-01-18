@@ -10,8 +10,11 @@
     <div class="card-body">
       <div class="card-info">
         <slot name="info">
-          <div v-if="description" class="card-row description-row">
-            <span class="description-text">{{ description }}</span>
+          <div v-if="description || instanceName" class="card-row description-row">
+            <div class="description-block">
+              <span v-if="description" class="description-text">{{ description }}</span>
+              <span v-if="instanceName" class="instance-text">Instance: {{ instanceName }}</span>
+            </div>
           </div>
           <div v-if="scheduleDescription" class="card-row schedule-description-row">
             <span class="schedule-label">Schedule:</span>
@@ -80,6 +83,10 @@ export default {
       default: false
     },
     description: {
+      type: String,
+      default: ''
+    },
+    instanceName: {
       type: String,
       default: ''
     },
@@ -223,9 +230,21 @@ export default {
   border-bottom: 1px solid var(--separator-color);
 }
 
+.description-block {
+  display: flex;
+  flex-direction: column;
+}
+
 .description-text {
   font-style: italic;
   color: var(--font-color-medium);
+}
+
+.instance-text {
+  font-style: italic;
+  color: var(--font-color-medium);
+  padding-left: 1.5em;
+  margin-top: 2px;
 }
 
 .card-row.schedule-description-row {

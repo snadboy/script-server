@@ -61,7 +61,6 @@
       />
       <ScheduledSection
         :scriptFilter="selectedScript"
-        :showScriptName="false"
         :showParams="false"
       />
       <CompletedSection

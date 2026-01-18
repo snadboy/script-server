@@ -20,7 +20,8 @@
         :status="getStatus(execution)"
         :statusText="execution.fullStatus || execution.status"
         :user="execution.user"
-        :description="getExecutionDescription(execution)"
+        :description="getScriptDesc(execution.script)"
+        :instanceName="execution.instanceName"
         :isScheduled="!!execution.scheduleId"
         :scheduleDescription="getScheduleDesc(execution.scheduleId)"
         timeLabel="Started"
@@ -157,18 +158,8 @@ export default {
       return getExecutionStatus(execution);
     },
 
-    getExecutionDescription(execution) {
-      const parts = [];
-      // Add script description if available (use computed scriptsMap for reactivity)
-      const scriptDesc = this.scriptsMap[execution.script];
-      if (scriptDesc) {
-        parts.push(scriptDesc);
-      }
-      // Add instance name if available
-      if (execution.instanceName) {
-        parts.push(`Instance: ${execution.instanceName}`);
-      }
-      return parts.join(' | ');
+    getScriptDesc(scriptName) {
+      return this.scriptsMap[scriptName] || '';
     },
 
     getScheduleDesc(scheduleId) {
