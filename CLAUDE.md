@@ -15,8 +15,8 @@
 ## Current State
 
 **Branch:** `feature/venv-management`
-**Latest Commit:** (uncommitted) - Add Project Manager feature
-**Last Updated:** 2026-01-13
+**Latest Commit:** `afb5981` - Add local path import option to Project Manager
+**Last Updated:** 2026-01-16
 **Docker Image:** `ghcr.io/snadboy/script-server:latest`
 
 ### Completed Features
@@ -65,7 +65,7 @@
 | Script/Instance Descriptions | Done | All cards show script description + instance name; /scripts API includes description; uses computed scriptsMap for reactivity |
 | GitHub Actions Docker Build | Done | Auto-builds and pushes to ghcr.io/snadboy/script-server on push to master |
 | Venv Package Management | Done | Admin UI for managing Python packages in common venv; auto-creates venv; install/uninstall packages |
-| Project Manager | Done | Import external Python projects via Git/ZIP; auto-detect dependencies & entry points; generate wrapper scripts |
+| Project Manager | Done | Import external Python projects via Git/ZIP/Local Path; auto-detect dependencies & entry points; generate wrapper scripts |
 
 ### Test Infrastructure
 

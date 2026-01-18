@@ -438,7 +438,13 @@ export default {
 
     selectedProject(newVal) {
       if (newVal) {
-        this.configEntryPoint = newVal.entry_points?.[0] || '';
+        console.log('Selected project:', newVal);
+        console.log('Entry points:', newVal.entry_points);
+        // Use nextTick to ensure dropdown options are rendered before setting value
+        this.$nextTick(() => {
+          this.configEntryPoint = newVal.entry_points?.[0] || '';
+          console.log('Set configEntryPoint to:', this.configEntryPoint);
+        });
         this.customEntryPoint = '';
         this.configScriptName = newVal.name || '';
         this.configDescription = '';
@@ -479,7 +485,9 @@ export default {
       this.error = null;
       try {
         const response = await axiosInstance.get('admin/projects');
+        console.log('Projects API response:', response.data);
         this.projects = response.data.projects || [];
+        console.log('Loaded projects:', this.projects);
       } catch (e) {
         this.error = 'Failed to load projects';
         console.error('Failed to load projects:', e);

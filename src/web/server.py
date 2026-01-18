@@ -1141,6 +1141,7 @@ class ListProjectsHandler(BaseRequestHandler):
             raise tornado.web.HTTPError(503, 'Project service not available')
 
         projects = project_service.list_projects()
+        LOGGER.info(f"ListProjects returning: {projects}")
         self.write(json.dumps({'projects': projects}))
 
 
