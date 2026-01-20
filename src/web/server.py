@@ -861,6 +861,35 @@ class ToggleScheduleEnabled(BaseRequestHandler):
             raise tornado.web.HTTPError(403, reason=str(e))
 
 
+class ScheduleSettingsHandler(BaseRequestHandler):
+    @check_authorization
+    def get(self):
+        """Get schedule-related settings."""
+        retention = self.application.schedule_service.get_retention_minutes()
+        self.write(json.dumps({
+            'onetime_retention_minutes': retention
+        }))
+
+    @requires_admin_rights
+    def put(self):
+        """Update schedule settings (admin only)."""
+        try:
+            body = json.loads(self.request.body.decode('utf-8'))
+            retention = body.get('onetime_retention_minutes')
+
+            if retention is not None:
+                if not isinstance(retention, int):
+                    raise tornado.web.HTTPError(400, reason='retention must be an integer')
+                if retention < -1:
+                    raise tornado.web.HTTPError(400, reason='retention must be >= -1')
+
+                self.application.schedule_service.set_retention_minutes(retention)
+
+            self.write(json.dumps({
+                'onetime_retention_minutes': self.application.schedule_service.get_retention_minutes()
+            }))
+        except json.JSONDecodeError:
+            raise tornado.web.HTTPError(400, reason='Invalid JSON')
 
 
 # User Management Handlers
@@ -1404,6 +1433,7 @@ def init(server_config: ServerConfig,
                 (r'/schedules', GetSchedules),
                 (r'/schedules/([^/]+)', ScheduleHandler),
                 (r'/schedules/([^/]+)/enabled', ToggleScheduleEnabled),
+                (r'/schedules/settings', ScheduleSettingsHandler),
                 (r'/auth/info', AuthInfoHandler),
                 (r'/result_files/(.*)',
                  DownloadResultFile,

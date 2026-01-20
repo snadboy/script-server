@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 const STORAGE_KEY = 'scriptServer.settings';
 
 const DEFAULT_SETTINGS = {
@@ -5,21 +7,31 @@ const DEFAULT_SETTINGS = {
   logSizeLimit: 250
 };
 
+// Server-side settings (not stored in localStorage)
+const DEFAULT_SERVER_SETTINGS = {
+  onetimeRetentionMinutes: 60
+};
+
 function loadSettings() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      return {...DEFAULT_SETTINGS, ...JSON.parse(stored)};
+      return {...DEFAULT_SETTINGS, ...DEFAULT_SERVER_SETTINGS, ...JSON.parse(stored)};
     }
   } catch (e) {
     // Ignore localStorage errors
   }
-  return {...DEFAULT_SETTINGS};
+  return {...DEFAULT_SETTINGS, ...DEFAULT_SERVER_SETTINGS};
 }
 
 function saveSettings(settings) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    // Only save client-side settings to localStorage
+    const clientSettings = {
+      completedExecutionsLimit: settings.completedExecutionsLimit,
+      logSizeLimit: settings.logSizeLimit
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(clientSettings));
   } catch (e) {
     // Ignore localStorage errors
   }
@@ -33,6 +45,9 @@ export default {
   mutations: {
     SET_SETTINGS(state, settings) {
       Object.assign(state, settings);
+    },
+    SET_RETENTION(state, minutes) {
+      state.onetimeRetentionMinutes = minutes;
     }
   },
 
@@ -40,6 +55,28 @@ export default {
     updateSettings({commit, state}, settings) {
       commit('SET_SETTINGS', settings);
       saveSettings(state);
+    },
+
+    async fetchScheduleSettings({commit}) {
+      try {
+        const response = await axios.get('schedules/settings');
+        commit('SET_RETENTION', response.data.onetime_retention_minutes);
+      } catch (e) {
+        console.error('Failed to fetch schedule settings:', e);
+      }
+    },
+
+    async updateRetention({commit}, minutes) {
+      try {
+        const response = await axios.put('schedules/settings', {
+          onetime_retention_minutes: minutes
+        });
+        commit('SET_RETENTION', response.data.onetime_retention_minutes);
+        return true;
+      } catch (e) {
+        console.error('Failed to update retention setting:', e);
+        throw e;
+      }
     }
   }
 };

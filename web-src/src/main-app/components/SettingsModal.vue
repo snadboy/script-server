@@ -35,6 +35,26 @@
             />
           </div>
         </div>
+
+        <div v-if="isAdmin" class="settings-section">
+          <h6>Scheduling</h6>
+
+          <div class="setting-row">
+            <div class="setting-label-group">
+              <label for="retentionMinutes">One-time schedule retention</label>
+              <span class="setting-hint">Minutes to keep completed schedules (-1 = forever)</span>
+            </div>
+            <input
+              id="retentionMinutes"
+              v-model.number="localSettings.onetimeRetentionMinutes"
+              type="number"
+              min="-1"
+              max="10080"
+              step="5"
+              class="setting-input"
+            />
+          </div>
+        </div>
       </div>
 
       <div class="modal-footer">
@@ -46,7 +66,7 @@
 </template>
 
 <script>
-import {mapState, mapActions} from 'vuex';
+import {mapState, mapActions, mapGetters} from 'vuex';
 
 export default {
   name: 'SettingsModal',
@@ -62,38 +82,63 @@ export default {
     return {
       localSettings: {
         completedExecutionsLimit: 50,
-        logSizeLimit: 250
-      }
+        logSizeLimit: 250,
+        onetimeRetentionMinutes: 60
+      },
+      saving: false
     };
   },
 
   computed: {
-    ...mapState('settings', ['completedExecutionsLimit', 'logSizeLimit'])
+    ...mapState('settings', ['completedExecutionsLimit', 'logSizeLimit', 'onetimeRetentionMinutes']),
+    ...mapGetters('serverConfig', ['isAdmin'])
   },
 
   watch: {
-    visible(newVal) {
+    async visible(newVal) {
       if (newVal) {
         // Load current settings when modal opens
         this.localSettings.completedExecutionsLimit = this.completedExecutionsLimit;
         this.localSettings.logSizeLimit = this.logSizeLimit;
+
+        // Fetch server-side settings if admin
+        if (this.isAdmin) {
+          await this.fetchScheduleSettings();
+          this.localSettings.onetimeRetentionMinutes = this.onetimeRetentionMinutes;
+        }
       }
     }
   },
 
   methods: {
-    ...mapActions('settings', ['updateSettings']),
+    ...mapActions('settings', ['updateSettings', 'fetchScheduleSettings', 'updateRetention']),
 
     close() {
       this.$emit('close');
     },
 
-    save() {
-      this.updateSettings({
-        completedExecutionsLimit: this.localSettings.completedExecutionsLimit,
-        logSizeLimit: this.localSettings.logSizeLimit
-      });
-      this.close();
+    async save() {
+      this.saving = true;
+      try {
+        // Save client-side settings
+        this.updateSettings({
+          completedExecutionsLimit: this.localSettings.completedExecutionsLimit,
+          logSizeLimit: this.localSettings.logSizeLimit
+        });
+
+        // Save server-side settings if admin
+        if (this.isAdmin) {
+          await this.updateRetention(this.localSettings.onetimeRetentionMinutes);
+        }
+
+        this.close();
+      } catch (e) {
+        console.error('Failed to save settings:', e);
+        // Still close on error - client settings were saved
+        this.close();
+      } finally {
+        this.saving = false;
+      }
     }
   }
 };
@@ -164,6 +209,17 @@ export default {
 .setting-row label {
   font-size: 14px;
   color: var(--font-color-main);
+}
+
+.setting-label-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.setting-hint {
+  font-size: 11px;
+  color: var(--font-color-medium);
 }
 
 .setting-input {

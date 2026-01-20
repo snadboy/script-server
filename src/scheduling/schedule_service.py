@@ -59,6 +59,7 @@ class ScheduleService:
         self._config_service = config_service
         self._execution_service = execution_service
         self._onetime_retention_minutes = onetime_retention_minutes
+        self._schedules_folder_path = self._schedules_folder  # Expose for persistence
 
         (jobs, ids) = restore_jobs(self._schedules_folder)
         self._id_generator = IdGenerator(ids)
@@ -348,6 +349,19 @@ class ScheduleService:
     def stop(self):
         self._cleanup_stop_event.set()
         self.scheduler.stop()
+
+    def get_retention_minutes(self) -> int:
+        """Get the current one-time schedule retention period in minutes."""
+        return self._onetime_retention_minutes
+
+    def set_retention_minutes(self, minutes: int):
+        """Set the one-time schedule retention period in minutes.
+
+        Args:
+            minutes: Retention period. 0 = immediate cleanup, -1 = never cleanup.
+        """
+        self._onetime_retention_minutes = minutes
+        LOGGER.info(f'Updated one-time schedule retention to {minutes} minutes')
 
     def _start_cleanup_task(self):
         """Start background thread to clean up expired one-time schedules."""
