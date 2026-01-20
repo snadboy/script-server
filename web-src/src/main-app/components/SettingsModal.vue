@@ -66,7 +66,7 @@
 </template>
 
 <script>
-import {mapState, mapActions, mapGetters} from 'vuex';
+import {mapState, mapActions} from 'vuex';
 
 export default {
   name: 'SettingsModal',
@@ -91,7 +91,9 @@ export default {
 
   computed: {
     ...mapState('settings', ['completedExecutionsLimit', 'logSizeLimit', 'onetimeRetentionMinutes']),
-    ...mapGetters('serverConfig', ['isAdmin'])
+    ...mapState('auth', {
+      isAdmin: 'admin'
+    })
   },
 
   watch: {
