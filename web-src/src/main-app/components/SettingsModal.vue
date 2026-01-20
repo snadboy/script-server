@@ -246,6 +246,20 @@ export default {
   box-shadow: 0 0 0 2px rgba(38, 166, 154, 0.2);
 }
 
+/* Override Materialize validation styling */
+.setting-input:invalid,
+.setting-input.invalid,
+.setting-input:focus:invalid {
+  border-color: var(--separator-color);
+  box-shadow: none;
+  border-bottom: 1px solid var(--separator-color);
+}
+
+.setting-input:focus:invalid {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(38, 166, 154, 0.2);
+}
+
 .modal-footer {
   display: flex;
   justify-content: flex-end;
