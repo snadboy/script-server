@@ -14,8 +14,8 @@
 
 ## Current State
 
-**Branch:** `master` (merged from `feature/venv-management`)
-**Latest Commit:** (pending) - Auto-cleanup of non-recurring scheduled tasks
+**Branch:** `master`
+**Latest Commit:** `bcf1371` - Add retention setting to Settings Modal (admin only)
 **Last Updated:** 2026-01-20
 **Docker Image:** `ghcr.io/snadboy/script-server:latest` (auto-builds on push to master)
 
@@ -23,13 +23,22 @@
 
 Implemented auto-cleanup of completed one-time scheduled tasks:
 
+| Commit | Description |
+|--------|-------------|
+| `b476b53` | Add auto-cleanup of non-recurring scheduled tasks |
+| `bcf1371` | Add retention setting to Settings Modal (admin only) |
+
+**Features added:**
+
 | Feature | Description |
 |---------|-------------|
-| Completion Time Tracking | Non-recurring schedules record completion_time when executed |
-| Configurable Retention | `scheduling.onetime_schedule_retention_minutes` in conf.json (default 60, -1 to disable) |
+| Completion Time Tracking | Non-recurring schedules record `completion_time` when executed |
+| Configurable Retention | Default 60 min, 0 = immediate, -1 = never delete |
 | Background Cleanup | Runs every 5 minutes + on startup to delete expired schedules |
-| Expired Status API | GET /schedules returns `expired` and `auto_delete_at` for completed one-time schedules |
+| Expired Status API | GET /schedules returns `expired` and `auto_delete_at` fields |
 | Visual Distinction | Green "Completed" badge, reduced opacity, auto-delete countdown in UI |
+| Settings Modal | Admins can configure retention via Settings (gear icon) in sidebar |
+| Runtime API | GET/PUT /schedules/settings endpoint for retention config |
 
 ### Previous Session (2026-01-18)
 
@@ -207,8 +216,10 @@ docker build -t script-server:custom .
 - `src/project_manager/project_service.py` (new - project import/management service)
 - `web-src/src/main-app/components/ProjectsModal.vue` (new - admin UI for project management)
 - `src/scheduling/schedule_config.py` (modified - added completion_time field for non-recurring schedule cleanup)
-- `src/scheduling/schedule_service.py` (modified - added auto-cleanup logic, expiry helpers, background cleanup task)
+- `src/scheduling/schedule_service.py` (modified - added auto-cleanup logic, expiry helpers, background cleanup task, get/set retention methods)
 - `src/model/server_conf.py` (modified - added onetime_schedule_retention_minutes config)
 - `src/main.py` (modified - passes retention config to ScheduleService)
-- `src/web/server.py` (modified - added expired and auto_delete_at to schedule API response)
+- `src/web/server.py` (modified - added expired/auto_delete_at to API, ScheduleSettingsHandler for retention config)
 - `web-src/src/main-app/components/common/ScheduleCard.vue` (modified - added expired schedule visual distinction)
+- `web-src/src/main-app/components/SettingsModal.vue` (modified - added retention setting for admins)
+- `web-src/src/main-app/store/settings.js` (modified - added server-side retention setting with API calls)
