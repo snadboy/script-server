@@ -1,7 +1,8 @@
 import json
 import logging
 import os
-from datetime import timezone
+import threading
+from datetime import timezone, timedelta
 
 from auth.user import User
 from config.config_service import ConfigService
@@ -50,12 +51,14 @@ class ScheduleService:
     def __init__(self,
                  config_service: ConfigService,
                  execution_service: ExecutionService,
-                 conf_folder):
+                 conf_folder,
+                 onetime_retention_minutes: int = 60):
         self._schedules_folder = os.path.join(conf_folder, 'schedules')
         file_utils.prepare_folder(self._schedules_folder)
 
         self._config_service = config_service
         self._execution_service = execution_service
+        self._onetime_retention_minutes = onetime_retention_minutes
 
         (jobs, ids) = restore_jobs(self._schedules_folder)
         self._id_generator = IdGenerator(ids)
@@ -64,6 +67,13 @@ class ScheduleService:
 
         for job_path, job in jobs.items():
             self.schedule_job(job, job_path)
+
+        # Clean up expired schedules on startup
+        self._cleanup_expired_schedules()
+
+        # Start background cleanup task
+        self._cleanup_stop_event = threading.Event()
+        self._start_cleanup_task()
 
     def create_job(self, script_name, parameter_values, incoming_schedule_config, user: User):
         if user is None:
@@ -163,7 +173,10 @@ class ScheduleService:
             if job.schedule.repeatable:
                 job.schedule.executions_count += 1
                 job.schedule.last_execution_time = date_utils.now(tz=timezone.utc)
-
+                self.save_job(job)
+            else:
+                # Non-recurring: mark completion time for auto-cleanup tracking
+                job.schedule.completion_time = date_utils.now(tz=timezone.utc)
                 self.save_job(job)
 
         except:
@@ -333,7 +346,84 @@ class ScheduleService:
         return job
 
     def stop(self):
+        self._cleanup_stop_event.set()
         self.scheduler.stop()
+
+    def _start_cleanup_task(self):
+        """Start background thread to clean up expired one-time schedules."""
+        if self._onetime_retention_minutes < 0:
+            LOGGER.info('One-time schedule auto-cleanup is disabled (retention=-1)')
+            return
+
+        def cleanup_loop():
+            while not self._cleanup_stop_event.wait(timeout=300):  # Run every 5 minutes
+                try:
+                    self._cleanup_expired_schedules()
+                except Exception:
+                    LOGGER.exception('Error during scheduled cleanup')
+
+        cleanup_thread = threading.Thread(target=cleanup_loop, daemon=True, name='schedule-cleanup')
+        cleanup_thread.start()
+        LOGGER.info(f'Started schedule cleanup task (retention={self._onetime_retention_minutes} minutes)')
+
+    def _cleanup_expired_schedules(self):
+        """Remove expired one-time schedules that have exceeded the retention period."""
+        if self._onetime_retention_minutes < 0:
+            return  # Cleanup disabled
+
+        now = date_utils.now(tz=timezone.utc)
+        cleaned_count = 0
+
+        for file in os.listdir(self._schedules_folder):
+            if not file.endswith('.json'):
+                continue
+
+            try:
+                job_path = os.path.join(self._schedules_folder, file)
+                content = file_utils.read_file(job_path)
+                job_json = custom_json.loads(content)
+                job = scheduling_job.from_dict(job_json)
+
+                expiry_time = self.get_expiry_time(job)
+                if expiry_time is not None and now >= expiry_time:
+                    # Cancel any pending scheduled execution
+                    self.scheduler.cancel(job_path)
+                    # Delete the job file
+                    os.remove(job_path)
+                    cleaned_count += 1
+                    LOGGER.info(f'Auto-deleted expired one-time schedule {job.id} for script {job.script_name}')
+            except Exception:
+                LOGGER.exception(f'Failed to process schedule file during cleanup: {file}')
+
+        if cleaned_count > 0:
+            LOGGER.info(f'Cleaned up {cleaned_count} expired one-time schedule(s)')
+
+    def is_schedule_expired(self, job: SchedulingJob) -> bool:
+        """Check if a one-time schedule has completed and is awaiting cleanup."""
+        if job.schedule.repeatable:
+            return False
+        return job.schedule.completion_time is not None
+
+    def get_expiry_time(self, job: SchedulingJob):
+        """Get the time when a completed one-time schedule will be auto-deleted.
+
+        Returns None if:
+        - Schedule is recurring
+        - Schedule has not completed yet
+        - Auto-cleanup is disabled (retention=-1)
+        """
+        if job.schedule.repeatable:
+            return None
+        if job.schedule.completion_time is None:
+            return None
+        if self._onetime_retention_minutes < 0:
+            return None
+
+        if self._onetime_retention_minutes == 0:
+            # Delete immediately after completion
+            return job.schedule.completion_time
+
+        return job.schedule.completion_time + timedelta(minutes=self._onetime_retention_minutes)
 
 
 class AccessDeniedException(Exception):

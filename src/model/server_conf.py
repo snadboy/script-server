@@ -45,6 +45,8 @@ class ServerConfig(object):
         self.xsrf_protection = None
         # noinspection PyTypeChecker
         self.env_vars: EnvVariables = None
+        # Auto-cleanup settings for one-time schedules (default 60 minutes, -1 to disable)
+        self.onetime_schedule_retention_minutes = 60
 
     def get_port(self):
         return self.port
@@ -217,6 +219,12 @@ def from_json(conf_path, temp_folder):
 
     config.secret_storage_file = json_object.get('secret_storage_file', os.path.join(temp_folder, 'secret.dat'))
     config.xsrf_protection = _parse_xsrf_protection(security)
+
+    # Scheduling configuration
+    scheduling_config = model_helper.read_dict(json_object, 'scheduling')
+    if scheduling_config:
+        config.onetime_schedule_retention_minutes = read_int_from_config(
+            'onetime_schedule_retention_minutes', scheduling_config, default=60)
 
     return config
 

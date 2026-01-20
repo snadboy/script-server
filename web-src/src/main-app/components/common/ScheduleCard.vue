@@ -1,11 +1,12 @@
 <template>
-  <div class="schedule-card" :class="{ 'schedule-disabled': schedule.enabled === false }">
+  <div class="schedule-card" :class="{ 'schedule-disabled': schedule.enabled === false, 'schedule-expired': schedule.expired }">
     <div class="card-header">
       <span v-if="showScriptName" class="script-name">{{ schedule.script_name }}</span>
       <div class="badge-container">
-        <span v-if="schedule.schedule.repeatable" class="status-badge status-recurring">Recurring</span>
+        <span v-if="schedule.expired" class="status-badge status-completed">Completed</span>
+        <span v-else-if="schedule.schedule.repeatable" class="status-badge status-recurring">Recurring</span>
         <span v-else class="status-badge status-once">One-time</span>
-        <span v-if="schedule.enabled === false" class="status-badge status-disabled">Disabled</span>
+        <span v-if="schedule.enabled === false && !schedule.expired" class="status-badge status-disabled">Disabled</span>
       </div>
     </div>
     <div class="card-body">
@@ -22,8 +23,11 @@
           <span class="value">{{ schedule.last_execution ? formattedLastExecution : 'No prior runs' }}</span>
         </div>
         <div class="card-row">
-          <span class="label">Next run:</span>
-          <span class="value next-run" :class="{ 'disabled-text': schedule.enabled === false }">
+          <span class="label">{{ schedule.expired ? 'Status:' : 'Next run:' }}</span>
+          <span v-if="schedule.expired" class="value expired-text">
+            {{ autoDeleteText }}
+          </span>
+          <span v-else class="value next-run" :class="{ 'disabled-text': schedule.enabled === false }">
             {{ schedule.enabled === false ? 'Disabled' : formattedNextExecution }}
           </span>
         </div>
@@ -49,7 +53,7 @@
                 title="Edit schedule">
           <i class="material-icons">edit</i>
         </button>
-        <button v-if="schedule.schedule.repeatable"
+        <button v-if="schedule.schedule.repeatable && !schedule.expired"
                 class="action-btn toggle-btn waves-effect"
                 :disabled="toggling"
                 @click.stop="$emit('toggle-enabled')"
@@ -146,6 +150,32 @@ export default {
 
     hasParams() {
       return hasParameters(this.schedule);
+    },
+
+    autoDeleteText() {
+      if (!this.schedule.auto_delete_at) {
+        return 'Completed - will be kept indefinitely';
+      }
+
+      const deleteTime = new Date(this.schedule.auto_delete_at);
+      const now = new Date();
+      const diffMs = deleteTime - now;
+
+      if (diffMs <= 0) {
+        return 'Completed - deleting soon';
+      }
+
+      const diffMinutes = Math.ceil(diffMs / 60000);
+      if (diffMinutes < 60) {
+        return `Completed - auto-deletes in ${diffMinutes} min`;
+      }
+
+      const diffHours = Math.floor(diffMinutes / 60);
+      const remainingMinutes = diffMinutes % 60;
+      if (remainingMinutes === 0) {
+        return `Completed - auto-deletes in ${diffHours}h`;
+      }
+      return `Completed - auto-deletes in ${diffHours}h ${remainingMinutes}m`;
     }
   },
 
@@ -169,6 +199,11 @@ export default {
 
 .schedule-card.schedule-disabled {
   opacity: 0.6;
+}
+
+.schedule-card.schedule-expired {
+  opacity: 0.7;
+  border-left: 3px solid var(--status-success-color);
 }
 
 .card-header {
@@ -219,6 +254,11 @@ export default {
 .status-disabled {
   background: var(--status-error-bg);
   color: var(--status-error-color);
+}
+
+.status-completed {
+  background: var(--status-success-bg);
+  color: var(--status-success-color);
 }
 
 .card-body {
@@ -286,6 +326,12 @@ export default {
 .disabled-text {
   color: var(--status-disabled-color) !important;
   font-weight: normal !important;
+}
+
+.expired-text {
+  color: var(--status-success-color) !important;
+  font-weight: 500;
+  font-style: italic;
 }
 
 .card-actions {

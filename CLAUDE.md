@@ -15,11 +15,23 @@
 ## Current State
 
 **Branch:** `master` (merged from `feature/venv-management`)
-**Latest Commit:** `cd86463` - Fix schedule edit: parse external schedule format
-**Last Updated:** 2026-01-18
+**Latest Commit:** (pending) - Auto-cleanup of non-recurring scheduled tasks
+**Last Updated:** 2026-01-20
 **Docker Image:** `ghcr.io/snadboy/script-server:latest` (auto-builds on push to master)
 
-### Recent Session (2026-01-18)
+### Recent Session (2026-01-20)
+
+Implemented auto-cleanup of completed one-time scheduled tasks:
+
+| Feature | Description |
+|---------|-------------|
+| Completion Time Tracking | Non-recurring schedules record completion_time when executed |
+| Configurable Retention | `scheduling.onetime_schedule_retention_minutes` in conf.json (default 60, -1 to disable) |
+| Background Cleanup | Runs every 5 minutes + on startup to delete expired schedules |
+| Expired Status API | GET /schedules returns `expired` and `auto_delete_at` for completed one-time schedules |
+| Visual Distinction | Green "Completed" badge, reduced opacity, auto-delete countdown in UI |
+
+### Previous Session (2026-01-18)
 
 Tested entry point detection and fixed several UI issues:
 
@@ -83,6 +95,7 @@ Tested entry point detection and fixed several UI issues:
 | GitHub Actions Docker Build | Done | Auto-builds and pushes to ghcr.io/snadboy/script-server on push to master |
 | Venv Package Management | Done | Admin UI for managing Python packages in common venv; auto-creates venv; install/uninstall packages |
 | Project Manager | Done | Import external Python projects via Git/ZIP/Local Path; auto-detect dependencies & entry points; generate wrapper scripts; clean entry point UI with toggle for custom input |
+| One-time Schedule Auto-Cleanup | Done | Completed non-recurring schedules auto-delete after configurable retention period (default 60 min); shows "Completed" badge with auto-delete countdown in UI |
 
 ### Test Infrastructure
 
@@ -193,3 +206,9 @@ docker build -t script-server:custom .
 - `src/project_manager/__init__.py` (new - project manager module)
 - `src/project_manager/project_service.py` (new - project import/management service)
 - `web-src/src/main-app/components/ProjectsModal.vue` (new - admin UI for project management)
+- `src/scheduling/schedule_config.py` (modified - added completion_time field for non-recurring schedule cleanup)
+- `src/scheduling/schedule_service.py` (modified - added auto-cleanup logic, expiry helpers, background cleanup task)
+- `src/model/server_conf.py` (modified - added onetime_schedule_retention_minutes config)
+- `src/main.py` (modified - passes retention config to ScheduleService)
+- `src/web/server.py` (modified - added expired and auto_delete_at to schedule API response)
+- `web-src/src/main-app/components/common/ScheduleCard.vue` (modified - added expired schedule visual distinction)

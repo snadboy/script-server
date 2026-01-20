@@ -87,6 +87,9 @@ def read_schedule_config(incoming_schedule_config):
 
         if prepared_schedule_config.repeat_unit == 'weeks':
             prepared_schedule_config.weekdays = read_weekdays(incoming_schedule_config)
+    else:
+        # For non-recurring schedules, parse completion_time if present
+        prepared_schedule_config.completion_time = model_helper.read_datetime_from_config('completion_time', incoming_schedule_config)
 
     return prepared_schedule_config
 
@@ -103,6 +106,7 @@ class ScheduleConfig:
         self.repeat_unit = None
         self.repeat_period = None
         self.weekdays = None
+        self.completion_time = None  # type: datetime - For non-recurring schedules, when execution completed
 
     def as_serializable_dict(self):
         result = {
@@ -130,6 +134,9 @@ class ScheduleConfig:
 
         if self.weekdays is not None:
             result['weekdays'] = self.weekdays
+
+        if self.completion_time is not None:
+            result['completion_time'] = date_utils.to_iso_string(self.completion_time)
 
         return result
 

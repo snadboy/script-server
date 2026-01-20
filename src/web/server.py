@@ -760,7 +760,8 @@ class GetSchedules(BaseRequestHandler):
     def get(self, user):
         script_name = self.get_query_argument('script', default=None)
 
-        jobs = self.application.schedule_service.get_jobs(user=user, script_name=script_name)
+        schedule_service = self.application.schedule_service
+        jobs = schedule_service.get_jobs(user=user, script_name=script_name)
 
         schedules = []
         for job in jobs:
@@ -774,6 +775,11 @@ class GetSchedules(BaseRequestHandler):
                 last_time = job.schedule.get_last_execution_time()
                 if last_time:
                     schedule_data['last_execution'] = last_time.isoformat()
+            # Add expired status and auto-delete time for non-recurring schedules
+            schedule_data['expired'] = schedule_service.is_schedule_expired(job)
+            expiry_time = schedule_service.get_expiry_time(job)
+            if expiry_time:
+                schedule_data['auto_delete_at'] = expiry_time.isoformat()
             schedules.append(schedule_data)
 
         self.write(json.dumps({'schedules': schedules}))

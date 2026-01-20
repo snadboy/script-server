@@ -141,7 +141,11 @@ def main():
 
     executions_callback_feature.start()
 
-    schedule_service = ScheduleService(config_service, execution_service, CONFIG_FOLDER)
+    schedule_service = ScheduleService(
+        config_service,
+        execution_service,
+        CONFIG_FOLDER,
+        onetime_retention_minutes=server_config.onetime_schedule_retention_minutes)
 
     server.init(
         server_config,
