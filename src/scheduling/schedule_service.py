@@ -416,7 +416,13 @@ class ScheduleService:
         """Check if a one-time schedule has completed and is awaiting cleanup."""
         if job.schedule.repeatable:
             return False
-        return job.schedule.completion_time is not None
+        # Has explicit completion_time (new behavior)
+        if job.schedule.completion_time is not None:
+            return True
+        # Legacy: no completion_time but start_datetime is in the past (already ran)
+        if date_utils.is_past(job.schedule.start_datetime):
+            return True
+        return False
 
     def get_expiry_time(self, job: SchedulingJob):
         """Get the time when a completed one-time schedule will be auto-deleted.
@@ -428,16 +434,23 @@ class ScheduleService:
         """
         if job.schedule.repeatable:
             return None
-        if job.schedule.completion_time is None:
-            return None
         if self._onetime_retention_minutes < 0:
             return None
 
+        # Determine completion time: explicit or inferred from past start_datetime
+        completion_time = job.schedule.completion_time
+        if completion_time is None:
+            if date_utils.is_past(job.schedule.start_datetime):
+                # Legacy schedule: use start_datetime as completion time
+                completion_time = job.schedule.start_datetime
+            else:
+                return None  # Not completed yet
+
         if self._onetime_retention_minutes == 0:
             # Delete immediately after completion
-            return job.schedule.completion_time
+            return completion_time
 
-        return job.schedule.completion_time + timedelta(minutes=self._onetime_retention_minutes)
+        return completion_time + timedelta(minutes=self._onetime_retention_minutes)
 
 
 class AccessDeniedException(Exception):
