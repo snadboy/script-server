@@ -15,7 +15,7 @@
 ## Current State
 
 **Branch:** `master`
-**Latest Commit:** `bcf1371` - Add retention setting to Settings Modal (admin only)
+**Latest Commit:** `72ee089` - Fix: Clean up legacy one-time schedules without completion_time
 **Last Updated:** 2026-01-20
 **Docker Image:** `ghcr.io/snadboy/script-server:latest` (auto-builds on push to master)
 
@@ -27,6 +27,10 @@ Implemented auto-cleanup of completed one-time scheduled tasks:
 |--------|-------------|
 | `b476b53` | Add auto-cleanup of non-recurring scheduled tasks |
 | `bcf1371` | Add retention setting to Settings Modal (admin only) |
+| `7ee892e` | Fix: Use auth store for admin check in SettingsModal |
+| `5dffc67` | Fix: Override Materialize red validation border on settings inputs |
+| `b018d7b` | Fix: Force override Materialize input border styles with !important |
+| `72ee089` | Fix: Clean up legacy one-time schedules without completion_time |
 
 **Features added:**
 
