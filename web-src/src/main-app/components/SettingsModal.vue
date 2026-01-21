@@ -247,17 +247,21 @@ export default {
 }
 
 /* Override Materialize validation styling */
+.setting-input,
 .setting-input:invalid,
 .setting-input.invalid,
-.setting-input:focus:invalid {
-  border-color: var(--separator-color);
-  box-shadow: none;
-  border-bottom: 1px solid var(--separator-color);
+.setting-input:focus:invalid,
+.setting-input[type="number"] {
+  border-bottom: 1px solid var(--separator-color) !important;
+  box-shadow: none !important;
 }
 
-.setting-input:focus:invalid {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px rgba(38, 166, 154, 0.2);
+.setting-input:focus,
+.setting-input:focus:invalid,
+.setting-input[type="number"]:focus {
+  border-color: var(--primary-color) !important;
+  border-bottom-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 2px rgba(38, 166, 154, 0.2) !important;
 }
 
 .modal-footer {
