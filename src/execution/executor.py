@@ -187,56 +187,108 @@ class ScriptExecutor:
 
 
 def build_command_args(param_values, config):
+    """Build command arguments from parameter values.
+
+    For scripts with verbs configured:
+    - First adds the verb (from the verbs_config parameter)
+    - Then adds positional params with verb_position='after_verb'
+    - Then adds regular params with their flags
+    - Finally adds positional params with verb_position='end'
+
+    For scripts without verbs, behavior is unchanged.
+    """
     result = []
+    after_verb_args = []
+    end_args = []
+    regular_args = []
+
+    # Check if script has verbs configured
+    verbs_config = getattr(config, 'verbs_config', None)
+    has_verbs = verbs_config and verbs_config.enabled
+
+    # Extract the verb value if verbs are configured
+    verb_value = None
+    verb_param_name = None
+    if has_verbs:
+        verb_param_name = verbs_config.parameter_name
+        verb_value = param_values.get(verb_param_name)
 
     for parameter in config.parameters:
         name = parameter.name
         option_name = parameter.param
+        verb_position = getattr(parameter, 'verb_position', None)
 
         if not parameter.pass_as.pass_as_argument():
+            continue
+
+        # Skip the verb parameter itself - it's handled separately
+        if has_verbs and name == verb_param_name:
             continue
 
         if name in param_values:
             value = param_values[name]
 
-            if parameter.no_value:
-                if value is True and option_name:
-                    result.append(option_name)
+            # Build argument(s) for this parameter
+            param_args = _build_param_args(parameter, option_name, value)
 
-            elif value:
-
-                if option_name:
-                    if isinstance(value, list):
-                        if len(value) == 0:
-                            continue
-
-                        if parameter.multiselect_argument_type == 'argument_per_value':
-                            if parameter.same_arg_param:
-                                result.append(option_name + str(value[0]))
-                                result.extend(value[1:])
-                            else:
-                                result.append(option_name)
-                                result.extend(value)
-                        elif parameter.multiselect_argument_type == 'repeat_param_value':
-                            if parameter.same_arg_param:
-                                for el in value:
-                                    result.append(option_name + str(el))
-                            else:
-                                for el in value:
-                                    result.append(option_name)
-                                    result.append(el)
-                    else:
-                        if parameter.same_arg_param:
-                            result.append(option_name + str(value))
-                        else:
-                            result.append(option_name)
-                            result.append(value)
-
+            if param_args:
+                if verb_position == 'after_verb':
+                    after_verb_args.extend(param_args)
+                elif verb_position == 'end':
+                    end_args.extend(param_args)
                 else:
-                    if isinstance(value, list):
-                        result.extend(value)
+                    regular_args.extend(param_args)
+
+    # Assemble final result: verb (if any) + after_verb + regular + end
+    if has_verbs and verb_value:
+        result.append(verb_value)
+
+    result.extend(after_verb_args)
+    result.extend(regular_args)
+    result.extend(end_args)
+
+    return result
+
+
+def _build_param_args(parameter, option_name, value):
+    """Build command line arguments for a single parameter."""
+    result = []
+
+    if parameter.no_value:
+        if value is True and option_name:
+            result.append(option_name)
+    elif value:
+        if option_name:
+            if isinstance(value, list):
+                if len(value) == 0:
+                    return result
+
+                if parameter.multiselect_argument_type == 'argument_per_value':
+                    if parameter.same_arg_param:
+                        result.append(option_name + str(value[0]))
+                        result.extend(value[1:])
                     else:
-                        result.append(value)
+                        result.append(option_name)
+                        result.extend(value)
+                elif parameter.multiselect_argument_type == 'repeat_param_value':
+                    if parameter.same_arg_param:
+                        for el in value:
+                            result.append(option_name + str(el))
+                    else:
+                        for el in value:
+                            result.append(option_name)
+                            result.append(el)
+            else:
+                if parameter.same_arg_param:
+                    result.append(option_name + str(value))
+                else:
+                    result.append(option_name)
+                    result.append(value)
+        else:
+            if isinstance(value, list):
+                result.extend(value)
+            else:
+                result.append(value)
 
     return result
 

@@ -49,7 +49,8 @@ ParameterUiSeparator = namedtuple('ParameterUiSeparator', ['type', 'title'])
     'file_type',
     'file_extensions',
     'file_recursive',
-    'ui_width_weight')
+    'ui_width_weight',
+    'verb_position')  # Positional placement for verb commands: 'after_verb' or 'end'
 class ParameterModel(object):
     def __init__(self, parameter_config, username, audit_name,
                  other_params_supplier,
@@ -114,6 +115,11 @@ class ParameterModel(object):
         self.excluded_files_matcher = _resolve_excluded_files(config, 'excluded_files', self._list_files_dir)
 
         self.constant = read_bool_from_config('constant', config, default=False)
+
+        # Parse verb_position for CLI verb/subcommand support
+        # Values: 'after_verb' (positional right after verb), 'end' (positional at end), or None (use param flag)
+        self.verb_position = read_str_from_config(config, 'verb_position', blank_to_none=True,
+                                                   allowed_values=['after_verb', 'end'])
 
         ui_config = config.get('ui')
         if ui_config:
@@ -630,6 +636,7 @@ def get_sorted_config(param_config):
                  'regex',
                  'multiselect_argument_type',
                  'separator',
+                 'verb_position',
                  'file_dir',
                  'file_recursive',
                  'file_type',

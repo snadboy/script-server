@@ -20,7 +20,7 @@ def config_to_external(config, id, external_id=None):
 
         parameters.append(external_param)
 
-    return {
+    result = {
         'id': id,
         'clientModelId': external_id,
         'name': config.name,
@@ -30,12 +30,20 @@ def config_to_external(config, id, external_id=None):
         'outputFormat': config.output_format
     }
 
+    # Add verbs configuration if present
+    verbs_config = getattr(config, 'verbs_config', None)
+    if verbs_config and verbs_config.enabled:
+        result['verbs'] = verbs_config.to_dict()
+        result['sharedParameters'] = getattr(config, 'shared_parameters', [])
+
+    return result
+
 
 def parameter_to_external(parameter):
     if parameter.constant:
         return None
 
-    return {
+    result = {
         'name': parameter.name,
         'description': parameter.description,
         'withoutValue': parameter.no_value,
@@ -56,6 +64,13 @@ def parameter_to_external(parameter):
             'separatorBefore': parameter.ui_separator._asdict() if parameter.ui_separator else None
         }
     }
+
+    # Add verb_position if set
+    verb_position = getattr(parameter, 'verb_position', None)
+    if verb_position:
+        result['verbPosition'] = verb_position
+
+    return result
 
 
 def to_short_execution_log(history_entries, running_script_ids=None):

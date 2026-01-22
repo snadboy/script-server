@@ -15,11 +15,65 @@
 ## Current State
 
 **Branch:** `master`
-**Latest Commit:** `72ee089` - Fix: Clean up legacy one-time schedules without completion_time
-**Last Updated:** 2026-01-20
+**Latest Commit:** (uncommitted) - CLI Verb/Subcommand Support
+**Last Updated:** 2026-01-21
 **Docker Image:** `ghcr.io/snadboy/script-server:latest` (auto-builds on push to master)
 
-### Recent Session (2026-01-20)
+### Recent Session (2026-01-21)
+
+Implemented CLI verb/subcommand support where scripts can define multiple verbs (like `git clone`, `docker run`), each with their own set of required/optional parameters.
+
+**Features added:**
+
+| Feature | Description |
+|---------|-------------|
+| Verb Configuration | New `verbs` section in script config to define subcommands |
+| VerbOption Model | Defines name, label, description, parameters, and required_parameters per verb |
+| Verb-aware Command Building | Executor places verb first, then positional `after_verb` params, then flagged params, then `end` positional params |
+| verb_position Parameter | New parameter field: `after_verb` (positional after verb) or `end` (positional at end) |
+| shared_parameters | Parameters visible across all verbs (e.g., `--verbose`) |
+| VerbSelector.vue | Frontend dropdown component for selecting verb/subcommand |
+| Parameter Filtering | Only parameters for selected verb are shown in UI |
+| Verb-specific Required | Parameters can be required only for certain verbs |
+| ExecuteModal Support | Verb selector integrated into Execute dialog with parameter filtering |
+| API Extension | `verbs` and `sharedParameters` serialized in config API response |
+
+**Example config format:**
+```json
+{
+  "verbs": {
+    "parameter_name": "action",
+    "default": "list",
+    "options": [
+      {
+        "name": "create",
+        "label": "Create Item",
+        "parameters": ["name", "type"],
+        "required_parameters": ["name"]
+      }
+    ]
+  },
+  "shared_parameters": ["verbose"],
+  "parameters": [
+    {"name": "name", "verb_position": "after_verb"},
+    {"name": "verbose", "param": "-v", "no_value": true}
+  ]
+}
+```
+
+**Files created/modified:**
+- `src/model/verb_config.py` (new)
+- `src/model/script_config.py` (modified)
+- `src/model/parameter_config.py` (modified)
+- `src/execution/executor.py` (modified)
+- `src/model/external_model.py` (modified)
+- `web-src/src/main-app/components/scripts/VerbSelector.vue` (new)
+- `web-src/src/main-app/components/scripts/script-parameters-view.vue` (modified)
+- `web-src/src/main-app/components/scripts/ExecuteModal.vue` (modified)
+- `web-src/src/main-app/store/scriptSetup.js` (modified)
+- `conf/runners/verb_demo.json` (new - test config)
+
+### Previous Session (2026-01-20)
 
 Implemented auto-cleanup of completed one-time scheduled tasks:
 
@@ -109,6 +163,7 @@ Tested entry point detection and fixed several UI issues:
 | Venv Package Management | Done | Admin UI for managing Python packages in common venv; auto-creates venv; install/uninstall packages |
 | Project Manager | Done | Import external Python projects via Git/ZIP/Local Path; auto-detect dependencies & entry points; generate wrapper scripts; clean entry point UI with toggle for custom input |
 | One-time Schedule Auto-Cleanup | Done | Completed non-recurring schedules auto-delete after configurable retention period (default 60 min); shows "Completed" badge with auto-delete countdown in UI |
+| CLI Verb/Subcommand Support | Done | Scripts can define verbs (like git clone, docker run) with per-verb parameters, required params, and positional placement |
 
 ### Test Infrastructure
 

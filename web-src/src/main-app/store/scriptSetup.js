@@ -20,7 +20,8 @@ export default {
         errors: {},
         nextReloadValues: null,
         _parameterAllowedValues: {},
-        _default_values_from_config: {}
+        _default_values_from_config: {},
+        selectedVerb: null
     },
     actions: {
         reset({commit}) {
@@ -29,6 +30,7 @@ export default {
             commit('SET_FORCED_VALUE_PARAMETERS', []);
             commit('SET_NEXT_RELOAD_VALUES', null);
             commit('RESET_DEFAULT_VALUES');
+            commit('SET_SELECTED_VERB', null);
         },
 
         initFromParameters({state, dispatch, commit}, {scriptConfig, parameters}) {
@@ -197,6 +199,71 @@ export default {
         },
         MEMORIZE_DEFAULT_VALUE(state, {parameterName, defaultValue}) {
             state._default_values_from_config[parameterName] = defaultValue;
+        },
+        SET_SELECTED_VERB(state, verb) {
+            state.selectedVerb = verb;
+        }
+    },
+    getters: {
+        // Get the current verb selection
+        currentVerb: (state, getters, rootState) => {
+            const config = rootState.scriptConfig?.scriptConfig;
+            if (!config?.verbs) return null;
+
+            const verbParamName = config.verbs.parameterName || 'verb';
+
+            // First check selectedVerb state
+            if (state.selectedVerb) return state.selectedVerb;
+
+            // Then check parameter values
+            const value = state.parameterValues[verbParamName];
+            if (value) return value;
+
+            // Fall back to default
+            return config.verbs.default || (config.verbs.options?.[0]?.name);
+        },
+
+        // Get visible parameters for the current verb
+        visibleParameters: (state, getters, rootState) => {
+            const config = rootState.scriptConfig?.scriptConfig;
+            const parameters = rootState.scriptConfig?.parameters || [];
+
+            if (!config?.verbs || !config.verbs.options || config.verbs.options.length === 0) {
+                // No verbs configured, show all parameters
+                return parameters;
+            }
+
+            const currentVerb = getters.currentVerb;
+            if (!currentVerb) return parameters;
+
+            const verbOption = config.verbs.options.find(v => v.name === currentVerb);
+            if (!verbOption) return parameters;
+
+            // Get visible params for this verb + shared params
+            const verbParams = verbOption.parameters || [];
+            const sharedParams = config.sharedParameters || [];
+            const visibleNames = new Set([...verbParams, ...sharedParams]);
+
+            // Also include the verb parameter itself (so the selector is shown)
+            const verbParamName = config.verbs.parameterName || 'verb';
+            visibleNames.add(verbParamName);
+
+            return parameters.filter(p => visibleNames.has(p.name));
+        },
+
+        // Get required parameters for the current verb
+        requiredParametersForVerb: (state, getters, rootState) => {
+            const config = rootState.scriptConfig?.scriptConfig;
+
+            if (!config?.verbs || !config.verbs.options || config.verbs.options.length === 0) {
+                return [];
+            }
+
+            const currentVerb = getters.currentVerb;
+            if (!currentVerb) return [];
+
+            const verbOption = config.verbs.options.find(v => v.name === currentVerb);
+            return verbOption?.requiredParameters || [];
         }
     }
 }

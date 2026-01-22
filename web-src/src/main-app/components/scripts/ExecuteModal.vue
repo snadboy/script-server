@@ -7,6 +7,17 @@
       </div>
 
       <div class="modal-body">
+        <!-- Verb selector (shown when script has verbs configured) -->
+        <div v-if="hasVerbs" class="verb-section">
+          <label class="section-label">Command</label>
+          <select v-model="selectedVerb" class="verb-select" @change="onVerbChanged">
+            <option v-for="verb in verbOptions" :key="verb.name" :value="verb.name">
+              {{ verb.label }}
+            </option>
+          </select>
+          <p v-if="selectedVerbDescription" class="verb-description">{{ selectedVerbDescription }}</p>
+        </div>
+
         <div class="instance-field input-field">
           <input type="text" v-model="instanceName" id="execute-instance"
                  placeholder="Optional identifier for this execution">
@@ -16,7 +27,7 @@
           </button>
         </div>
 
-        <div v-if="hasParameters" class="parameters-section">
+        <div v-if="hasVisibleParameters" class="parameters-section">
           <span class="parameters-label">Parameters</span>
           <div class="params-table-wrapper">
             <table class="params-table">
@@ -28,10 +39,11 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="param in parameters" :key="param.name" :class="{ 'required-param': param.required }">
+                <tr v-for="param in visibleParameters" :key="param.name"
+                    :class="{ 'required-param': isRequiredParam(param) }">
                   <td class="param-name">
                     {{ param.name }}
-                    <span v-if="param.required" class="required-marker" title="Required">*</span>
+                    <span v-if="isRequiredParam(param)" class="required-marker" title="Required">*</span>
                   </td>
                   <td class="param-value">
                     <input v-if="!param.withoutValue && param.type !== 'list' && param.type !== 'multiselect'"
@@ -92,7 +104,7 @@
 </template>
 
 <script>
-import {mapState, mapActions} from 'vuex';
+import {mapState, mapActions, mapGetters} from 'vuex';
 import {isNull, isEmptyString, isEmptyValue} from '@/common/utils/common';
 import clone from 'lodash/clone';
 
@@ -113,7 +125,8 @@ export default {
   data() {
     return {
       instanceName: '',
-      localValues: {}
+      localValues: {},
+      selectedVerb: null
     };
   },
 
@@ -125,16 +138,68 @@ export default {
     ...mapState('scriptSetup', {
       parameterValues: 'parameterValues'
     }),
+    ...mapGetters('scriptSetup', ['requiredParametersForVerb']),
 
-    hasParameters() {
-      return this.parameters && this.parameters.length > 0;
+    verbsConfig() {
+      return this.scriptConfig?.verbs || null;
+    },
+
+    hasVerbs() {
+      return this.verbsConfig && this.verbsConfig.options && this.verbsConfig.options.length > 0;
+    },
+
+    verbOptions() {
+      if (!this.verbsConfig) return [];
+      return this.verbsConfig.options || [];
+    },
+
+    verbParameterName() {
+      return this.verbsConfig?.parameterName || 'verb';
+    },
+
+    selectedVerbDescription() {
+      if (!this.selectedVerb || !this.verbOptions) return '';
+      const verb = this.verbOptions.find(v => v.name === this.selectedVerb);
+      return verb?.description || '';
+    },
+
+    // Get visible parameters for the current verb
+    visibleParameters() {
+      if (!this.parameters) return [];
+
+      if (!this.hasVerbs || !this.selectedVerb) {
+        return this.parameters;
+      }
+
+      const verbOption = this.verbOptions.find(v => v.name === this.selectedVerb);
+      if (!verbOption) return this.parameters;
+
+      // Get visible params for this verb + shared params
+      const verbParams = verbOption.parameters || [];
+      const sharedParams = this.scriptConfig?.sharedParameters || [];
+      const visibleNames = new Set([...verbParams, ...sharedParams]);
+
+      return this.parameters.filter(p => visibleNames.has(p.name));
+    },
+
+    // Get required parameters for the current verb
+    verbRequiredParams() {
+      if (!this.hasVerbs || !this.selectedVerb) return [];
+
+      const verbOption = this.verbOptions.find(v => v.name === this.selectedVerb);
+      return verbOption?.requiredParameters || [];
+    },
+
+    hasVisibleParameters() {
+      return this.visibleParameters && this.visibleParameters.length > 0;
     },
 
     validationError() {
-      if (!this.parameters) return null;
+      if (!this.visibleParameters) return null;
 
-      for (const param of this.parameters) {
-        if (param.required) {
+      // Check verb-specific required parameters
+      for (const param of this.visibleParameters) {
+        if (this.isRequiredParam(param)) {
           const value = this.localValues[param.name];
           if (isEmptyValue(value) || (typeof value === 'string' && isEmptyString(value.trim()))) {
             return `Required parameter "${param.name}" is missing`;
@@ -166,6 +231,25 @@ export default {
       // Clone current parameter values to local state
       this.localValues = clone(this.parameterValues) || {};
       this.instanceName = '';
+
+      // Initialize verb selection
+      if (this.hasVerbs) {
+        const currentVerbValue = this.localValues[this.verbParameterName];
+        if (currentVerbValue) {
+          this.selectedVerb = currentVerbValue;
+        } else {
+          this.selectedVerb = this.verbsConfig.default || this.verbOptions[0]?.name;
+        }
+      } else {
+        this.selectedVerb = null;
+      }
+    },
+
+    onVerbChanged() {
+      // Update the verb parameter value
+      if (this.verbParameterName && this.selectedVerb) {
+        this.$set(this.localValues, this.verbParameterName, this.selectedVerb);
+      }
     },
 
     setLocalValue(paramName, value) {
@@ -187,11 +271,23 @@ export default {
       return !isEmptyValue(value) && value !== '';
     },
 
+    isRequiredParam(param) {
+      // Check if parameter is required (either globally or for this verb)
+      if (param.required) return true;
+
+      // Check verb-specific required params
+      if (this.hasVerbs && this.selectedVerb) {
+        return this.verbRequiredParams.includes(param.name);
+      }
+
+      return false;
+    },
+
     getPlaceholder(param) {
       if (!isNull(param.default)) {
         return `Default: ${param.default}`;
       }
-      return param.required ? 'Required' : 'Optional';
+      return this.isRequiredParam(param) ? 'Required' : 'Optional';
     },
 
     formatMultiselectValue(value) {
@@ -206,6 +302,11 @@ export default {
 
     runScript() {
       if (this.validationError) return;
+
+      // Set verb parameter if verbs are configured
+      if (this.hasVerbs && this.selectedVerb) {
+        this.localValues[this.verbParameterName] = this.selectedVerb;
+      }
 
       // Apply local values to the store
       for (const [paramName, value] of Object.entries(this.localValues)) {
@@ -275,6 +376,59 @@ export default {
   flex: 1;
   overflow-y: auto;
   padding: 16px 24px;
+}
+
+.verb-section {
+  margin-bottom: 16px;
+  padding: 12px;
+  background-color: var(--background-color-high-emphasis);
+  border-radius: var(--radius-sm);
+}
+
+.section-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--font-color-medium);
+  display: block;
+  margin-bottom: 8px;
+}
+
+.verb-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--separator-color);
+  border-radius: var(--radius-sm);
+  background-color: var(--background-color-level-4dp);
+  color: var(--font-color-main);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  /* Override Materialize CSS that hides native selects */
+  opacity: 1 !important;
+  appearance: menulist;
+  -webkit-appearance: menulist;
+  -moz-appearance: menulist;
+  height: auto;
+}
+
+.verb-select:hover {
+  border-color: var(--primary-color);
+}
+
+.verb-select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(38, 166, 154, 0.2);
+  outline: none;
+}
+
+.verb-description {
+  margin-top: 8px;
+  margin-bottom: 0;
+  font-size: 12px;
+  color: var(--font-color-medium);
+  font-style: italic;
 }
 
 .instance-field {
@@ -401,6 +555,15 @@ export default {
   font-size: 13px;
   box-sizing: border-box;
   transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* Override Materialize CSS that hides native selects */
+.param-select {
+  opacity: 1 !important;
+  appearance: menulist;
+  -webkit-appearance: menulist;
+  -moz-appearance: menulist;
+  height: auto;
 }
 
 .param-input:hover,

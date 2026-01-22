@@ -1,23 +1,29 @@
 <template>
-  <div ref="parametersPanel" :style="{ 'grid-template-columns': 'repeat(' + gridColumns + ', minmax(0, 1fr))'}"
-       class="script-parameters-panel">
-    <template v-for="parameter in parameters">
-      <ParameterSeparator
-          v-if="parameter.ui?.separatorBefore && !startsWithNewLine(parameter)"
-          :separator="parameter.ui?.separatorBefore"
-          :style="'grid-column-start: span ' + gridColumns"/>
-      <component
-          :is="getComponentType(parameter)"
-          :key="parameter.name"
-          :config="parameter"
-          :value="getParameterValue(parameter)"
-          :class="{'inline': isInline(parameter)}"
-          class="parameter"
-          :style="getGridCellStyle(parameter)"
-          :forceValue="forcedValueParameters.includes(parameter.name)"
-          @error="handleError(parameter, $event)"
-          @input="setParameterValue(parameter.name, $event)"/>
-    </template>
+  <div ref="parametersPanel" class="script-parameters-container">
+    <!-- Verb selector (shown when script has verbs configured) -->
+    <VerbSelector @verb-changed="onVerbChanged"/>
+
+    <!-- Parameters grid -->
+    <div :style="{ 'grid-template-columns': 'repeat(' + gridColumns + ', minmax(0, 1fr))'}"
+         class="script-parameters-panel">
+      <template v-for="parameter in visibleParameters">
+        <ParameterSeparator
+            v-if="parameter.ui?.separatorBefore && !startsWithNewLine(parameter)"
+            :separator="parameter.ui?.separatorBefore"
+            :style="'grid-column-start: span ' + gridColumns"/>
+        <component
+            :is="getComponentType(parameter)"
+            :key="parameter.name"
+            :config="parameter"
+            :value="getParameterValue(parameter)"
+            :class="{'inline': isInline(parameter)}"
+            class="parameter"
+            :style="getGridCellStyle(parameter)"
+            :forceValue="forcedValueParameters.includes(parameter.name)"
+            @error="handleError(parameter, $event)"
+            @input="setParameterValue(parameter.name, $event)"/>
+      </template>
+    </div>
   </div>
 </template>
 
@@ -30,12 +36,13 @@ import TextArea from '@/common/components/TextArea'
 import Textfield from '@/common/components/textfield'
 import {isNull} from '@/common/utils/common';
 import ParameterSeparator from '@/main-app/components/scripts/ParameterSeparator.vue';
-import {mapActions, mapState} from 'vuex'
+import VerbSelector from '@/main-app/components/scripts/VerbSelector.vue';
+import {mapActions, mapState, mapGetters} from 'vuex'
 import {comboboxTypes, isRecursiveFileParameter} from '../../utils/model_helper'
 
 export default {
   name: 'script-parameters-view',
-  components: {ParameterSeparator},
+  components: {ParameterSeparator, VerbSelector},
 
   data: function () {
     return {
@@ -45,12 +52,14 @@ export default {
 
   computed: {
     ...mapState('scriptConfig', {
-      parameters: 'parameters'
+      parameters: 'parameters',
+      scriptConfig: 'scriptConfig'
     }),
     ...mapState('scriptSetup', {
       parameterValues: 'parameterValues',
       forcedValueParameters: 'forcedValueParameters'
-    })
+    }),
+    ...mapGetters('scriptSetup', ['visibleParameters'])
   },
 
   mounted() {
@@ -148,14 +157,23 @@ export default {
       }
 
       return separator.type === 'new_line'
+    },
+
+    onVerbChanged(verb) {
+      // Clear values for parameters that are not visible in the new verb
+      // This prevents stale values from being sent to the server
+      this.$store.commit('scriptSetup/SET_SELECTED_VERB', verb);
     }
   }
 }
 </script>
 
 <style scoped>
-.script-parameters-panel >>> {
+.script-parameters-container {
   margin-top: 15px;
+}
+
+.script-parameters-panel {
   margin-right: 0;
   display: grid;
   gap: 24px;

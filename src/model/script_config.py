@@ -12,6 +12,7 @@ from model.model_helper import is_empty, read_bool_from_config, InvalidValueExce
 from model.parameter_config import ParameterModel
 from model.server_conf import LoggingConfig
 from model.template_property import TemplateProperty
+from model.verb_config import VerbsConfiguration
 from react.properties import ObservableList, ObservableDict, observable_fields
 from utils import file_utils, custom_json
 from utils.object_utils import merge_dicts
@@ -55,6 +56,7 @@ def create_failed_short_config(path, has_admin_rights):
     'schedulable',
     'preload_script',
     '_included_config',
+    'verbs_config',
 )
 class ConfigModel:
 
@@ -222,6 +224,13 @@ class ConfigModel:
 
         self.preload_script = self._read_preload_script_conf(config.get('preload_script'))
 
+        # Parse verbs configuration
+        verbs_config = config.get('verbs')
+        self.verbs_config = VerbsConfiguration(verbs_config)
+
+        # Also read shared_parameters list for verbs
+        self.shared_parameters = read_list(config, 'shared_parameters') or []
+
         if not self.script_command:
             raise Exception('No script_path is specified for ' + self.name)
 
@@ -272,6 +281,27 @@ class ConfigModel:
 
     def on_remove(self, parameter):
         pass
+
+    def get_visible_parameters_for_verb(self, verb_name: str) -> List[str]:
+        """Get list of visible parameter names for a specific verb.
+
+        If no verbs are configured, returns all parameter names.
+        Includes shared_parameters that apply to all verbs.
+        """
+        if not self.verbs_config or not self.verbs_config.enabled:
+            return [p.name for p in self.parameters]
+
+        verb_params = self.verbs_config.get_visible_parameters(verb_name)
+        shared_params = getattr(self, 'shared_parameters', [])
+
+        return list(set(verb_params + shared_params))
+
+    def get_required_parameters_for_verb(self, verb_name: str) -> List[str]:
+        """Get list of required parameter names for a specific verb."""
+        if not self.verbs_config or not self.verbs_config.enabled:
+            return [p.name for p in self.parameters if p.required]
+
+        return self.verbs_config.get_required_parameters(verb_name)
 
     def _validate_parameter_configs(self):
         for parameter in self.parameters:
@@ -415,6 +445,8 @@ def get_sorted_config(config):
                  'requires_terminal',
                  'output_format',
                  'scheduling',
+                 'verbs',
+                 'shared_parameters',
                  'parameters']
 
     def get_order(key):
