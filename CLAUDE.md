@@ -15,7 +15,7 @@
 ## Current State
 
 **Branch:** `master`
-**Latest Commit:** (uncommitted) - CLI Verb/Subcommand Support
+**Latest Commit:** `9af5821` - Add CLI verb/subcommand support for scripts
 **Last Updated:** 2026-01-21
 **Docker Image:** `ghcr.io/snadboy/script-server:latest` (auto-builds on push to master)
 
