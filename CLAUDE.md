@@ -14,12 +14,176 @@
 
 ## Current State
 
-**Branch:** `master`
-**Latest Commit:** `9af5821` - Add CLI verb/subcommand support for scripts
-**Last Updated:** 2026-01-21
+**Branch:** `verb`
+**Latest Commit:** (uncommitted changes)
+**Last Updated:** 2026-01-29
 **Docker Image:** `ghcr.io/snadboy/script-server:latest` (auto-builds on push to master)
 
-### Recent Session (2026-01-21)
+### Recent Session (2026-01-29) - Part 2
+
+Consolidated Create Script and Manage Projects buttons into a unified "Script Manager" with 3-tab modal interface.
+
+**What was changed:**
+
+- **Unified Script Manager Button** - Single entry point in sidebar (description icon) for all script-related actions
+- **3-Tab Modal System:**
+  - **Projects tab** - View and delete imported Python projects (existing ProjectsModal functionality)
+  - **Import tab** - Import Python projects via Git/ZIP/Local (existing ProjectsModal functionality)
+  - **Create tab** - NEW - Opens CreateScriptModal in manual mode for creating script configs
+- **Create Tab UI:**
+  - Centered card with code icon
+  - "Create Manual Script" button
+  - Opens CreateScriptModal with `initialMode='manual'` prop
+  - Automatically skips Source tab, goes directly to Details tab
+- **InitialMode Prop:**
+  - Added to CreateScriptModal to support launching in specific mode
+  - When set to 'manual', automatically sets creationMode and activeTab to skip Source selection
+- **Axios Import Fix:**
+  - Fixed incorrect default imports to use named import: `import {axiosInstance} from '@/common/utils/axios_utils'`
+  - Affected CreateScriptModal, ImportPanel, ConfigurePanel
+
+**Files modified:**
+- `web-src/src/main-app/components/MainAppSidebar.vue`
+  - Removed separate "Create Script" and "Manage Projects" buttons
+  - Added single "Script Manager" button (description icon)
+  - Opens ProjectsModal instead of CreateScriptModal
+- `web-src/src/main-app/components/SidebarBottomNav.vue`
+  - Removed "Add Script" button from bottom navigation
+  - Bottom nav now only shows Activity and Users tabs
+- `web-src/src/main-app/components/ProjectsModal.vue`
+  - Renamed title to "Script Manager"
+  - Added "Create" tab with centered card UI
+  - Integrated CreateScriptModal with `initialMode='manual'`
+  - Added CSS for create-section, create-card, create-icon, create-btn
+- `web-src/src/admin/components/scripts-config/create-script/CreateScriptModal.vue`
+  - Added `initialMode` prop (validates 'import'|'manual')
+  - Modified `watch.visible` to handle initialMode and skip Source tab
+  - Fixed axios import to named import
+- `web-src/src/admin/components/scripts-config/create-script/ImportPanel.vue`
+  - Fixed axios import to named import
+- `web-src/src/admin/components/scripts-config/create-script/ConfigurePanel.vue`
+  - Fixed axios import to named import
+
+**Testing:**
+- Frontend rebuilt successfully
+- Server restarted on http://localhost:5000
+- Verified all three tabs work correctly:
+  - Projects tab shows imported projects with configure/delete actions
+  - Import tab provides Git/ZIP/Local import options
+  - Create tab opens manual script creation modal in correct mode
+- Verified CreateScriptModal initialMode prop works - skips Source tab and starts at Details
+
+**Next steps:**
+- Update CLAUDE.md with this session's changes
+- Consider committing these UI improvements to the verb branch
+
+### Recent Session (2026-01-29) - Part 1
+
+Fixed parameter filtering in execution cards and added script description to script view header.
+
+**Issues fixed:**
+
+1. **Parameter Filtering by Verb** - Execution cards were showing all parameters instead of just those relevant to the verb that was used.
+   - **Root cause:** The `/scripts` API endpoint only returned "short configs" without verb configuration
+   - **Solution:** Extended ShortConfig dataclass and API response to include verb configuration
+   - Now properly filters parameters to show only:
+     - The verb parameter itself (e.g., `command=labels`)
+     - Parameters specific to the selected verb
+     - Shared parameters (e.g., `verbose`)
+
+2. **Script Description in Header** - Added script description display in the header area above the Running section on script view pages.
+
+**Backend changes:**
+- `src/model/script_config.py`:
+  - Extended `ShortConfig` dataclass to include `verbs_config` and `shared_parameters` fields
+  - Modified `read_short()` function to parse and include verb configuration
+- `src/web/server.py`:
+  - Modified `GetScripts` handler to serialize verb config in API response
+  - Uses `verbs_config.to_dict()` for proper camelCase serialization
+
+**Frontend changes:**
+- `web-src/src/main-app/utils/executionFormatters.js`:
+  - Added `getScriptConfig()` utility to find script config by name
+  - Added `filterParametersByVerb()` utility to filter parameters based on verb
+  - Fixed to use camelCase `parameterName` (not snake_case `parameter_name`)
+- `web-src/src/main-app/components/common/RunningSection.vue`:
+  - Integrated verb-aware parameter filtering
+  - Updated `getVerbParameterName()` to use camelCase
+- `web-src/src/main-app/components/common/CompletedSection.vue`:
+  - Integrated verb-aware parameter filtering
+  - Updated `getVerbParameterName()` to use camelCase
+- `web-src/src/main-app/components/scripts/script-view.vue`:
+  - Added script description header with styled container
+
+**Example result:**
+- **Before:** `days=14, dry_run=true, verbose=false, command=labels`
+- **After:** `command=labels, verbose=false` (for "labels" verb with no specific parameters)
+
+**Testing:**
+- Frontend rebuilt successfully
+- Server running on http://localhost:5000
+- Parameter filtering verified working via Chrome DevTools
+- Script description displays in header when present
+
+### Previous Session (2026-01-28)
+
+Added verb/subcommand configuration UI to the admin interface.
+
+**What was added:**
+- New **"Verbs"** tab (Tab 5) in Add/Edit Script Modal
+- `VerbConfigEditor.vue` - Main component for managing verb configuration
+- `VerbOptionEditor.vue` - Component for editing individual verb options
+- Enable/disable verb support with checkbox
+- Configure verb parameter name, default verb, and required flag
+- Define shared parameters (visible for all verbs)
+- Add/edit/delete/reorder verb options
+- For each verb: set name, label, description, visible parameters, and required parameters
+- Real-time parameter filtering based on verb selection
+- Full integration with existing script config save/load system
+
+**Files created:**
+- `web-src/src/admin/components/scripts-config/VerbConfigEditor.vue`
+- `web-src/src/admin/components/scripts-config/VerbOptionEditor.vue`
+
+**Files modified:**
+- `web-src/src/admin/components/scripts-config/AddScriptModal.vue` - Added Verbs tab, integrated VerbConfigEditor
+
+**Testing:**
+- Frontend rebuilt successfully with `npm run build`
+- Server restarted and running on http://localhost:5000
+- Verbs tab now accessible in admin UI at http://localhost:5000/admin.html
+
+**Next steps:**
+- Test the new Verbs UI by creating/editing a script
+- Consider adding verb editing to existing EditScriptModal as well
+- Merge to master when ready
+
+### Previous Session (2026-01-22)
+
+Tested and verified CLI verb/subcommand feature is fully working after frontend rebuild.
+
+**Testing performed:**
+- Rebuilt frontend (`npm run build`) to include VerbSelector component
+- Restarted server to pick up new build (build 0122-0716)
+- Verified VerbSelector renders correctly above parameters panel
+- Tested all three verbs in `verb_demo.json`:
+
+| Verb | Description | Parameters Shown |
+|------|-------------|------------------|
+| List Items | List all items with optional filtering | format, all, verbose |
+| Create Item | Create a new item with the given name | name, type, verbose |
+| Delete Item | Delete an item by its ID | item_id, force, verbose |
+
+**Verified functionality:**
+- ✅ VerbSelector dropdown renders with "Command" label
+- ✅ Verb descriptions update dynamically when switching
+- ✅ Parameter filtering works - only relevant parameters shown per verb
+- ✅ Shared parameters (`verbose`) appear for all verbs
+- ✅ Verb-specific parameters correctly hidden/shown on switch
+
+**Note:** Initial test showed all parameters visible because server was running old frontend build. After rebuild + restart, feature works correctly.
+
+### Previous Session (2026-01-21)
 
 Implemented CLI verb/subcommand support where scripts can define multiple verbs (like `git clone`, `docker run`), each with their own set of required/optional parameters.
 
@@ -164,6 +328,7 @@ Tested entry point detection and fixed several UI issues:
 | Project Manager | Done | Import external Python projects via Git/ZIP/Local Path; auto-detect dependencies & entry points; generate wrapper scripts; clean entry point UI with toggle for custom input |
 | One-time Schedule Auto-Cleanup | Done | Completed non-recurring schedules auto-delete after configurable retention period (default 60 min); shows "Completed" badge with auto-delete countdown in UI |
 | CLI Verb/Subcommand Support | Done | Scripts can define verbs (like git clone, docker run) with per-verb parameters, required params, and positional placement |
+| Unified Create Script Workflow | Done | Single modal combining Project Manager and Add Script functionality; adaptive tabs show/hide based on import vs manual mode; reusable components for each step |
 
 ### Test Infrastructure
 
@@ -200,8 +365,9 @@ Tested entry point detection and fixed several UI issues:
 
 ## Pending / Suggested Next Steps
 
-1. **PR to Upstream** - Consider submitting PR to `bugy/script-server`
-2. **Merge to Master** - Merge `feature/venv-management` branch to trigger Docker build
+1. **Merge verb branch to master** - Verb feature tested and working, ready for merge
+2. **PR to Upstream** - Consider submitting PR to `bugy/script-server` for verb/subcommand feature
+3. **Update gmail_cleanup.json** - Convert to use verb config instead of manual Command parameter
 
 ---
 
@@ -269,10 +435,16 @@ docker build -t script-server:custom .
 - `src/venv_manager/__init__.py` (new - venv package module)
 - `src/venv_manager/venv_service.py` (new - venv package management service)
 - `web-src/src/main-app/components/PackagesModal.vue` (new - admin UI for package management)
-- `web-src/src/main-app/components/MainAppSidebar.vue` (modified - added packages/projects buttons for admins)
+- `web-src/src/main-app/components/MainAppSidebar.vue` (modified - replaced Projects button with Create Script button)
 - `src/web/server.py` (modified - added venv and project management API endpoints)
 - `src/project_manager/__init__.py` (new - project manager module)
 - `src/project_manager/project_service.py` (new - project import/management service)
+- `web-src/src/admin/components/scripts-config/create-script/CreateScriptModal.vue` (new - unified create script orchestrator)
+- `web-src/src/admin/components/scripts-config/create-script/SourceSelector.vue` (new - source selection UI)
+- `web-src/src/admin/components/scripts-config/create-script/ImportPanel.vue` (new - Git/ZIP/Local import)
+- `web-src/src/admin/components/scripts-config/create-script/ConfigurePanel.vue` (new - dependency/entry point config)
+- `web-src/src/admin/components/scripts-config/create-script/DetailsTab.vue` (new - script details form)
+- `web-src/src/admin/components/scripts-config/create-script/AdvancedTab.vue` (new - access/scheduling/verbs combined)
 - `web-src/src/main-app/components/ProjectsModal.vue` (new - admin UI for project management)
 - `src/scheduling/schedule_config.py` (modified - added completion_time field for non-recurring schedule cleanup)
 - `src/scheduling/schedule_service.py` (modified - added auto-cleanup logic, expiry helpers, background cleanup task, get/set retention methods)

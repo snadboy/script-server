@@ -138,7 +138,21 @@ class GetScripts(BaseRequestHandler):
 
         configs = self.application.config_service.list_configs(user, mode)
 
-        scripts = [{'name': conf.name, 'group': conf.group, 'parsing_failed': conf.parsing_failed, 'description': conf.description} for conf in configs]
+        scripts = []
+        for conf in configs:
+            script_dict = {
+                'name': conf.name,
+                'group': conf.group,
+                'parsing_failed': conf.parsing_failed,
+                'description': conf.description
+            }
+
+            # Add verbs configuration if present
+            if hasattr(conf, 'verbs_config') and conf.verbs_config and conf.verbs_config.enabled:
+                script_dict['verbs'] = conf.verbs_config.to_dict()
+                script_dict['sharedParameters'] = getattr(conf, 'shared_parameters', [])
+
+            scripts.append(script_dict)
 
         self.write(json.dumps({'scripts': scripts}))
 
@@ -719,6 +733,52 @@ class GetLongHistoryEntryHandler(BaseRequestHandler):
         running = self.application.execution_service.is_running(history_entry.id, user)
         long_log = to_long_execution_log(history_entry, log, running)
         self.write(json.dumps(long_log))
+
+
+class DeleteHistoryEntryHandler(BaseRequestHandler):
+    @check_authorization
+    @inject_user
+    def delete(self, user, execution_id):
+        if is_empty(execution_id):
+            respond_error(self, 400, 'Execution id is not specified')
+            return
+
+        try:
+            deleted = self.application.execution_logging_service.delete_history_entry(execution_id, user.user_id)
+        except AccessProhibitedException:
+            respond_error(self, 403, 'Access to execution #' + str(execution_id) + ' is prohibited')
+            return
+
+        if not deleted:
+            respond_error(self, 404, 'No history found for id ' + execution_id)
+            return
+
+        self.write(json.dumps({'deleted': True}))
+
+
+class DeleteHistoryEntriesByScriptHandler(BaseRequestHandler):
+    @check_authorization
+    @inject_user
+    def delete(self, user, script_name):
+        if is_empty(script_name):
+            respond_error(self, 400, 'Script name is not specified')
+            return
+
+        # URL decode the script name
+        script_name = tornado.escape.url_unescape(script_name)
+
+        deleted_count = self.application.execution_logging_service.delete_history_entries_by_script(
+            script_name, user.user_id)
+
+        self.write(json.dumps({'deleted': deleted_count}))
+
+
+class DeleteAllHistoryEntriesHandler(BaseRequestHandler):
+    @check_authorization
+    @inject_user
+    def delete(self, user):
+        deleted_count = self.application.execution_logging_service.delete_all_history_entries(user.user_id)
+        self.write(json.dumps({'deleted': deleted_count}))
 
 
 @tornado.web.stream_request_body
@@ -1429,6 +1489,9 @@ def init(server_config: ServerConfig,
                 (r'/executions/status/(.*)', GetExecutionStatus),
                 (r'/history/execution_log/short', GetShortHistoryEntriesHandler),
                 (r'/history/execution_log/long/(.*)', GetLongHistoryEntryHandler),
+                (r'/history/execution_log/all', DeleteAllHistoryEntriesHandler),
+                (r'/history/execution_log/script/(.*)', DeleteHistoryEntriesByScriptHandler),
+                (r'/history/execution_log/(.*)', DeleteHistoryEntryHandler),
                 (r'/schedule', AddSchedule),
                 (r'/schedules', GetSchedules),
                 (r'/schedules/([^/]+)', ScheduleHandler),

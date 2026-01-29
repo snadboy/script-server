@@ -25,6 +25,8 @@
         :timeValue="execution.startTimeString"
         :isScheduled="!!execution.scheduleId"
         :scheduleDescription="getScheduleDesc(execution.scheduleId)"
+        :parameters="showParameters ? getFilteredParameters(execution) : null"
+        :verbParameterName="showParameters ? getVerbParameterName(execution.script) : null"
         @click="handleClick(execution)">
         <template #actions>
           <StopButton :executionId="execution.id" />
@@ -39,7 +41,7 @@ import {mapState, mapActions} from 'vuex';
 import CollapsibleSection from './CollapsibleSection';
 import ExecutionCard from './ExecutionCard';
 import StopButton from './StopButton';
-import {getScheduleDescription, getScriptDescription} from '@/main-app/utils/executionFormatters';
+import {getScheduleDescription, getScriptDescription, getScriptConfig, filterParametersByVerb} from '@/main-app/utils/executionFormatters';
 
 const STORAGE_KEY = 'executionSections.collapsed.running';
 
@@ -58,6 +60,10 @@ export default {
       default: null
     },
     showScriptName: {
+      type: Boolean,
+      default: true
+    },
+    showParameters: {
       type: Boolean,
       default: true
     }
@@ -156,6 +162,16 @@ export default {
 
     getScriptDesc(scriptName) {
       return this.scriptsMap[scriptName] || '';
+    },
+
+    getVerbParameterName(scriptName) {
+      const scriptConfig = getScriptConfig(scriptName, this.scripts);
+      return scriptConfig?.verbs?.parameterName || null;
+    },
+
+    getFilteredParameters(execution) {
+      const scriptConfig = getScriptConfig(execution.script, this.scripts);
+      return filterParametersByVerb(execution.parameterValues, scriptConfig);
     }
   }
 };

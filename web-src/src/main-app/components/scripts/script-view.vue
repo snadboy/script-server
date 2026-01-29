@@ -1,13 +1,14 @@
 <template>
   <div :id="id" class="script-view">
     <ScriptLoadingText v-if="loading && !scriptConfig" :loading="loading" :script="selectedScript"/>
-    <p v-show="scriptDescription" class="script-description" v-html="formattedDescription"/>
-    <ScriptParametersView ref="parametersView"/>
     <div v-if="hasErrors" v-show="!hideExecutionControls" class="validation-panel">
       <h6 class="header">Validation failed. Errors list:</h6>
       <ul class="validation-errors-list">
         <li v-for="error in shownErrors">{{ error }}</li>
       </ul>
+    </div>
+    <div v-if="scriptDescription && !hideExecutionControls && scriptConfig" class="script-description-header">
+      <span v-html="formattedDescription"></span>
     </div>
     <ScriptExecutionsPanel v-if="!hideExecutionControls && scriptConfig" class="executions-panel"/>
   </div>
@@ -22,7 +23,6 @@ import DOMPurify from 'dompurify';
 import {marked} from 'marked';
 import {mapActions, mapState} from 'vuex'
 import {STATUS_DISCONNECTED, STATUS_ERROR, STATUS_EXECUTING, STATUS_FINISHED} from '../../store/scriptExecutor';
-import ScriptParametersView from './script-parameters-view'
 
 export default {
   data: function () {
@@ -43,8 +43,7 @@ export default {
 
   components: {
     ScriptLoadingText,
-    ScriptExecutionsPanel,
-    ScriptParametersView
+    ScriptExecutionsPanel
   },
 
   computed: {
@@ -227,6 +226,26 @@ export default {
 
 .validation-errors-list li {
   color: var(--status-error-color);
+}
+
+.script-description-header {
+  margin: 12px 0 8px;
+  padding: 10px 14px;
+  background: var(--background-color-level-4dp);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  color: var(--font-color-medium);
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.script-description-header :deep(a) {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+.script-description-header :deep(a:hover) {
+  text-decoration: underline;
 }
 
 .executions-panel {

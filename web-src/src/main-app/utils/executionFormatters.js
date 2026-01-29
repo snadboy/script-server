@@ -135,3 +135,72 @@ export function getScriptDescription(scriptName, scripts) {
   const script = scripts.find(s => s.name === scriptName);
   return script?.description || '';
 }
+
+/**
+ * Get script configuration from scripts array by name
+ * @param {string} scriptName - Script name to find
+ * @param {Array} scripts - Array of script objects from scripts store
+ * @returns {Object|null} Script configuration object or null
+ */
+export function getScriptConfig(scriptName, scripts) {
+  if (!scriptName || !scripts) return null;
+  return scripts.find(s => s.name === scriptName) || null;
+}
+
+/**
+ * Filter parameters based on verb configuration
+ * Returns only parameters relevant to the verb that was used in the execution
+ * @param {Object} parameterValues - All parameter values from execution
+ * @param {Object} scriptConfig - Full script configuration object
+ * @returns {Object} Filtered parameter values
+ */
+export function filterParametersByVerb(parameterValues, scriptConfig) {
+  if (!parameterValues || !scriptConfig) {
+    return parameterValues;
+  }
+
+  // If script doesn't use verbs, return all parameters
+  if (!scriptConfig.verbs || !scriptConfig.verbs.parameterName) {
+    return parameterValues;
+  }
+
+  const verbParamName = scriptConfig.verbs.parameterName;
+  const verbValue = parameterValues[verbParamName];
+
+  // If no verb value found, return all parameters
+  if (!verbValue) {
+    return parameterValues;
+  }
+
+  // Find the verb option that was used
+  const verbOption = scriptConfig.verbs.options?.find(opt => opt.name === verbValue);
+  if (!verbOption) {
+    return parameterValues;
+  }
+
+  // Build set of allowed parameter names
+  const allowedParams = new Set();
+
+  // Always include the verb parameter itself
+  allowedParams.add(verbParamName);
+
+  // Include shared parameters
+  if (scriptConfig.sharedParameters) {
+    scriptConfig.sharedParameters.forEach(p => allowedParams.add(p));
+  }
+
+  // Include parameters specific to this verb
+  if (verbOption.parameters) {
+    verbOption.parameters.forEach(p => allowedParams.add(p));
+  }
+
+  // Filter the parameter values
+  const filtered = {};
+  for (const [key, value] of Object.entries(parameterValues)) {
+    if (allowedParams.has(key)) {
+      filtered[key] = value;
+    }
+  }
+
+  return filtered;
+}

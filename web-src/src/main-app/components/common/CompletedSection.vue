@@ -7,6 +7,17 @@
     :collapsed="collapsed"
     @toggle="handleToggle"
     class="completed-section">
+    <template #actions>
+      <button v-if="filteredExecutions.length > 0 || deleting"
+              class="delete-all-btn"
+              :class="{ 'is-deleting': deleting }"
+              :disabled="deleting"
+              @click="confirmDeleteAll"
+              :title="deleting ? 'Deleting...' : 'Delete all completed entries'">
+        <i v-if="deleting" class="material-icons spinning">sync</i>
+        <i v-else class="material-icons">delete_sweep</i>
+      </button>
+    </template>
     <template v-if="loading">
       <div class="loading-state">
         <div class="spinner"></div>
@@ -28,17 +39,31 @@
         :timeValue="execution.startTimeString"
         timeLabel2="Ended"
         :timeValue2="execution.finishTimeString ? execution.finishTimeString + ' ' + execution.durationString : ''"
+        :parameters="showParameters ? getFilteredParameters(execution) : null"
+        :verbParameterName="showParameters ? getVerbParameterName(execution.script) : null"
         @click="handleClick(execution)">
+        <template #actions>
+          <button class="action-btn view-btn" @click="viewLog(execution)" title="View log">
+            <i class="material-icons">description</i>
+          </button>
+          <button class="action-btn delete-btn"
+                  :disabled="deleting"
+                  @click="confirmDelete(execution)"
+                  title="Delete">
+            <i class="material-icons">delete</i>
+          </button>
+        </template>
       </ExecutionCard>
     </template>
   </CollapsibleSection>
 </template>
 
 <script>
-import {mapState} from 'vuex';
+import {mapState, mapActions} from 'vuex';
 import CollapsibleSection from './CollapsibleSection';
 import ExecutionCard from './ExecutionCard';
-import {getExecutionStatus, getScheduleDescription, getScriptDescription} from '@/main-app/utils/executionFormatters';
+import {getExecutionStatus, getScheduleDescription, getScriptDescription, getScriptConfig, filterParametersByVerb} from '@/main-app/utils/executionFormatters';
+import {axiosInstance} from '@/common/utils/axios_utils';
 
 const STORAGE_KEY = 'executionSections.collapsed.completed';
 
@@ -58,12 +83,17 @@ export default {
     limit: {
       type: Number,
       default: null
+    },
+    showParameters: {
+      type: Boolean,
+      default: true
     }
   },
 
   data() {
     return {
-      collapsed: this.loadCollapsedState()
+      collapsed: this.loadCollapsedState(),
+      deleting: false
     };
   },
 
@@ -124,6 +154,8 @@ export default {
   },
 
   methods: {
+    ...mapActions('history', ['refresh']),
+
     loadCollapsedState() {
       try {
         return localStorage.getItem(STORAGE_KEY) === 'true';
@@ -154,6 +186,55 @@ export default {
       }
     },
 
+    viewLog(execution) {
+      this.$router.push(`/activity/${execution.id}`);
+    },
+
+    confirmDelete(execution) {
+      if (confirm(`Delete execution log for "${execution.script}" (ID: ${execution.id})?`)) {
+        this.deleteExecution(execution.id);
+      }
+    },
+
+    confirmDeleteAll() {
+      const msg = this.scriptFilter
+        ? `Delete all ${this.filteredExecutions.length} completed entries for "${this.scriptFilter}"?`
+        : `Delete all ${this.filteredExecutions.length} completed entries?`;
+
+      if (confirm(msg)) {
+        this.deleteAllExecutions();
+      }
+    },
+
+    async deleteExecution(executionId) {
+      try {
+        await axiosInstance.delete(`/history/execution_log/${executionId}`);
+        this.refresh();
+      } catch (e) {
+        console.error('Failed to delete execution:', e.response?.data || e.message);
+      }
+    },
+
+    async deleteAllExecutions() {
+      this.deleting = true;
+      try {
+        let url;
+        if (this.scriptFilter) {
+          url = `/history/execution_log/script/${encodeURIComponent(this.scriptFilter)}`;
+        } else {
+          url = '/history/execution_log/all';
+        }
+
+        const response = await axiosInstance.delete(url);
+        console.log(`Deleted ${response.data.deleted} entries`);
+        this.refresh();
+      } catch (e) {
+        console.error('Failed to delete executions:', e.response?.data || e.message);
+      } finally {
+        this.deleting = false;
+      }
+    },
+
     getStatus(execution) {
       return getExecutionStatus(execution);
     },
@@ -164,6 +245,16 @@ export default {
 
     getScheduleDesc(scheduleId) {
       return getScheduleDescription(scheduleId, this.schedules);
+    },
+
+    getVerbParameterName(scriptName) {
+      const scriptConfig = getScriptConfig(scriptName, this.scripts);
+      return scriptConfig?.verbs?.parameterName || null;
+    },
+
+    getFilteredParameters(execution) {
+      const scriptConfig = getScriptConfig(execution.script, this.scripts);
+      return filterParametersByVerb(execution.parameterValues, scriptConfig);
     }
   }
 };
@@ -192,5 +283,76 @@ export default {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+.delete-all-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--font-color-medium);
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.delete-all-btn:hover:not(:disabled) {
+  background-color: var(--status-error-bg);
+  color: var(--status-error-color);
+}
+
+.delete-all-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.delete-all-btn.is-deleting {
+  color: var(--primary-color);
+}
+
+.delete-all-btn i {
+  font-size: 20px;
+}
+
+.delete-all-btn i.spinning {
+  animation: spin 1s linear infinite;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--font-color-medium);
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.action-btn i {
+  font-size: 18px;
+}
+
+.view-btn:hover {
+  background-color: var(--hover-color);
+  color: var(--primary-color);
+}
+
+.delete-btn:hover:not(:disabled) {
+  background-color: var(--status-error-bg);
+  color: var(--status-error-color);
+}
+
+.delete-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 </style>

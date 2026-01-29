@@ -33,6 +33,8 @@ class ShortConfig:
     allowed_users: List[str] = field(default_factory=list)
     admin_users: List[str] = field(default_factory=list)
     parsing_failed: bool = False
+    verbs_config: 'VerbsConfiguration' = None
+    shared_parameters: List[str] = field(default_factory=list)
 
 
 def create_failed_short_config(path, has_admin_rights):
@@ -166,8 +168,26 @@ class ConfigModel:
                 self.parameter_values.set(original_values)
                 raise Exception('Could not resolve order for dependencies. Remaining: ' + str(remaining))
 
+        # Handle verb parameter value (if verbs are configured)
+        if self.verbs_config and self.verbs_config.enabled:
+            verb_param_name = self.verbs_config.parameter_name
+            if verb_param_name in param_values:
+                # Store verb value directly without parameter validation
+                # since verb parameters don't have parameter definitions
+                verb_value = param_values[verb_param_name]
+                from model.value_wrapper import ScriptValueWrapper
+                verb_wrapper = ScriptValueWrapper(
+                    user_value=verb_value,
+                    mapped_script_value=verb_value,
+                    script_arg=verb_value
+                )
+                self.parameter_values[verb_param_name] = verb_wrapper
+
         for key, value in param_values.items():
             if self.find_parameter(key) is None:
+                # Skip warning for verb parameter - it's expected to not have a parameter definition
+                if self.verbs_config and self.verbs_config.enabled and key == self.verbs_config.parameter_name:
+                    continue
                 LOGGER.warning('Incoming value for unknown parameter ' + key)
 
     def list_files_for_param(self, parameter_name, path):
@@ -422,7 +442,20 @@ def read_short(file_path, json_object, group_by_folders: bool, script_configs_fo
     elif (admin_users == '*') or ('*' in admin_users):
         admin_users = ANY_USER
 
-    return ShortConfig(name=name, group=group, description=description, allowed_users=allowed_users, admin_users=admin_users)
+    # Parse verbs configuration for short config
+    verbs_config_data = json_object.get('verbs')
+    verbs_config = VerbsConfiguration(verbs_config_data)
+    shared_parameters = read_list(json_object, 'shared_parameters') or []
+
+    return ShortConfig(
+        name=name,
+        group=group,
+        description=description,
+        allowed_users=allowed_users,
+        admin_users=admin_users,
+        verbs_config=verbs_config,
+        shared_parameters=shared_parameters
+    )
 
 
 class ParameterNotFoundException(Exception):
