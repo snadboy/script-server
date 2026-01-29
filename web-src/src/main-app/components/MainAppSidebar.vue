@@ -18,6 +18,9 @@
       <button v-if="adminUser" class="packages-btn waves-effect waves-circle" @click="showPackages = true" title="Package Manager">
         <i class="material-icons">inventory_2</i>
       </button>
+      <button v-if="adminUser" class="requirements-btn waves-effect waves-circle" @click="showRequirements = true" title="Requirements">
+        <i class="material-icons">list_alt</i>
+      </button>
       <button v-if="adminUser" class="logs-btn waves-effect waves-circle" @click="showLogs = true" title="Server Logs">
         <i class="material-icons">article</i>
       </button>
@@ -29,6 +32,7 @@
     <SettingsModal :visible="showSettings" @close="showSettings = false" />
     <ProjectsModal v-if="adminUser" :visible="showScripts" @close="showScripts = false" />
     <PackagesModal v-if="adminUser" :visible="showPackages" @close="showPackages = false" />
+    <RequirementsModal v-if="adminUser" :visible="showRequirements" @update:visible="showRequirements = $event" />
     <ServerLogsModal v-if="adminUser" :visible="showLogs" @update:visible="showLogs = $event" />
 
     <SidebarBottomNav />
@@ -56,6 +60,7 @@ import SidebarBottomNav from './SidebarBottomNav';
 import SettingsModal from './SettingsModal';
 import ProjectsModal from './ProjectsModal';
 import PackagesModal from './PackagesModal';
+import RequirementsModal from './RequirementsModal';
 import ServerLogsModal from './ServerLogsModal';
 import ThemeToggle from '@/common/components/ThemeToggle';
 
@@ -68,6 +73,7 @@ export default {
     SettingsModal,
     ProjectsModal,
     PackagesModal,
+    RequirementsModal,
     ServerLogsModal,
     ThemeToggle
   },
@@ -78,6 +84,7 @@ export default {
       showSettings: false,
       showScripts: false,
       showPackages: false,
+      showRequirements: false,
       showLogs: false
     }
   },

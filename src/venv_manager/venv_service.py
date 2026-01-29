@@ -164,3 +164,114 @@ class VenvService:
             error_msg = e.stderr if e.stderr else str(e)
             LOGGER.error(f'Failed to uninstall {package}: {error_msg}')
             raise RuntimeError(f'Failed to uninstall package: {error_msg}')
+
+    def _get_requirements_file_path(self) -> str:
+        """Get path to requirements.txt in conf directory"""
+        return os.path.join(self.project_root, 'conf', 'requirements.txt')
+
+    def read_requirements(self) -> str:
+        """Read requirements.txt file content"""
+        requirements_path = self._get_requirements_file_path()
+
+        if not os.path.exists(requirements_path):
+            return ''
+
+        try:
+            with open(requirements_path, 'r', encoding='utf-8') as f:
+                return f.read()
+        except Exception as e:
+            LOGGER.error(f'Failed to read requirements.txt: {e}')
+            raise RuntimeError(f'Failed to read requirements.txt: {str(e)}')
+
+    def write_requirements(self, content: str) -> Dict:
+        """Write requirements.txt file content"""
+        requirements_path = self._get_requirements_file_path()
+
+        # Create conf directory if it doesn't exist
+        conf_dir = os.path.dirname(requirements_path)
+        os.makedirs(conf_dir, exist_ok=True)
+
+        try:
+            with open(requirements_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+            LOGGER.info(f'Successfully wrote requirements.txt')
+            return {
+                'success': True,
+                'path': requirements_path,
+                'lines': len(content.strip().split('\n')) if content.strip() else 0
+            }
+        except Exception as e:
+            LOGGER.error(f'Failed to write requirements.txt: {e}')
+            raise RuntimeError(f'Failed to write requirements.txt: {str(e)}')
+
+    def sync_requirements(self) -> Dict:
+        """Install all packages from requirements.txt"""
+        requirements_path = self._get_requirements_file_path()
+
+        if not os.path.exists(requirements_path):
+            raise RuntimeError('requirements.txt not found')
+
+        # Auto-create venv if needed
+        if not self.venv_exists():
+            self.create_venv()
+
+        try:
+            LOGGER.info(f'Installing packages from requirements.txt')
+            result = subprocess.run(
+                [self.pip_path, 'install', '-r', requirements_path],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            LOGGER.info(f'Successfully installed packages from requirements.txt')
+            return {
+                'success': True,
+                'output': result.stdout
+            }
+        except subprocess.CalledProcessError as e:
+            error_msg = e.stderr if e.stderr else str(e)
+            LOGGER.error(f'Failed to sync requirements: {error_msg}')
+            raise RuntimeError(f'Failed to sync requirements: {error_msg}')
+
+    def get_requirements_status(self) -> Dict:
+        """Compare installed packages vs requirements.txt"""
+        requirements_content = self.read_requirements()
+        installed_packages = {pkg['name'].lower(): pkg['version'] for pkg in self.list_packages()}
+
+        # Parse requirements.txt
+        required = []
+        for line in requirements_content.split('\n'):
+            line = line.strip()
+            # Skip comments and empty lines
+            if not line or line.startswith('#'):
+                continue
+
+            # Parse package name and version
+            # Handle formats: package, package==version, package>=version, etc.
+            package_name = line.split('==')[0].split('>=')[0].split('<=')[0].split('>')[0].split('<')[0].strip()
+            version_spec = line[len(package_name):].strip() if len(line) > len(package_name) else ''
+
+            required.append({
+                'name': package_name,
+                'spec': version_spec,
+                'installed': package_name.lower() in installed_packages,
+                'installed_version': installed_packages.get(package_name.lower())
+            })
+
+        # Find extra installed packages (not in requirements)
+        required_names = {pkg['name'].lower() for pkg in required}
+        extra = [
+            {'name': name, 'version': version}
+            for name, version in installed_packages.items()
+            if name not in required_names and name not in ['pip', 'setuptools', 'wheel']
+        ]
+
+        missing_count = sum(1 for pkg in required if not pkg['installed'])
+
+        return {
+            'required': required,
+            'extra': extra,
+            'missing_count': missing_count,
+            'extra_count': len(extra),
+            'total_required': len(required)
+        }

@@ -1231,6 +1231,72 @@ class GetServerLogsHandler(BaseRequestHandler):
             raise tornado.web.HTTPError(500, reason=f'Failed to read logs: {str(e)}')
 
 
+# Requirements.txt Management Handlers
+class GetRequirementsHandler(BaseRequestHandler):
+    @requires_admin_rights
+    def get(self):
+        """Get requirements.txt file content"""
+        venv_service = self.application.venv_service
+        if venv_service is None:
+            raise tornado.web.HTTPError(503, 'Venv service not available')
+
+        try:
+            content = venv_service.read_requirements()
+            self.write(json.dumps({'content': content}))
+        except Exception as e:
+            raise tornado.web.HTTPError(500, reason=str(e))
+
+
+class UpdateRequirementsHandler(BaseRequestHandler):
+    @requires_admin_rights
+    def put(self):
+        """Update requirements.txt file content"""
+        venv_service = self.application.venv_service
+        if venv_service is None:
+            raise tornado.web.HTTPError(503, 'Venv service not available')
+
+        try:
+            body = json.loads(self.request.body.decode('utf-8'))
+            content = body.get('content', '')
+
+            result = venv_service.write_requirements(content)
+            self.write(json.dumps(result))
+        except ValueError as e:
+            raise tornado.web.HTTPError(400, reason=str(e))
+        except Exception as e:
+            raise tornado.web.HTTPError(500, reason=str(e))
+
+
+class SyncRequirementsHandler(BaseRequestHandler):
+    @requires_admin_rights
+    def post(self):
+        """Install all packages from requirements.txt"""
+        venv_service = self.application.venv_service
+        if venv_service is None:
+            raise tornado.web.HTTPError(503, 'Venv service not available')
+
+        try:
+            result = venv_service.sync_requirements()
+            self.write(json.dumps(result))
+        except Exception as e:
+            raise tornado.web.HTTPError(500, reason=str(e))
+
+
+class GetRequirementsStatusHandler(BaseRequestHandler):
+    @requires_admin_rights
+    def get(self):
+        """Get requirements status (installed vs required packages)"""
+        venv_service = self.application.venv_service
+        if venv_service is None:
+            raise tornado.web.HTTPError(503, 'Venv service not available')
+
+        try:
+            status = venv_service.get_requirements_status()
+            self.write(json.dumps(status))
+        except Exception as e:
+            raise tornado.web.HTTPError(500, reason=str(e))
+
+
 # Filesystem Browser Handler
 class FilesystemBrowseHandler(BaseRequestHandler):
     @requires_admin_rights
@@ -1575,6 +1641,11 @@ def init(server_config: ServerConfig,
                 (r'/admin/venv/packages', GetVenvPackagesHandler),
                 (r'/admin/venv/packages/install', InstallVenvPackageHandler),
                 (r'/admin/venv/packages/([^/]+)', UninstallVenvPackageHandler),
+                # Requirements.txt management endpoints
+                (r'/admin/venv/requirements', GetRequirementsHandler),
+                (r'/admin/venv/requirements/update', UpdateRequirementsHandler),
+                (r'/admin/venv/requirements/sync', SyncRequirementsHandler),
+                (r'/admin/venv/requirements/status', GetRequirementsStatusHandler),
                 # Filesystem browser endpoint
                 (r'/admin/filesystem/browse', FilesystemBrowseHandler),
                 # Server logs endpoint
