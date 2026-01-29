@@ -15,7 +15,7 @@ import tempfile
 import zipfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 try:
     import tomllib
@@ -132,7 +132,7 @@ class ProjectService:
 
         return sorted(projects, key=lambda x: x.get('name', ''))
 
-    def get_project(self, project_id: str) -> dict | None:
+    def get_project(self, project_id: str) -> Optional[dict]:
         """
         Get a single project's details.
 
