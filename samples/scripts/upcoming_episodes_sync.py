@@ -4,7 +4,14 @@ import requests
 import sys
 import json
 
-SERVICE_URL = "http://localhost:8001"
+import socket
+
+# Try to get host gateway IP, fallback to localhost
+try:
+    gateway = socket.gethostbyname('gateway.docker.internal')
+    SERVICE_URL = f"http://{gateway}:8001"
+except:
+    SERVICE_URL = "http://172.17.0.1:8001"  # Default Docker bridge gateway
 
 try:
     # Call the /sync endpoint
