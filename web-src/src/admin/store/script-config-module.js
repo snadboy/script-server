@@ -162,7 +162,7 @@ function prepareConfigForSave(scriptConfig, scriptFilename) {
     removeEmptyValues(config);
 
     const formData = new FormData()
-    if (config['script']['mode'] === UPLOAD_MODE) {
+    if (config['script'] && config['script']['mode'] === UPLOAD_MODE) {
         const uploadFile = config['script']['uploadFile']
         formData.append('uploadedScript', uploadFile)
         delete config['script']['uploadFile']

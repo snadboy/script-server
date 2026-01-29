@@ -32,6 +32,10 @@
             <span class="label">{{ timeLabel2 }}:</span>
             <span class="value">{{ timeValue2 }}</span>
           </div>
+          <div v-if="formattedParameters" class="card-row parameters-row">
+            <span class="label">Parameters:</span>
+            <span class="parameters-value">{{ formattedParameters }}</span>
+          </div>
         </slot>
       </div>
       <div class="card-actions" @click.stop>
@@ -93,10 +97,48 @@ export default {
     scheduleDescription: {
       type: String,
       default: ''
+    },
+    parameters: {
+      type: Object,
+      default: null
+    },
+    verbParameterName: {
+      type: String,
+      default: null
     }
   },
 
   computed: {
+    formattedParameters() {
+      if (!this.parameters || Object.keys(this.parameters).length === 0) {
+        return null;
+      }
+
+      const params = [];
+
+      // Show verb first if present
+      if (this.verbParameterName && this.parameters[this.verbParameterName]) {
+        params.push(`${this.verbParameterName}=${this.parameters[this.verbParameterName]}`);
+      }
+
+      // Show other parameters
+      for (const [key, value] of Object.entries(this.parameters)) {
+        if (key === this.verbParameterName) continue; // Skip verb, already shown
+
+        if (value === true) {
+          params.push(key);
+        } else if (value === false || value === null || value === undefined) {
+          // Skip false/null/undefined values
+          continue;
+        } else if (Array.isArray(value)) {
+          params.push(`${key}=[${value.join(', ')}]`);
+        } else {
+          params.push(`${key}=${value}`);
+        }
+      }
+
+      return params.length > 0 ? params.join(', ') : null;
+    },
     cardClasses() {
       return {
         'status-running': this.status === 'running',
@@ -259,6 +301,19 @@ export default {
 .schedule-text {
   color: var(--font-color-medium);
   font-style: italic;
+}
+
+.card-row.parameters-row {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--separator-color);
+}
+
+.parameters-value {
+  color: var(--font-color-main);
+  font-family: monospace;
+  font-size: 11px;
+  word-break: break-word;
 }
 
 .card-actions {

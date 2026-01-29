@@ -10,23 +10,10 @@
 
     <button v-if="adminUser"
        class="nav-tab waves-effect"
-       @click="showAddScriptModal = true">
-      <i class="material-icons">add_circle_outline</i>
-      <span class="nav-label">Add Script</span>
-    </button>
-
-    <button v-if="adminUser"
-       class="nav-tab waves-effect"
        @click="showUsersModal = true">
       <i class="material-icons">people</i>
       <span class="nav-label">Users</span>
     </button>
-
-    <AddScriptModal
-      :visible="showAddScriptModal"
-      @close="showAddScriptModal = false"
-      @saved="onScriptSaved"
-    />
 
     <UserManagementModal
       :visible="showUsersModal"
@@ -37,20 +24,17 @@
 
 <script>
 import {mapState} from 'vuex';
-import AddScriptModal from '@/admin/components/scripts-config/AddScriptModal';
 import UserManagementModal from '@/admin/components/UserManagementModal';
 
 export default {
   name: 'SidebarBottomNav',
 
   components: {
-    AddScriptModal,
     UserManagementModal
   },
 
   data() {
     return {
-      showAddScriptModal: false,
       showUsersModal: false
     };
   },
@@ -62,16 +46,6 @@ export default {
     isActivityActive() {
       // Active when on root path or activity path
       return this.$route.path === '/' || this.$route.path.startsWith('/activity');
-    }
-  },
-
-  methods: {
-    onScriptSaved(scriptName) {
-      this.showAddScriptModal = false;
-      // Refresh scripts list if we're on the scripts page
-      if (this.$route.path.includes('/admin/scripts')) {
-        this.$store.dispatch('adminScripts/init');
-      }
     }
   }
 }

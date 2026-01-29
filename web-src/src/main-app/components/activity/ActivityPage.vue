@@ -1,8 +1,14 @@
 <template>
   <div class="activity-page">
-    <RunningSection :showScriptName="true" />
-    <ScheduledSection :showScriptName="true" :showParams="true" />
-    <CompletedSection :limit="completedExecutionsLimit" />
+    <!-- Show execution details if viewing a specific execution -->
+    <router-view v-if="showExecutionDetail" />
+
+    <!-- Show activity sections when at base /activity route -->
+    <template v-else>
+      <RunningSection :showScriptName="true" />
+      <ScheduledSection :showScriptName="true" :showParams="true" />
+      <CompletedSection :limit="completedExecutionsLimit" />
+    </template>
   </div>
 </template>
 
@@ -22,7 +28,12 @@ export default {
   },
 
   computed: {
-    ...mapState('settings', ['completedExecutionsLimit'])
+    ...mapState('settings', ['completedExecutionsLimit']),
+
+    showExecutionDetail() {
+      // Show execution details when route has an executionId param
+      return !!this.$route.params.executionId;
+    }
   }
 };
 </script>

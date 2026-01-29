@@ -1,5 +1,11 @@
 <template>
   <div class="execution-details container">
+    <div class="details-header">
+      <button class="back-btn btn-flat waves-effect" @click="goBack">
+        <i class="material-icons">arrow_back</i>
+        <span>Back</span>
+      </button>
+    </div>
     <div>
       <readonly-field :value="script" class="readonly-field" title="Script name"/>
       <readonly-field :value="user" class="readonly-field" title="User"/>
@@ -63,6 +69,15 @@ export default {
 
   methods: {
     ...mapActions('history', ['selectExecution']),
+
+    goBack() {
+      // Navigate back - use history if available, otherwise go to activity
+      if (window.history.length > 1) {
+        this.$router.back();
+      } else {
+        this.$router.push('/activity');
+      }
+    },
 
     setLog(log) {
       if (!this.mounted) {
@@ -150,6 +165,28 @@ export default {
   display: flex;
   flex-direction: column;
   height: 100%;
+}
+
+.details-header {
+  margin-bottom: 8px;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  color: var(--primary-color);
+  font-size: 14px;
+  border-radius: var(--radius-md);
+}
+
+.back-btn:hover {
+  background-color: var(--hover-color);
+}
+
+.back-btn i {
+  font-size: 20px;
 }
 
 .readonly-field {

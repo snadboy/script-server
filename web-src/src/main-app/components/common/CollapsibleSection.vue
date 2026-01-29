@@ -1,9 +1,14 @@
 <template>
   <section class="collapsible-section" :class="{ collapsed: isCollapsed }">
-    <h6 class="section-title" @click="toggle">
-      <i class="material-icons expand-icon" :class="{ collapsed: isCollapsed }">expand_more</i>
-      <slot name="title">{{ title }}</slot>
-      <span v-if="count !== null && count !== undefined" class="badge">{{ count }}</span>
+    <h6 class="section-title">
+      <div class="title-left" @click="toggle">
+        <i class="material-icons expand-icon" :class="{ collapsed: isCollapsed }">expand_more</i>
+        <slot name="title">{{ title }}</slot>
+        <span v-if="count !== null && count !== undefined" class="badge">{{ count }}</span>
+      </div>
+      <div class="title-actions" @click.stop>
+        <slot name="actions"></slot>
+      </div>
     </h6>
     <div v-if="!isCollapsed" class="section-content">
       <div v-if="isEmpty" class="empty-state">
@@ -73,18 +78,30 @@ export default {
 .section-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
   margin: 0 0 12px 0;
   padding: 0 16px;
   font-size: 14px;
   font-weight: 500;
   color: var(--font-color-main);
+}
+
+.title-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   cursor: pointer;
   user-select: none;
 }
 
-.section-title:hover {
+.title-left:hover {
   color: var(--primary-color);
+}
+
+.title-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .section-title .expand-icon {

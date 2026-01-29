@@ -1,8 +1,5 @@
 <template>
   <div ref="parametersPanel" class="script-parameters-container">
-    <!-- Verb selector (shown when script has verbs configured) -->
-    <VerbSelector @verb-changed="onVerbChanged"/>
-
     <!-- Parameters grid -->
     <div :style="{ 'grid-template-columns': 'repeat(' + gridColumns + ', minmax(0, 1fr))'}"
          class="script-parameters-panel">

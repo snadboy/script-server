@@ -2,7 +2,7 @@
   <div v-if="visible" class="projects-modal-overlay">
     <div class="projects-modal">
       <div class="modal-header">
-        <span class="modal-title">Project Manager</span>
+        <span class="modal-title">Script Manager</span>
       </div>
 
       <!-- Tabs -->
@@ -18,6 +18,12 @@
           @click="activeTab = 'import'"
         >
           Import
+        </button>
+        <button
+          :class="['tab-btn', { active: activeTab === 'create' }]"
+          @click="activeTab = 'create'"
+        >
+          Create
         </button>
         <button
           v-if="selectedProject"
@@ -215,6 +221,20 @@
           </div>
         </div>
 
+        <!-- Create Tab -->
+        <div v-if="activeTab === 'create'" class="tab-content">
+          <div class="create-section">
+            <div class="create-card">
+              <i class="material-icons create-icon">code</i>
+              <h5>Create Manual Script</h5>
+              <p>Create a script configuration for any executable (Python script, shell script, binary, etc.)</p>
+              <button class="btn btn-primary create-btn" @click="openManualScriptCreation">
+                Create Manual Script
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Configure Tab -->
         <div v-if="activeTab === 'configure' && selectedProject" class="tab-content">
           <div class="configure-section">
@@ -362,18 +382,28 @@
         </button>
       </div>
     </div>
+
+    <!-- Create Manual Script Modal -->
+    <CreateScriptModal
+      :visible="showCreateManualScript"
+      :initial-mode="'manual'"
+      @close="showCreateManualScript = false"
+      @saved="onScriptCreated"
+    />
   </div>
 </template>
 
 <script>
 import {axiosInstance} from '@/common/utils/axios_utils';
 import DirectoryBrowserModal from './common/DirectoryBrowserModal.vue';
+import CreateScriptModal from '@/admin/components/scripts-config/create-script/CreateScriptModal.vue';
 
 export default {
   name: 'ProjectsModal',
 
   components: {
-    DirectoryBrowserModal
+    DirectoryBrowserModal,
+    CreateScriptModal
   },
 
   props: {
@@ -394,6 +424,7 @@ export default {
       installingDeps: false,
       error: null,
       success: null,
+      showCreateManualScript: false,
 
       // Import form
       importType: 'git',
@@ -469,6 +500,17 @@ export default {
   methods: {
     close() {
       this.$emit('close');
+    },
+
+    openManualScriptCreation() {
+      this.showCreateManualScript = true;
+    },
+
+    onScriptCreated() {
+      this.showCreateManualScript = false;
+      this.success = 'Script created successfully!';
+      // Optionally refresh projects list
+      this.refreshProjects();
     },
 
     async loadInstalledPackages() {
@@ -1278,6 +1320,67 @@ export default {
   margin-top: 24px;
   padding-top: 16px;
   border-top: 1px solid var(--separator-color);
+}
+
+/* Create Section */
+.create-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  padding: 40px 20px;
+}
+
+.create-card {
+  max-width: 400px;
+  text-align: center;
+  padding: 32px 24px;
+  background: var(--background-color-level-4dp);
+  border: 1px solid var(--separator-color);
+  border-radius: var(--radius-md);
+  transition: all 0.2s;
+}
+
+.create-card:hover {
+  background: var(--background-color-level-8dp);
+  border-color: var(--primary-color);
+}
+
+.create-icon {
+  font-size: 64px;
+  color: var(--primary-color);
+  margin-bottom: 16px;
+}
+
+.create-card h5 {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--font-color-main);
+}
+
+.create-card p {
+  margin: 0 0 24px 0;
+  font-size: 14px;
+  color: var(--font-color-medium);
+  line-height: 1.5;
+}
+
+.create-btn {
+  width: 100%;
+  background: var(--primary-color);
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.create-btn:hover {
+  background: var(--primary-color-dark-color);
 }
 
 /* Footer */

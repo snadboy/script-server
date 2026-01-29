@@ -92,6 +92,15 @@
           <div v-show="activeTab === 3" class="tab-panel">
             <ScriptParamList :parameters="scriptConfig.parameters"/>
           </div>
+
+          <!-- Tab 5: Verbs -->
+          <div v-show="activeTab === 4" class="tab-panel">
+            <VerbConfigEditor
+              v-model="verbsConfig"
+              :available-parameters="scriptConfig.parameters || []"
+              :shared-parameters.sync="sharedParameters"
+            />
+          </div>
         </template>
       </div>
 
@@ -107,6 +116,7 @@
 import {NEW_SCRIPT} from '@/admin/store/script-config-module';
 import PromisableButton from '@/common/components/PromisableButton';
 import ScriptParamList from './ScriptParamList';
+import VerbConfigEditor from './VerbConfigEditor';
 import ScriptPathField from '@/admin/components/scripts-config/script-edit/ScriptField';
 import CheckBox from '@/common/components/checkbox';
 import ChipsList from '@/common/components/ChipsList';
@@ -135,6 +145,7 @@ export default {
   components: {
     PromisableButton,
     ScriptParamList,
+    VerbConfigEditor,
     ScriptPathField,
     CheckBox,
     ChipsList,
@@ -160,7 +171,8 @@ export default {
         { id: 'details', label: 'Details' },
         { id: 'access', label: 'Access' },
         { id: 'scheduling', label: 'Scheduling' },
-        { id: 'parameters', label: 'Parameters' }
+        { id: 'parameters', label: 'Parameters' },
+        { id: 'verbs', label: 'Verbs' }
       ],
       // Field configs
       nameField,
@@ -183,7 +195,10 @@ export default {
       globalInstances: false,
       // Scheduling state
       schedulingEnabled: true,
-      schedulingAutoCleanup: false
+      schedulingAutoCleanup: false,
+      // Verbs state
+      verbsConfig: null,
+      sharedParameters: []
     };
   },
 
@@ -245,6 +260,9 @@ export default {
           // Sync scheduling from config
           this.schedulingEnabled = config.scheduling?.enabled !== false;
           this.schedulingAutoCleanup = config.scheduling?.auto_cleanup || false;
+          // Sync verbs from config
+          this.verbsConfig = config.verbs || null;
+          this.sharedParameters = config.shared_parameters || [];
         }
       }
     },
@@ -276,6 +294,15 @@ export default {
     },
     schedulingAutoCleanup() {
       this.updateSchedulingInConfig();
+    },
+    verbsConfig: {
+      deep: true,
+      handler() {
+        this.updateVerbsInConfig();
+      }
+    },
+    sharedParameters() {
+      this.updateSharedParametersInConfig();
     }
   },
 
@@ -382,6 +409,26 @@ export default {
         this.$set(this.scriptConfig, 'scheduling', schedulingConf);
       } else {
         this.$delete(this.scriptConfig, 'scheduling');
+      }
+    },
+
+    updateVerbsInConfig() {
+      if (!this.scriptConfig) return;
+
+      if (this.verbsConfig) {
+        this.$set(this.scriptConfig, 'verbs', this.verbsConfig);
+      } else {
+        this.$delete(this.scriptConfig, 'verbs');
+      }
+    },
+
+    updateSharedParametersInConfig() {
+      if (!this.scriptConfig) return;
+
+      if (this.sharedParameters && this.sharedParameters.length > 0) {
+        this.$set(this.scriptConfig, 'shared_parameters', this.sharedParameters);
+      } else {
+        this.$delete(this.scriptConfig, 'shared_parameters');
       }
     }
   }

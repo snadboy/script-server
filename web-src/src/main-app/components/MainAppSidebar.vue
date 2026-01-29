@@ -12,8 +12,8 @@
       </router-link>
 
       <SearchPanel v-model="searchText"/>
-      <button v-if="adminUser" class="projects-btn waves-effect waves-circle" @click="showProjects = true" title="Project Manager">
-        <i class="material-icons">folder_special</i>
+      <button v-if="adminUser" class="scripts-btn waves-effect waves-circle" @click="showScripts = true" title="Script Manager">
+        <i class="material-icons">description</i>
       </button>
       <button v-if="adminUser" class="packages-btn waves-effect waves-circle" @click="showPackages = true" title="Package Manager">
         <i class="material-icons">inventory_2</i>
@@ -24,8 +24,8 @@
     </div>
 
     <SettingsModal :visible="showSettings" @close="showSettings = false" />
+    <ProjectsModal v-if="adminUser" :visible="showScripts" @close="showScripts = false" />
     <PackagesModal v-if="adminUser" :visible="showPackages" @close="showPackages = false" />
-    <ProjectsModal v-if="adminUser" :visible="showProjects" @close="showProjects = false" />
 
     <SidebarBottomNav />
 
@@ -50,8 +50,8 @@ import ScriptsList from './scripts/ScriptsList'
 import SearchPanel from './SearchPanel';
 import SidebarBottomNav from './SidebarBottomNav';
 import SettingsModal from './SettingsModal';
-import PackagesModal from './PackagesModal';
 import ProjectsModal from './ProjectsModal';
+import PackagesModal from './PackagesModal';
 import ThemeToggle from '@/common/components/ThemeToggle';
 
 export default {
@@ -61,8 +61,8 @@ export default {
     ScriptsList,
     SidebarBottomNav,
     SettingsModal,
-    PackagesModal,
     ProjectsModal,
+    PackagesModal,
     ThemeToggle
   },
 
@@ -70,8 +70,8 @@ export default {
     return {
       searchText: '',
       showSettings: false,
-      showPackages: false,
-      showProjects: false
+      showScripts: false,
+      showPackages: false
     }
   },
 
@@ -183,7 +183,7 @@ export default {
 
 .settings-btn,
 .packages-btn,
-.projects-btn {
+.scripts-btn {
   background: none;
   border: none;
   cursor: pointer;
@@ -197,13 +197,13 @@ export default {
 
 .settings-btn:hover,
 .packages-btn:hover,
-.projects-btn:hover {
+.scripts-btn:hover {
   background: var(--background-color-high-emphasis);
 }
 
 .settings-btn i,
 .packages-btn i,
-.projects-btn i {
+.scripts-btn i {
   font-size: 24px;
   color: var(--font-color-medium);
 }
