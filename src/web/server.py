@@ -1175,6 +1175,62 @@ class UninstallVenvPackageHandler(BaseRequestHandler):
             raise tornado.web.HTTPError(500, reason=str(e))
 
 
+# Server Logs Handler
+class GetServerLogsHandler(BaseRequestHandler):
+    @requires_admin_rights
+    def get(self):
+        """Get recent server logs from server.log file."""
+        import os
+        from pathlib import Path
+
+        # Get query parameters
+        lines = int(self.get_argument('lines', '500'))
+        level_filter = self.get_argument('level', None)  # ERROR, WARNING, INFO, DEBUG
+        search = self.get_argument('search', None)
+
+        # Limit lines to prevent excessive memory usage
+        if lines > 10000:
+            lines = 10000
+
+        try:
+            log_file = Path(self.application.server_config.logging_config_location).parent / 'logs' / 'server.log'
+
+            if not log_file.exists():
+                raise tornado.web.HTTPError(404, reason='Server log file not found')
+
+            # Read last N lines efficiently
+            with open(log_file, 'r', encoding='utf-8', errors='replace') as f:
+                all_lines = f.readlines()
+                recent_lines = all_lines[-lines:]
+
+            # Apply filters
+            filtered_lines = recent_lines
+
+            if level_filter:
+                level_filter = level_filter.upper()
+                filtered_lines = [
+                    line for line in filtered_lines
+                    if f'.{level_filter}]' in line
+                ]
+
+            if search:
+                search_lower = search.lower()
+                filtered_lines = [
+                    line for line in filtered_lines
+                    if search_lower in line.lower()
+                ]
+
+            self.write(json.dumps({
+                'logs': ''.join(filtered_lines),
+                'total_lines': len(all_lines),
+                'filtered_lines': len(filtered_lines),
+                'log_file': str(log_file)
+            }))
+
+        except Exception as e:
+            raise tornado.web.HTTPError(500, reason=f'Failed to read logs: {str(e)}')
+
+
 # Filesystem Browser Handler
 class FilesystemBrowseHandler(BaseRequestHandler):
     @requires_admin_rights
@@ -1521,6 +1577,8 @@ def init(server_config: ServerConfig,
                 (r'/admin/venv/packages/([^/]+)', UninstallVenvPackageHandler),
                 # Filesystem browser endpoint
                 (r'/admin/filesystem/browse', FilesystemBrowseHandler),
+                # Server logs endpoint
+                (r'/admin/logs/server', GetServerLogsHandler),
                 # Project management endpoints
                 (r'/admin/projects', ListProjectsHandler),
                 (r'/admin/projects/import', ImportProjectHandler),
