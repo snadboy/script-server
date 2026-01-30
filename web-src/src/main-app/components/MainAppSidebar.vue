@@ -16,13 +16,13 @@
         <i class="material-icons">description</i>
       </button>
       <button v-if="adminUser" class="packages-btn waves-effect waves-circle" @click="showPackages = true" title="Package Manager">
-        <i class="material-icons">inventory_2</i>
+        <i class="material-icons">storage</i>
       </button>
       <button v-if="adminUser" class="requirements-btn waves-effect waves-circle" @click="showRequirements = true" title="Requirements">
         <i class="material-icons">list_alt</i>
       </button>
       <button v-if="adminUser" class="logs-btn waves-effect waves-circle" @click="showLogs = true" title="Server Logs">
-        <i class="material-icons">article</i>
+        <i class="material-icons">subject</i>
       </button>
       <button class="settings-btn waves-effect waves-circle" @click="showSettings = true" title="Settings">
         <i class="material-icons">settings</i>
