@@ -41,6 +41,7 @@
 
     <div class="bottom-panels">
       <div class="fork-version"><strong>snadboy-fork</strong> v1.0.0 <span class="build-number">build {{ buildTimestamp }}</span></div>
+      <div class="local-time">{{ currentDateTime }}</div>
       <div class="logout-panel">
         <ThemeToggle />
         <span v-if="authEnabled" class="username">{{ username }}</span>
@@ -85,7 +86,9 @@ export default {
       showScripts: false,
       showPackages: false,
       showRequirements: false,
-      showLogs: false
+      showLogs: false,
+      currentTime: new Date(),
+      timeInterval: null
     }
   },
 
@@ -101,6 +104,29 @@ export default {
     }),
     buildTimestamp() {
       return process.env.VUE_APP_BUILD_TIMESTAMP || 'dev';
+    },
+    currentDateTime() {
+      const options = {
+        month: 'numeric',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      };
+      return this.currentTime.toLocaleString('en-US', options).replace(',', ' @');
+    }
+  },
+
+  mounted() {
+    this.timeInterval = setInterval(() => {
+      this.currentTime = new Date();
+    }, 1000);
+  },
+
+  beforeDestroy() {
+    if (this.timeInterval) {
+      clearInterval(this.timeInterval);
     }
   },
 
@@ -179,6 +205,13 @@ export default {
   color: var(--primary-color);
 }
 
+.local-time {
+  font-size: 0.75rem;
+  color: var(--font-color-medium);
+  text-align: center;
+  padding: 2px 8px 6px;
+}
+
 .logout-panel {
   height: 2.5em;
   display: flex;
@@ -225,7 +258,7 @@ export default {
 .requirements-btn i,
 .logs-btn i {
   font-size: 24px;
-  color: var(--font-color-medium);
+  color: var(--font-color-main);
 }
 
 </style>
