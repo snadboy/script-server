@@ -1193,7 +1193,8 @@ class GetServerLogsHandler(BaseRequestHandler):
             lines = 10000
 
         try:
-            log_file = Path(self.application.server_config.logging_config_location).parent / 'logs' / 'server.log'
+            # Log file is always at /app/logs/server.log in container
+            log_file = Path('/app/logs/server.log')
 
             if not log_file.exists():
                 raise tornado.web.HTTPError(404, reason='Server log file not found')

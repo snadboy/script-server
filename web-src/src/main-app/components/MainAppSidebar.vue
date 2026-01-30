@@ -197,7 +197,9 @@ export default {
 
 .settings-btn,
 .packages-btn,
-.scripts-btn {
+.scripts-btn,
+.requirements-btn,
+.logs-btn {
   background: none;
   border: none;
   cursor: pointer;
@@ -211,13 +213,17 @@ export default {
 
 .settings-btn:hover,
 .packages-btn:hover,
-.scripts-btn:hover {
+.scripts-btn:hover,
+.requirements-btn:hover,
+.logs-btn:hover {
   background: var(--background-color-high-emphasis);
 }
 
 .settings-btn i,
 .packages-btn i,
-.scripts-btn i {
+.scripts-btn i,
+.requirements-btn i,
+.logs-btn i {
   font-size: 24px;
   color: var(--font-color-medium);
 }
