@@ -152,6 +152,15 @@ class GetScripts(BaseRequestHandler):
                 script_dict['verbs'] = conf.verbs_config.to_dict()
                 script_dict['sharedParameters'] = getattr(conf, 'shared_parameters', [])
 
+            # Add validation status
+            if hasattr(self.application, 'script_validator'):
+                validation = self.application.script_validator.get_validation_status(conf.name)
+                script_dict['validation'] = {
+                    'valid': validation.get('valid', True),
+                    'error': validation.get('error'),
+                    'warning': validation.get('warning')
+                }
+
             scripts.append(script_dict)
 
         self.write(json.dumps({'scripts': scripts}))
@@ -1131,7 +1140,8 @@ class GetVenvPackagesHandler(BaseRequestHandler):
 
         try:
             packages = venv_service.list_packages()
-            self.write(json.dumps({'packages': packages}))
+            status = venv_service.get_status()
+            self.write(json.dumps({'packages': packages, 'status': status}))
         except RuntimeError as e:
             raise tornado.web.HTTPError(500, reason=str(e))
 
@@ -1232,18 +1242,49 @@ class GetServerLogsHandler(BaseRequestHandler):
             raise tornado.web.HTTPError(500, reason=f'Failed to read logs: {str(e)}')
 
 
+class ValidateScriptsHandler(BaseRequestHandler):
+    @requires_admin_rights
+    def post(self):
+        """Re-validate all scripts on-demand"""
+        if not hasattr(self.application, 'script_validator'):
+            raise tornado.web.HTTPError(503, reason='Script validator not available')
+
+        try:
+            # Clear cache and re-validate
+            self.application.script_validator.clear_cache()
+
+            # Get config folder path from config service
+            config_folder = self.application.config_service._script_configs_folder
+
+            # Validate from config files directly
+            validation_results = self.application.script_validator.validate_from_config_folder(config_folder)
+
+            # Count invalid scripts
+            invalid_count = sum(1 for r in validation_results.values() if not r['valid'])
+
+            self.write(json.dumps({
+                'validated': len(validation_results),
+                'invalid_count': invalid_count,
+                'results': validation_results
+            }))
+
+        except Exception as e:
+            LOGGER.error(f'Failed to validate scripts: {e}', exc_info=True)
+            raise tornado.web.HTTPError(500, reason=f'Failed to validate scripts: {str(e)}')
+
+
 # Requirements.txt Management Handlers
 class GetRequirementsHandler(BaseRequestHandler):
     @requires_admin_rights
     def get(self):
-        """Get requirements.txt file content"""
+        """Get auto-populated requirements from venv with script dependencies and missing packages"""
         venv_service = self.application.venv_service
         if venv_service is None:
             raise tornado.web.HTTPError(503, 'Venv service not available')
 
         try:
-            content = venv_service.read_requirements()
-            self.write(json.dumps({'content': content}))
+            data = venv_service.get_requirements_with_dependencies()
+            self.write(json.dumps(data))
         except Exception as e:
             raise tornado.web.HTTPError(500, reason=str(e))
 
@@ -1625,6 +1666,7 @@ def init(server_config: ServerConfig,
                  DownloadResultFile,
                  {'path': downloads_folder}),
                 (r'/admin/scripts', AdminUpdateScriptEndpoint),
+                (r'/admin/scripts/validate', ValidateScriptsHandler),
                 (r'/admin/scripts/([^/]+)', AdminScriptEndpoint),
                 (r'/admin/scripts/([^/]*)/code', AdminGetScriptCodeEndpoint),
                 # User management endpoints
@@ -1707,12 +1749,30 @@ def init(server_config: ServerConfig,
 
     # Initialize venv service
     from venv_manager.venv_service import VenvService
-    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    # __file__ is src/web/server.py, so go up 3 levels to get project root
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     application.venv_service = VenvService(project_root)
 
     # Initialize project manager service
     from project_manager.project_service import ProjectService
+    # project_root is already calculated above
     application.project_service = ProjectService(project_root)
+
+    # Initialize script validator and validate all scripts on startup
+    from script_validator import ScriptValidator
+    application.script_validator = ScriptValidator()
+    LOGGER.info('Validating scripts on startup...')
+    try:
+        # Validate from config folder
+        config_folder = os.path.join(conf_folder, 'runners')
+        validation_results = application.script_validator.validate_from_config_folder(config_folder)
+        invalid_count = sum(1 for r in validation_results.values() if not r['valid'])
+        if invalid_count > 0:
+            LOGGER.warning(f'Found {invalid_count} invalid script(s) during startup validation')
+        else:
+            LOGGER.info(f'All {len(validation_results)} scripts validated successfully')
+    except Exception as e:
+        LOGGER.warning(f'Could not validate scripts on startup: {e}')
 
     if os_utils.is_win() and env_utils.is_min_version('3.8'):
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())

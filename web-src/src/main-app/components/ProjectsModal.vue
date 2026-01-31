@@ -47,6 +47,17 @@
 
         <!-- Projects Tab -->
         <div v-if="activeTab === 'projects'" class="tab-content">
+          <div class="projects-header">
+            <button
+              class="btn btn-sm validate-btn"
+              :disabled="validating"
+              @click="validateAllScripts"
+              title="Re-validate all script configurations"
+            >
+              <i class="material-icons btn-icon-sm">fact_check</i>
+              {{ validating ? 'Validating...' : 'Validate Scripts' }}
+            </button>
+          </div>
           <div v-if="loading" class="loading">Loading projects...</div>
           <div v-else-if="projects.length === 0" class="no-projects">
             No projects imported yet. Use the Import tab to add a project.
@@ -422,6 +433,7 @@ export default {
       deleting: null,
       generating: false,
       installingDeps: false,
+      validating: false,
       error: null,
       success: null,
       showCreateManualScript: false,
@@ -550,6 +562,30 @@ export default {
 
     async refreshProjects() {
       await this.loadProjects();
+    },
+
+    async validateAllScripts() {
+      this.validating = true;
+      this.error = null;
+      this.success = null;
+      try {
+        const response = await axiosInstance.post('admin/scripts/validate');
+        const { validated, invalid_count } = response.data;
+
+        if (invalid_count > 0) {
+          this.success = `Validated ${validated} scripts. Found ${invalid_count} invalid script(s). Check sidebar for warnings.`;
+        } else {
+          this.success = `All ${validated} scripts validated successfully!`;
+        }
+
+        // Refresh scripts list to show updated validation status
+        await this.$store.dispatch('scripts/init');
+      } catch (e) {
+        this.error = 'Failed to validate scripts: ' + (e.response?.data?.message || e.message);
+        console.error('Failed to validate scripts:', e);
+      } finally {
+        this.validating = false;
+      }
     },
 
     selectProject(project) {
@@ -879,6 +915,24 @@ export default {
 
 .tab-content {
   min-height: 200px;
+}
+
+.projects-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+.validate-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.validate-btn .btn-icon-sm {
+  font-size: 18px;
 }
 
 .error-message {

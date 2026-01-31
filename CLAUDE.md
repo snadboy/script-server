@@ -14,10 +14,51 @@
 
 ## Current State
 
-**Branch:** `verb`
-**Latest Commit:** (uncommitted changes)
+**Branch:** `master`
+**Latest Commit:** 3a1cb71 - Add wrapper scripts for gmail-trim and upcoming-episodes integration
 **Last Updated:** 2026-01-29
 **Docker Image:** `ghcr.io/snadboy/script-server:latest` (auto-builds on push to master)
+
+### Recent Session (2026-01-29) - Part 3: Release & Integration
+
+**Merged verb branch to master and set up project integrations.**
+
+**Actions completed:**
+
+1. **Cleaned up verb branch:**
+   - Reverted test schedules, local development artifacts
+   - Removed test schedule files (Test Script_admin_*.json)
+   - Committed staged changes with verb filtering + script descriptions
+
+2. **Merged to master and triggered build:**
+   - Fast-forward merge of verb branch to master
+   - Pushed to origin master
+   - GitHub Actions workflow triggered: Docker build → ghcr.io/snadboy/script-server:latest
+
+3. **Set up gmail-trim on GitHub:**
+   - Already pushed to https://github.com/snadboy/gmail-trim
+   - Added topics: gmail, automation, cleanup, python, cli
+   - Latest commit: c6497b4 - Code quality improvements
+
+4. **Set up upcoming-episodes on GitHub:**
+   - Created initial commit (15d9b43) with FastAPI service
+   - Created public repository: https://github.com/snadboy/upcoming-episodes
+   - Added topics: plex, sonarr, metadata, fastapi, webhook
+   - 14 files committed (1,297 lines)
+
+5. **Created script-server integration:**
+   - **Wrapper scripts** (committed to repo):
+     - `samples/scripts/gmail_trim.py` - Wrapper for gmail-cleanup CLI
+     - `samples/scripts/upcoming_episodes_sync.py` - HTTP client for sync service
+   - **Config files** (local only, in .gitignore):
+     - `conf/runners/gmail_trim.json` - Verb-based config with run/auth/labels/groups/config commands
+     - `conf/runners/upcoming_episodes.json` - Simple sync trigger with scheduling enabled
+
+**Next steps:**
+- Wait for Docker build to complete
+- Deploy projects to /opt/ on utilities host
+- Set up systemd service for upcoming-episodes
+- Install Python dependencies and test wrappers
 
 ### Recent Session (2026-01-29) - Part 2
 
