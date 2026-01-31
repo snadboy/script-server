@@ -694,10 +694,15 @@ if len(sys.argv) >= 2 and sys.argv[1] == '{config_cmd}' and '--config' not in sy
         # Build script_path using venv python
         script_path = f"{self.venv_python} {wrapper_path}"
 
+        # AUTO-MANAGE: Set working_directory to project root for sandboxing
+        # Scripts execute from their project folder and access files via relative paths
+        working_directory = f"projects/{project_id}"
+
         # Build config
         config = {
             'name': script_name,
             'script_path': script_path,
+            'working_directory': working_directory,
             'description': description or f"Imported from {meta.get('source_url', 'ZIP upload')}",
             'group': group,
             'scheduling': {'enabled': True}

@@ -22,15 +22,7 @@
         <div v-if="error" class="error-message">{{ error }}</div>
         <div v-if="success" class="success-message">{{ success }}</div>
 
-        <!-- Source Tab (always visible) -->
-        <div v-if="currentTabId === 'source'" class="tab-panel">
-          <SourceSelector
-            :selected="creationMode"
-            @select="handleSourceSelect"
-          />
-        </div>
-
-        <!-- Import Tab (import mode only) -->
+        <!-- Import Tab -->
         <div v-if="currentTabId === 'import'" class="tab-panel">
           <ImportPanel
             @import-complete="handleImportComplete"
@@ -38,7 +30,7 @@
           />
         </div>
 
-        <!-- Configure Tab (import mode only) -->
+        <!-- Configure Tab -->
         <div v-if="currentTabId === 'configure' && importedProject" class="tab-panel">
           <ConfigurePanel
             :project="importedProject"
@@ -50,17 +42,17 @@
           />
         </div>
 
-        <!-- Details Tab (always visible after source selection) -->
+        <!-- Details Tab -->
         <div v-if="currentTabId === 'details'" class="tab-panel">
-          <DetailsTab :path-readonly="creationMode === 'import'" />
+          <DetailsTab :path-readonly="true" />
         </div>
 
-        <!-- Parameters Tab (always visible after source selection) -->
+        <!-- Parameters Tab -->
         <div v-if="currentTabId === 'parameters'" class="tab-panel">
           <ScriptParamList :parameters="scriptConfig.parameters"/>
         </div>
 
-        <!-- Advanced Tab (always visible after source selection) -->
+        <!-- Advanced Tab -->
         <div v-if="currentTabId === 'advanced'" class="tab-panel">
           <AdvancedTab />
         </div>
@@ -92,7 +84,6 @@
 import {NEW_SCRIPT} from '@/admin/store/script-config-module';
 import {axiosInstance} from '@/common/utils/axios_utils';
 import ScriptParamList from '../ScriptParamList';
-import SourceSelector from './SourceSelector.vue';
 import ImportPanel from './ImportPanel.vue';
 import ConfigurePanel from './ConfigurePanel.vue';
 import DetailsTab from './DetailsTab.vue';
@@ -103,7 +94,6 @@ export default {
 
   components: {
     ScriptParamList,
-    SourceSelector,
     ImportPanel,
     ConfigurePanel,
     DetailsTab,
@@ -114,11 +104,6 @@ export default {
     visible: {
       type: Boolean,
       default: false
-    },
-    initialMode: {
-      type: String,
-      default: null,
-      validator: (value) => value === null || ['import', 'manual'].includes(value)
     }
   },
 
@@ -126,7 +111,6 @@ export default {
 
   data() {
     return {
-      creationMode: null,  // 'import' | 'manual'
       activeTab: 0,
       error: null,
       success: null,
@@ -171,22 +155,17 @@ export default {
     },
 
     visibleTabs() {
-      const tabs = [{ id: 'source', label: 'Source' }];
+      // Import-only workflow: no Source tab
+      const tabs = [];
 
-      if (this.creationMode === 'import') {
-        tabs.push(
-          { id: 'import', label: 'Import' },
-          { id: 'configure', label: 'Configure' }
-        );
-      }
-
-      if (this.creationMode) {
-        tabs.push(
-          { id: 'details', label: 'Details' },
-          { id: 'parameters', label: 'Parameters' },
-          { id: 'advanced', label: 'Advanced' }
-        );
-      }
+      // Always show Import, Configure, Details, Parameters, Advanced
+      tabs.push(
+        { id: 'import', label: 'Import' },
+        { id: 'configure', label: 'Configure' },
+        { id: 'details', label: 'Details' },
+        { id: 'parameters', label: 'Parameters' },
+        { id: 'advanced', label: 'Advanced' }
+      );
 
       return tabs;
     },
@@ -196,8 +175,7 @@ export default {
     },
 
     canProceed() {
-      // Show Next button except on last tab and when form is complete
-      if (!this.creationMode) return false;
+      // Show Next button except on last tab
       if (this.activeTab >= this.visibleTabs.length - 1) return false;
 
       // For configure tab, require entry point and script name
@@ -210,7 +188,6 @@ export default {
 
     canSave() {
       // Show Save button on last 3 tabs (Details, Parameters, Advanced)
-      if (!this.creationMode) return false;
       const lastThreeTabs = ['details', 'parameters', 'advanced'];
       return lastThreeTabs.includes(this.currentTabId);
     },
@@ -237,12 +214,7 @@ export default {
         document.body.style.overflow = 'hidden';
         this.resetState();
         this.$store.dispatch(`${this.storeModule}/init`, NEW_SCRIPT);
-
-        // Handle initial mode (skip Source tab if specified)
-        if (this.initialMode === 'manual') {
-          this.creationMode = 'manual';
-          this.activeTab = 1; // Skip Source tab, go directly to Details
-        }
+        this.loadInstalledPackages();
 
         // Move modal to body
         this.$nextTick(() => {
@@ -266,7 +238,6 @@ export default {
 
   methods: {
     resetState() {
-      this.creationMode = null;
       this.activeTab = 0;
       this.error = null;
       this.success = null;
@@ -281,27 +252,12 @@ export default {
       };
     },
 
-    handleSourceSelect(mode) {
-      this.creationMode = mode;
-      this.error = null;
-      this.success = null;
-
-      if (mode === 'import') {
-        // Go to import tab
-        this.activeTab = 1;
-        this.loadInstalledPackages();
-      } else if (mode === 'manual') {
-        // Go directly to details tab
-        this.activeTab = 1;
-      }
-    },
-
     handleImportComplete(project) {
       this.importedProject = project;
       this.success = `Successfully imported ${project.name}`;
       this.error = null;
       // Move to configure tab
-      this.activeTab = 2;
+      this.activeTab = 1;
     },
 
     handleConfigureComplete(configData) {
@@ -371,51 +327,30 @@ export default {
       this.success = null;
 
       try {
-        if (this.creationMode === 'import') {
-          await this.saveImportPath();
-        } else {
-          await this.saveManualPath();
-        }
+        // Import-only workflow: generate wrapper + config via backend
+        const response = await axiosInstance.post(
+          `admin/projects/${encodeURIComponent(this.importedProject.id)}/wrapper`,
+          {
+            entry_point: this.configData.entryPoint,
+            config_path: this.configData.configPath || undefined,
+            config_cmd: this.configData.configCmd || undefined,
+            script_name: this.scriptConfig.name,
+            description: this.scriptConfig.description || undefined
+          }
+        );
+
+        this.success = `Wrapper and config generated! Script "${this.scriptConfig.name}" is now available.`;
+        this.$emit('saved', this.scriptConfig.name);
+
+        // Wait a bit to show success message
+        setTimeout(() => {
+          this.close();
+        }, 1500);
       } catch (e) {
         this.error = e.response?.data || e.message || 'Failed to save script';
       } finally {
         this.saving = false;
       }
-    },
-
-    async saveImportPath() {
-      // Generate wrapper + config via backend
-      const response = await axiosInstance.post(
-        `admin/projects/${encodeURIComponent(this.importedProject.id)}/wrapper`,
-        {
-          entry_point: this.configData.entryPoint,
-          config_path: this.configData.configPath || undefined,
-          config_cmd: this.configData.configCmd || undefined,
-          script_name: this.scriptConfig.name,
-          description: this.scriptConfig.description || undefined
-        }
-      );
-
-      this.success = `Wrapper and config generated! Script "${this.scriptConfig.name}" is now available.`;
-      this.$emit('saved', this.scriptConfig.name);
-
-      // Wait a bit to show success message
-      setTimeout(() => {
-        this.close();
-      }, 1500);
-    },
-
-    async saveManualPath() {
-      // Use existing scriptConfig store
-      await this.$store.dispatch(`${this.storeModule}/save`);
-
-      this.success = `Script "${this.scriptConfig.name}" created successfully!`;
-      this.$emit('saved', this.scriptConfig.name);
-
-      // Wait a bit to show success message
-      setTimeout(() => {
-        this.close();
-      }, 1500);
     },
 
     fixOverlayDimensions() {

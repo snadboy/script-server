@@ -4,12 +4,14 @@
       <TextField v-model="scriptConfig.name" :config="nameField" class="col s6"/>
       <TextField v-model="scriptConfig.group" :config="groupField" class="col s5 offset-s1"/>
     </div>
-    <div class="row">
+    <!-- Script path and working directory are auto-managed for imported projects -->
+    <!-- Only show these fields for manual scripts (backward compatibility) -->
+    <div v-if="!pathReadonly" class="row">
       <ScriptPathField
         :config-name="scriptConfig.name"
         :new-config="true"
         :original-path="scriptConfig.script_path"
-        :readonly="pathReadonly"
+        :readonly="false"
         class="col s6"
         @change="updateScript"
       />

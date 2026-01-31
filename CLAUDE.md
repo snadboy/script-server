@@ -16,8 +16,67 @@
 
 **Branch:** `master`
 **Latest Commit:** 3a1cb71 - Add wrapper scripts for gmail-trim and upcoming-episodes integration
-**Last Updated:** 2026-01-29
+**Last Updated:** 2026-01-31
 **Docker Image:** `ghcr.io/snadboy/script-server:latest` (auto-builds on push to master)
+
+### Recent Session (2026-01-31) - Part 3: Import-Only Architecture with Auto-Managed Paths
+
+**Major architectural simplification: removed manual script creation, auto-manage paths, and enforce sandboxing.**
+
+**Goals achieved:**
+- ✅ Import-only workflow (Git/ZIP/Local)
+- ✅ Script path and working directory auto-managed by server
+- ✅ Sandboxed execution (scripts confined to their project folders)
+- ✅ Hidden complexity from users (no path fields in UI)
+
+**Changes:**
+
+1. **Backend: Auto-manage working directory** (`project_service.py`):
+   - `generate_runner_config()` now auto-sets `working_directory = "projects/{project_id}"`
+   - Scripts execute from their project root, access files via relative paths
+
+2. **Backend: Sandboxing validation** (`executor.py`):
+   - Enhanced `_normalize_working_dir()` with security validation
+   - Enforces that `working_directory` must be within `projects/` folder
+   - Prevents path traversal attacks (resolves `..`, validates against projects_dir)
+   - Raises `ValueError` if working directory escapes project boundaries
+
+3. **Frontend: Hide path fields from UI** (`DetailsTab.vue`):
+   - Script path field: hidden for imported projects (path-readonly mode)
+   - Working directory field: hidden for imported projects
+   - Only show Name, Description, Group, Output Format, Terminal, Include fields
+
+4. **Frontend: Remove manual script creation** (`CreateScriptModal.vue`):
+   - Removed Source tab (no more import vs manual selection)
+   - Import-only workflow: Import → Configure → Details → Parameters → Advanced
+   - Removed `creationMode` state and logic
+   - Removed `initialMode` prop
+   - Always uses import path (calls backend wrapper generation API)
+
+5. **Frontend: Simplify Script Manager** (`ProjectsModal.vue`):
+   - Removed "Create" tab
+   - Now only has: Projects, Import, Configure tabs
+   - Removed CreateScriptModal integration
+   - Removed `openManualScriptCreation` and related methods
+
+**Security benefits:**
+- Scripts cannot escape their project folder via `../` traversal
+- Scripts cannot access other projects or server source code via working_directory
+- Path resolution handles symlinks correctly (follows then validates)
+- Absolute paths outside projects/ are rejected
+
+**Files modified:**
+- `src/project_manager/project_service.py` (auto-set working_directory)
+- `src/execution/executor.py` (sandboxing validation in _normalize_working_dir)
+- `web-src/src/admin/components/scripts-config/create-script/CreateScriptModal.vue` (import-only workflow)
+- `web-src/src/admin/components/scripts-config/create-script/DetailsTab.vue` (hide path fields)
+- `web-src/src/main-app/components/ProjectsModal.vue` (remove Create tab)
+
+**Next steps:**
+- Test import workflow with Git/ZIP/Local
+- Verify path fields hidden in UI
+- Test sandboxing prevents path traversal
+- Rebuild frontend and deploy
 
 ### Recent Session (2026-01-31) - Part 2: Code Quality Improvements
 

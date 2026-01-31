@@ -20,12 +20,6 @@
           Import
         </button>
         <button
-          :class="['tab-btn', { active: activeTab === 'create' }]"
-          @click="activeTab = 'create'"
-        >
-          Create
-        </button>
-        <button
           v-if="selectedProject"
           :class="['tab-btn', { active: activeTab === 'configure' }]"
           @click="activeTab = 'configure'"
@@ -232,20 +226,6 @@
           </div>
         </div>
 
-        <!-- Create Tab -->
-        <div v-if="activeTab === 'create'" class="tab-content">
-          <div class="create-section">
-            <div class="create-card">
-              <i class="material-icons create-icon">code</i>
-              <h5>Create Manual Script</h5>
-              <p>Create a script configuration for any executable (Python script, shell script, binary, etc.)</p>
-              <button class="btn btn-primary create-btn" @click="openManualScriptCreation">
-                Create Manual Script
-              </button>
-            </div>
-          </div>
-        </div>
-
         <!-- Configure Tab -->
         <div v-if="activeTab === 'configure' && selectedProject" class="tab-content">
           <div class="configure-section">
@@ -394,27 +374,18 @@
       </div>
     </div>
 
-    <!-- Create Manual Script Modal -->
-    <CreateScriptModal
-      :visible="showCreateManualScript"
-      :initial-mode="'manual'"
-      @close="showCreateManualScript = false"
-      @saved="onScriptCreated"
-    />
   </div>
 </template>
 
 <script>
 import {axiosInstance} from '@/common/utils/axios_utils';
 import DirectoryBrowserModal from './common/DirectoryBrowserModal.vue';
-import CreateScriptModal from '@/admin/components/scripts-config/create-script/CreateScriptModal.vue';
 
 export default {
   name: 'ProjectsModal',
 
   components: {
-    DirectoryBrowserModal,
-    CreateScriptModal
+    DirectoryBrowserModal
   },
 
   props: {
@@ -436,8 +407,6 @@ export default {
       validating: false,
       error: null,
       success: null,
-      showCreateManualScript: false,
-
       // Import form
       importType: 'git',
       gitUrl: '',
@@ -514,16 +483,6 @@ export default {
       this.$emit('close');
     },
 
-    openManualScriptCreation() {
-      this.showCreateManualScript = true;
-    },
-
-    onScriptCreated() {
-      this.showCreateManualScript = false;
-      this.success = 'Script created successfully!';
-      // Optionally refresh projects list
-      this.refreshProjects();
-    },
 
     async loadInstalledPackages() {
       this.loadingPackages = true;

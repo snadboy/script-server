@@ -40,9 +40,62 @@ _process_creator = create_process_wrapper
 
 
 def _normalize_working_dir(working_directory):
+    """
+    Normalize and validate working directory for security.
+
+    Enforces sandboxing by ensuring working_directory is within projects/ folder.
+    This prevents path traversal attacks and restricts scripts to their project boundaries.
+
+    Args:
+        working_directory: Path to working directory (relative or absolute)
+
+    Returns:
+        Normalized absolute path
+
+    Raises:
+        ValueError: If working_directory escapes projects/ folder
+    """
     if working_directory is None:
         return None
-    return file_utils.normalize_path(working_directory)
+
+    # Normalize and resolve to absolute path
+    normalized = file_utils.normalize_path(working_directory)
+
+    # For imported projects, enforce sandboxing
+    # Check both normalized and original paths to catch traversal attempts
+    if 'projects/' in normalized or 'projects/' in working_directory:
+        from pathlib import Path
+        import os
+
+        # Get server root (where launcher.py lives) - go up from src/execution/ to project root
+        server_root = str(Path(__file__).parent.parent.parent.resolve())
+
+        # Check for Docker environment (/app exists)
+        if os.path.exists('/app'):
+            projects_dir = '/app/projects'
+        else:
+            projects_dir = os.path.join(server_root, 'projects')
+
+        # Make the path absolute if it's relative
+        if not os.path.isabs(normalized):
+            abs_path = os.path.join(server_root, normalized)
+        else:
+            abs_path = normalized
+
+        # Resolve the working directory (follows symlinks, resolves ..)
+        try:
+            resolved = str(Path(abs_path).resolve())
+        except (OSError, RuntimeError) as e:
+            raise ValueError(f'Invalid working directory path: {e}') from e
+
+        # SANDBOX: Must be within projects/ directory
+        if not resolved.startswith(projects_dir):
+            raise ValueError(
+                f'Working directory must be within projects/ folder for security. '
+                f'Got: {resolved}, Expected prefix: {projects_dir}'
+            )
+
+    return normalized
 
 
 class ScriptExecutor:
