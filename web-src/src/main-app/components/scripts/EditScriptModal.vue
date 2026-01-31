@@ -372,9 +372,16 @@ export default {
       }
       return this.$store.dispatch(`${this.storeModule}/deleteScript`)
         .then(() => {
-          M.toast({ html: 'Script deleted' });
+          M.toast({ html: 'Script deleted successfully', classes: 'green' });
           this.$store.dispatch('scripts/init');
           this.$emit('deleted');
+          // Wait briefly to show success message before closing modal
+          return new Promise(resolve => {
+            setTimeout(() => {
+              this.$emit('close');
+              resolve();
+            }, 800);
+          });
         })
         .catch((e) => {
           if (e.userMessage) {
