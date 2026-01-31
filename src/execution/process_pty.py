@@ -58,6 +58,8 @@ class PtyProcessWrapper(process_base.ProcessWrapper):
         if self.is_finished():
             return
 
+        assert self.pty_master is not None, "PTY master not initialized"
+
         input_value = value
         if not input_value.endswith("\n"):
             input_value += "\n"
@@ -68,6 +70,9 @@ class PtyProcessWrapper(process_base.ProcessWrapper):
         self.process.wait()
 
     def pipe_process_output(self) -> None:
+        assert self.pty_master is not None, "PTY master not initialized"
+        assert self.pty_slave is not None, "PTY slave not initialized"
+
         utf8_stream = self.encoding.lower() == 'utf-8'
 
         buffer = b''
@@ -144,8 +149,10 @@ class PtyProcessWrapper(process_base.ProcessWrapper):
             LOGGER.exception('Failed to read script output')
 
         finally:
-            os.close(self.pty_master)
-            os.close(self.pty_slave)
+            if self.pty_master is not None:
+                os.close(self.pty_master)
+            if self.pty_slave is not None:
+                os.close(self.pty_slave)
             self.output_stream.close()
 
 
