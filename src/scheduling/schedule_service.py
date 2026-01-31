@@ -23,7 +23,7 @@ JOB_SCHEDULE_KEY = 'schedule'
 LOGGER = logging.getLogger('script_server.scheduling.schedule_service')
 
 
-def restore_jobs(schedules_folder):
+def restore_jobs(schedules_folder: str) -> tuple[dict, list]:
     files = [file for file in os.listdir(schedules_folder) if file.endswith('.json')]
     files.sort()
 
@@ -40,7 +40,7 @@ def restore_jobs(schedules_folder):
             job = scheduling_job.from_dict(job_json)
 
             job_path_dict[job_path] = job
-        except:
+        except Exception:
             LOGGER.exception('Failed to parse schedule file: ' + file)
 
     return job_path_dict, ids
@@ -122,7 +122,7 @@ class ScheduleService:
                 raise UnavailableScriptException(
                     'Script contains secure parameters (' + parameter.str_name() + '), this is not supported')
 
-    def schedule_job(self, job: SchedulingJob, job_path):
+    def schedule_job(self, job: SchedulingJob, job_path: str) -> None:
         schedule = job.schedule
 
         # Skip disabled jobs
@@ -147,7 +147,7 @@ class ScheduleService:
 
         self.scheduler.schedule(next_datetime, self._execute_job, (job, job_path))
 
-    def _execute_job(self, job: SchedulingJob, job_path):
+    def _execute_job(self, job: SchedulingJob, job_path: str) -> None:
         LOGGER.info('Executing ' + job.get_log_name())
 
         if not os.path.exists(job_path):
@@ -180,12 +180,12 @@ class ScheduleService:
                 job.schedule.completion_time = date_utils.now(tz=timezone.utc)
                 self.save_job(job)
 
-        except:
+        except Exception:
             LOGGER.exception('Failed to execute ' + job.get_log_name())
 
         self.schedule_job(job, job_path)
 
-    def save_job(self, job: SchedulingJob):
+    def save_job(self, job: SchedulingJob) -> str:
         user = job.user
         script_name = job.script_name
 
@@ -197,7 +197,7 @@ class ScheduleService:
 
         return path
 
-    def get_jobs(self, user: User = None, script_name: str = None):
+    def get_jobs(self, user: User = None, script_name: str = None) -> list[SchedulingJob]:
         """Get all scheduled jobs, optionally filtered by script name.
 
         Note: User filtering is disabled - all schedules are visible to all users.
@@ -220,12 +220,12 @@ class ScheduleService:
                     continue
 
                 jobs.append(job)
-            except:
+            except Exception:
                 LOGGER.exception('Failed to parse schedule file: ' + file)
 
         return jobs
 
-    def get_job(self, job_id: str, user: User = None):
+    def get_job(self, job_id: str, user: User = None) -> tuple:
         """Get a specific job by ID.
 
         Note: User ownership check is disabled - any user can access any schedule.
@@ -244,12 +244,12 @@ class ScheduleService:
 
                 job = scheduling_job.from_dict(job_json)
                 return job, job_path
-            except:
+            except Exception:
                 LOGGER.exception('Failed to parse schedule file: ' + file)
 
         return None, None
 
-    def delete_job(self, job_id: str, user: User):
+    def delete_job(self, job_id: str, user: User) -> SchedulingJob:
         """Delete a scheduled job by ID.
 
         Note: Any authenticated user can delete any schedule.
@@ -273,7 +273,7 @@ class ScheduleService:
 
         return job
 
-    def toggle_job_enabled(self, job_id: str, enabled: bool, user: User):
+    def toggle_job_enabled(self, job_id: str, enabled: bool, user: User) -> SchedulingJob:
         """Toggle the enabled state of a scheduled job."""
         if user is None:
             raise InvalidUserException('User id is missing')
@@ -301,7 +301,7 @@ class ScheduleService:
 
         return job
 
-    def update_job(self, job_id: str, incoming_schedule_config, user: User):
+    def update_job(self, job_id: str, incoming_schedule_config: dict, user: User) -> SchedulingJob:
         """Update a scheduled job's configuration."""
         if user is None:
             raise InvalidUserException('User id is missing')
@@ -346,7 +346,7 @@ class ScheduleService:
 
         return job
 
-    def stop(self):
+    def stop(self) -> None:
         self._cleanup_stop_event.set()
         self.scheduler.stop()
 
@@ -354,7 +354,7 @@ class ScheduleService:
         """Get the current one-time schedule retention period in minutes."""
         return self._onetime_retention_minutes
 
-    def set_retention_minutes(self, minutes: int):
+    def set_retention_minutes(self, minutes: int) -> None:
         """Set the one-time schedule retention period in minutes.
 
         Args:
@@ -363,7 +363,7 @@ class ScheduleService:
         self._onetime_retention_minutes = minutes
         LOGGER.info(f'Updated one-time schedule retention to {minutes} minutes')
 
-    def _start_cleanup_task(self):
+    def _start_cleanup_task(self) -> None:
         """Start background thread to clean up expired one-time schedules."""
         if self._onetime_retention_minutes < 0:
             LOGGER.info('One-time schedule auto-cleanup is disabled (retention=-1)')
@@ -380,7 +380,7 @@ class ScheduleService:
         cleanup_thread.start()
         LOGGER.info(f'Started schedule cleanup task (retention={self._onetime_retention_minutes} minutes)')
 
-    def _cleanup_expired_schedules(self):
+    def _cleanup_expired_schedules(self) -> None:
         """Remove expired one-time schedules that have exceeded the retention period."""
         if self._onetime_retention_minutes < 0:
             return  # Cleanup disabled

@@ -11,7 +11,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Dict, Optional, Set
+from typing import Dict, List, Optional, Set
 
 LOGGER = logging.getLogger('script_server.VenvService')
 
@@ -241,7 +241,7 @@ class VenvService:
         try:
             with open(requirements_path, 'r', encoding='utf-8') as f:
                 return f.read()
-        except Exception as e:
+        except OSError as e:
             LOGGER.error(f'Failed to read requirements.txt: {e}')
             raise RuntimeError(f'Failed to read requirements.txt: {str(e)}')
 
@@ -262,7 +262,7 @@ class VenvService:
                 'path': requirements_path,
                 'lines': len(content.strip().split('\n')) if content.strip() else 0
             }
-        except Exception as e:
+        except OSError as e:
             LOGGER.error(f'Failed to write requirements.txt: {e}')
             raise RuntimeError(f'Failed to write requirements.txt: {str(e)}')
 
@@ -395,7 +395,7 @@ class VenvService:
                         # Get root module
                         root = node.module.split('.')[0]
                         imports.add(root)
-        except Exception as e:
+        except (OSError, SyntaxError) as e:
             LOGGER.debug(f'Failed to parse imports from {filepath}: {e}')
 
         return imports

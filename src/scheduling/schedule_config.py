@@ -1,4 +1,5 @@
 from datetime import timezone, timedelta, datetime
+from typing import Any, Optional
 
 from model import model_helper
 from utils import date_utils
@@ -7,13 +8,13 @@ from utils.string_utils import is_blank
 ALLOWED_WEEKDAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
 
 
-def _read_datetime(incoming_schedule_config, key):
+def _read_datetime(incoming_schedule_config: dict, key: str) -> datetime:
     datetime_value = model_helper.read_datetime_from_config(key, incoming_schedule_config)
     if datetime_value is None:
         raise InvalidScheduleException(f'{key} is required')
     return datetime_value
 
-def _read_repeat_unit(incoming_schedule_config):
+def _read_repeat_unit(incoming_schedule_config: dict) -> str:
     repeat_unit = incoming_schedule_config.get('repeat_unit')
     if is_blank(repeat_unit):
         raise InvalidScheduleException('repeat_unit is required for repeatable schedule')
@@ -24,14 +25,14 @@ def _read_repeat_unit(incoming_schedule_config):
     return repeat_unit.lower()
 
 
-def _read_repeat_period(incoming_schedule_config):
+def _read_repeat_period(incoming_schedule_config: dict) -> int:
     period = model_helper.read_int_from_config('repeat_period', incoming_schedule_config, default=1)
     if period <= 0:
         raise InvalidScheduleException('repeat_period should be > 0')
     return period
 
 
-def _read_end_arg_int(incoming_schedule_config):
+def _read_end_arg_int(incoming_schedule_config: dict) -> int:
     end_arg = model_helper.read_int_from_config('end_arg', incoming_schedule_config)
     if end_arg is None:
         raise InvalidScheduleException('end_arg is required for repeatable schedule')
@@ -40,7 +41,7 @@ def _read_end_arg_int(incoming_schedule_config):
     return end_arg
 
 
-def _read_end_args(incoming_schedule_config):
+def _read_end_args(incoming_schedule_config: dict) -> tuple[Optional[str], Any]:
     end_option = incoming_schedule_config.get('end_option')
     if end_option == 'end_datetime':
         end_arg = _read_datetime(incoming_schedule_config, 'end_arg')
@@ -52,14 +53,14 @@ def _read_end_args(incoming_schedule_config):
         return end_option,None
 
 
-def read_repeatable_flag(incoming_schedule_config):
+def read_repeatable_flag(incoming_schedule_config: dict) -> bool:
     repeatable = model_helper.read_bool_from_config('repeatable', incoming_schedule_config)
     if repeatable is None:
         raise InvalidScheduleException('Missing "repeatable" field')
     return repeatable
 
 
-def read_weekdays(incoming_schedule_config):
+def read_weekdays(incoming_schedule_config: dict) -> list[str]:
     weekdays = model_helper.read_list(incoming_schedule_config, 'weekdays')
     if not weekdays:
         raise InvalidScheduleException('At least one weekday should be specified')
@@ -70,7 +71,7 @@ def read_weekdays(incoming_schedule_config):
     return sorted(weekdays, key=lambda x: ALLOWED_WEEKDAYS.index(x))
 
 
-def read_schedule_config(incoming_schedule_config):
+def read_schedule_config(incoming_schedule_config: dict) -> 'ScheduleConfig':
     repeatable = read_repeatable_flag(incoming_schedule_config)
     start_datetime = _read_datetime(incoming_schedule_config, 'start_datetime')
 
@@ -96,19 +97,19 @@ def read_schedule_config(incoming_schedule_config):
 
 class ScheduleConfig:
 
-    def __init__(self, repeatable, start_datetime) -> None:
-        self.repeatable = repeatable
-        self.start_datetime = start_datetime  # type: datetime
-        self.end_option = None
-        self.end_arg = None
-        self.executions_count = None
-        self.last_execution_time = None  # type: datetime
-        self.repeat_unit = None
-        self.repeat_period = None
-        self.weekdays = None
-        self.completion_time = None  # type: datetime - For non-recurring schedules, when execution completed
+    def __init__(self, repeatable: bool, start_datetime: datetime) -> None:
+        self.repeatable: bool = repeatable
+        self.start_datetime: datetime = start_datetime
+        self.end_option: Optional[str] = None
+        self.end_arg: Any = None
+        self.executions_count: Optional[int] = None
+        self.last_execution_time: Optional[datetime] = None
+        self.repeat_unit: Optional[str] = None
+        self.repeat_period: Optional[int] = None
+        self.weekdays: Optional[list[str]] = None
+        self.completion_time: Optional[datetime] = None
 
-    def as_serializable_dict(self):
+    def as_serializable_dict(self) -> dict:
         result = {
             'repeatable': self.repeatable,
             'start_datetime': date_utils.to_iso_string(self.start_datetime)
@@ -140,7 +141,7 @@ class ScheduleConfig:
 
         return result
 
-    def get_next_time(self):
+    def get_next_time(self) -> datetime:
         if not self.repeatable:
             return self.start_datetime
 
@@ -202,7 +203,7 @@ class ScheduleConfig:
             if i > max_iterations:
                 raise Exception('Endless loop in calc next time')
 
-    def get_last_execution_time(self):
+    def get_last_execution_time(self) -> Optional[datetime]:
         """Return the actual last execution time for recurring schedules."""
         if not self.repeatable:
             return None

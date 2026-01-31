@@ -320,7 +320,7 @@ class ScriptStreamSocket(tornado.websocket.WebSocketHandler):
                     web_socket.safe_write(wrap_to_server_event(
                         'file',
                         {'url': url_path, 'filename': filename}))
-            except:
+            except Exception:
                 LOGGER.exception('Could not prepare downloadable files')
 
             connection = web_socket.ws_connection
@@ -1617,7 +1617,7 @@ def intercept_stop_when_running_scripts(io_loop, execution_service):
                     LOGGER.info('Killing the running processes: ' + str(running_processes))
                     for id in running_processes:
                         execution_service.kill_script_by_system(id)
-                except:
+                except Exception:
                     LOGGER.exception('Could not kill running scripts, trying to stop the server')
 
         if can_stop:

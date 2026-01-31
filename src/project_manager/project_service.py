@@ -75,7 +75,7 @@ class ProjectService:
         self.runners_dir = self.project_root / 'conf' / 'runners'
         self.venv_python = self.project_root / '.venv' / 'bin' / 'python'
 
-    def _ensure_projects_dir(self):
+    def _ensure_projects_dir(self) -> None:
         """Create projects directory if it doesn't exist."""
         self.projects_dir.mkdir(parents=True, exist_ok=True)
 
@@ -91,7 +91,7 @@ class ProjectService:
                 return json.load(f)
         return {}
 
-    def _save_meta(self, project_path: Path, meta: dict):
+    def _save_meta(self, project_path: Path, meta: dict) -> None:
         """Save project metadata to JSON file."""
         meta_path = self._get_meta_path(project_path)
         with open(meta_path, 'w') as f:
@@ -148,7 +148,8 @@ class ProjectService:
             return None
         return self._load_meta(project_path)
 
-    def _validate_git_url(self, url: str) -> None:
+    @staticmethod
+    def _validate_git_url(url: str) -> None:
         """
         Validate Git URL to prevent SSRF attacks.
 
@@ -166,8 +167,8 @@ class ProjectService:
         # Parse URL
         try:
             parsed = urlparse(url)
-        except Exception as e:
-            raise ValueError(f'Invalid URL: {e}')
+        except ValueError as e:
+            raise ValueError(f'Invalid URL: {e}') from e
 
         # Only allow https:// protocol (not http, git, ssh, file, etc.)
         if parsed.scheme != 'https':
@@ -183,7 +184,7 @@ class ProjectService:
         # if not any(parsed.netloc.endswith(host) for host in allowed_hosts):
         #     raise ValueError(f'Git cloning is restricted to: {", ".join(allowed_hosts)}')
 
-    def import_from_git(self, url: str, branch: str = None) -> dict:
+    def import_from_git(self, url: str, branch: Optional[str] = None) -> dict:
         """
         Import a project by cloning a Git repository.
 
@@ -225,7 +226,7 @@ class ProjectService:
         result = subprocess.run(cmd, capture_output=True, text=True)
 
         if result.returncode != 0:
-            raise Exception(f"Git clone failed: {result.stderr}")
+            raise RuntimeError(f"Git clone failed: {result.stderr}")
 
         # Detect dependencies and entry points
         dependencies = self.detect_dependencies(project_path)
@@ -349,9 +350,9 @@ class ProjectService:
 
         # Validate source path
         if not source_path.exists():
-            raise Exception(f"Path does not exist: {local_path}")
+            raise FileNotFoundError(f"Path does not exist: {local_path}")
         if not source_path.is_dir():
-            raise Exception(f"Path is not a directory: {local_path}")
+            raise NotADirectoryError(f"Path is not a directory: {local_path}")
 
         # Extract project name from directory name
         dir_name = source_path.name
@@ -461,7 +462,7 @@ class ProjectService:
                     if name.lower() != 'python':
                         dependencies.append(name)
 
-            except Exception as e:
+            except (OSError, KeyError, TypeError) as e:
                 LOGGER.warning(f"Failed to parse pyproject.toml: {e}")
 
         # Try requirements.txt
@@ -476,7 +477,7 @@ class ProjectService:
                             name = re.split(r'[<>=\[!~]', line)[0].strip()
                             if name:
                                 dependencies.append(name)
-            except Exception as e:
+            except OSError as e:
                 LOGGER.warning(f"Failed to parse requirements.txt: {e}")
 
         return list(set(dependencies))
@@ -518,7 +519,7 @@ class ProjectService:
                 for name, entry in poetry_scripts.items():
                     entry_points.append(entry)
 
-            except Exception as e:
+            except (OSError, KeyError, TypeError) as e:
                 LOGGER.warning(f"Failed to parse pyproject.toml for entry points: {e}")
 
         # 2. Scan for __main__.py files
@@ -563,7 +564,7 @@ class ProjectService:
                         # This file can be run directly, add as module entry
                         entry_points.append(f"{module_name}")
 
-            except Exception as e:
+            except (OSError, UnicodeDecodeError) as e:
                 LOGGER.warning(f"Failed to scan {py_file} for entry points: {e}")
 
         # 4. If no entry points found, list root-level .py files as potential entries
@@ -584,8 +585,8 @@ class ProjectService:
         self,
         project_id: str,
         entry_point: str,
-        config_path: str = None,
-        config_cmd: str = None
+        config_path: Optional[str] = None,
+        config_cmd: Optional[str] = None
     ) -> str:
         """
         Generate a wrapper script for the project.
@@ -666,9 +667,9 @@ if len(sys.argv) >= 2 and sys.argv[1] == '{config_cmd}' and '--config' not in sy
         self,
         project_id: str,
         script_name: str,
-        description: str = None,
+        description: Optional[str] = None,
         group: str = 'Imported Projects',
-        parameters: list[dict] = None
+        parameters: Optional[list[dict]] = None
     ) -> str:
         """
         Generate a script-server runner configuration.
@@ -688,7 +689,7 @@ if len(sys.argv) >= 2 and sys.argv[1] == '{config_cmd}' and '--config' not in sy
 
         wrapper_path = meta.get('wrapper_script')
         if not wrapper_path:
-            raise Exception("Wrapper script not generated yet")
+            raise RuntimeError("Wrapper script not generated yet")
 
         # Build script_path using venv python
         script_path = f"{self.venv_python} {wrapper_path}"
@@ -724,8 +725,8 @@ if len(sys.argv) >= 2 and sys.argv[1] == '{config_cmd}' and '--config' not in sy
         self,
         project_id: str,
         entry_point: str,
-        config_path: str = None,
-        config_cmd: str = None
+        config_path: Optional[str] = None,
+        config_cmd: Optional[str] = None
     ) -> str:
         """
         Get a preview of what the wrapper script would look like.
