@@ -19,7 +19,48 @@
 **Last Updated:** 2026-01-29
 **Docker Image:** `ghcr.io/snadboy/script-server:latest` (auto-builds on push to master)
 
-### Recent Session (2026-01-31) - Icon Visibility Fix
+### Recent Session (2026-01-31) - Part 2: Code Quality Improvements
+
+**Comprehensive code quality refactoring to fix warnings and improve maintainability.**
+
+**Issues fixed:**
+- 6 bare `except:` clauses (catches `KeyboardInterrupt` and `SystemExit`)
+- 8 overly broad exception catches
+- 4 generic `Exception` raises
+- Missing type hints across scheduling and project modules
+
+**Changes:**
+
+1. **Bare exceptions → specific types:**
+   - `schedule_service.py`: restore_jobs, _execute_job, get_jobs, get_job
+   - `server.py`: ScriptStreamSocket.open, intercept_stop_when_running_scripts
+
+2. **Narrowed exception catches:**
+   - `venv_service.py`: OSError for file I/O, SyntaxError for AST parsing
+   - `project_service.py`: OSError, KeyError, TypeError for config parsing
+
+3. **Specific exception types:**
+   - RuntimeError for git clone failures
+   - FileNotFoundError for missing paths
+   - NotADirectoryError for invalid directories
+
+4. **Type hints added:**
+   - `scheduling_job.py`: All methods and parameters
+   - `schedule_config.py`: All functions and return types
+   - `schedule_service.py`: All ScheduleService methods
+   - `project_service.py`: Optional parameters, staticmethod decorator
+
+**Commit:** `fd0b312` - refactor: Improve code quality with better exception handling and type hints
+
+**Files modified:**
+- src/project_manager/project_service.py (41 changes)
+- src/scheduling/schedule_config.py (47 changes)
+- src/scheduling/schedule_service.py (34 changes)
+- src/scheduling/scheduling_job.py (35 changes)
+- src/venv_manager/venv_service.py (8 changes)
+- src/web/server.py (4 changes)
+
+### Recent Session (2026-01-31) - Part 1: Icon Visibility Fix
 
 **Fixed admin buttons appearing invisible due to Material Icons compatibility issues.**
 
