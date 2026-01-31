@@ -28,6 +28,7 @@
 - ✅ Script path and working directory auto-managed by server
 - ✅ Sandboxed execution (scripts confined to their project folders)
 - ✅ Hidden complexity from users (no path fields in UI)
+- ✅ Removed advanced "Include Config" field (doesn't fit import-only model)
 
 **Changes:**
 
@@ -40,24 +41,26 @@
    - Enforces that `working_directory` must be within `projects/` folder
    - Prevents path traversal attacks (resolves `..`, validates against projects_dir)
    - Raises `ValueError` if working directory escapes project boundaries
+   - Tested: blocks `projects/my-project/../../etc` and `/app/projects/../src`
 
-3. **Frontend: Hide path fields from UI** (`DetailsTab.vue`):
-   - Script path field: hidden for imported projects (path-readonly mode)
-   - Working directory field: hidden for imported projects
-   - Only show Name, Description, Group, Output Format, Terminal, Include fields
-
-4. **Frontend: Remove manual script creation** (`CreateScriptModal.vue`):
+3. **Frontend: Remove manual script creation** (`CreateScriptModal.vue`):
    - Removed Source tab (no more import vs manual selection)
    - Import-only workflow: Import → Configure → Details → Parameters → Advanced
    - Removed `creationMode` state and logic
    - Removed `initialMode` prop
    - Always uses import path (calls backend wrapper generation API)
 
-5. **Frontend: Simplify Script Manager** (`ProjectsModal.vue`):
+4. **Frontend: Simplify Script Manager** (`ProjectsModal.vue`):
    - Removed "Create" tab
    - Now only has: Projects, Import, Configure tabs
    - Removed CreateScriptModal integration
    - Removed `openManualScriptCreation` and related methods
+
+5. **Frontend: Hide path fields entirely** (`EditScriptModal.vue`, `DetailsTab.vue`):
+   - **Script path field: REMOVED** (not just hidden - completely gone)
+   - **Working directory field: REMOVED** (auto-managed by server)
+   - **Include config field: REMOVED** (advanced feature, doesn't fit import-only)
+   - Details tab now only shows: Name, Group, Description, Output Format, Enable Pseudo-Terminal
 
 **Security benefits:**
 - Scripts cannot escape their project folder via `../` traversal
@@ -65,18 +68,36 @@
 - Path resolution handles symlinks correctly (follows then validates)
 - Absolute paths outside projects/ are rejected
 
+**UX benefits:**
+- Cleaner UI: removed 3 confusing/advanced fields
+- Users only see what they need to configure
+- Import-only workflow is clear and straightforward
+- No manual path management (error-prone, not portable)
+
+**Commits:**
+- `777502a` - feat: Implement import-only architecture with auto-managed paths and sandboxing
+- `192f19e` - fix: Hide script path and working directory fields from Edit Script dialog
+- `696a26d` - refactor: Remove Include Config field from script dialogs
+
 **Files modified:**
 - `src/project_manager/project_service.py` (auto-set working_directory)
 - `src/execution/executor.py` (sandboxing validation in _normalize_working_dir)
 - `web-src/src/admin/components/scripts-config/create-script/CreateScriptModal.vue` (import-only workflow)
-- `web-src/src/admin/components/scripts-config/create-script/DetailsTab.vue` (hide path fields)
+- `web-src/src/admin/components/scripts-config/create-script/DetailsTab.vue` (hide path/include fields)
+- `web-src/src/main-app/components/scripts/EditScriptModal.vue` (hide path/include fields)
 - `web-src/src/main-app/components/ProjectsModal.vue` (remove Create tab)
+- `docs/import-only-architecture.md` (comprehensive documentation)
 
-**Next steps:**
-- Test import workflow with Git/ZIP/Local
-- Verify path fields hidden in UI
-- Test sandboxing prevents path traversal
-- Rebuild frontend and deploy
+**Testing performed:**
+- ✅ Sandboxing tests passing (path traversal blocked)
+- ✅ Frontend builds successfully
+- ✅ Server starts and validates scripts correctly
+- ✅ UI verified: path fields completely removed from Edit/Create dialogs
+
+**Deployment:**
+- Pushed to GitHub: triggers Docker build
+- Image: `ghcr.io/snadboy/script-server:latest`
+- Ready to deploy to utilities host
 
 ### Recent Session (2026-01-31) - Part 2: Code Quality Improvements
 
