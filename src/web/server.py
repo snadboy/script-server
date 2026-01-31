@@ -1203,16 +1203,37 @@ class GetServerLogsHandler(BaseRequestHandler):
             lines = 10000
 
         try:
-            # Log file is always at /app/logs/server.log in container
-            log_file = Path('/app/logs/server.log')
+            # Determine log file path based on environment
+            # In Docker: /app/logs/server.log
+            # In development: <project_root>/logs/server.log
+            if os.path.exists('/app/logs/server.log'):
+                log_file = Path('/app/logs/server.log')
+            else:
+                # Calculate project root (3 levels up from this file)
+                project_root = Path(__file__).parent.parent.parent
+                log_file = project_root / 'logs' / 'server.log'
 
             if not log_file.exists():
-                raise tornado.web.HTTPError(404, reason='Server log file not found')
+                raise tornado.web.HTTPError(404, reason=f'Server log file not found at {log_file}')
 
-            # Read last N lines efficiently
-            with open(log_file, 'r', encoding='utf-8', errors='replace') as f:
-                all_lines = f.readlines()
-                recent_lines = all_lines[-lines:]
+            # Check file size to prevent excessive memory usage
+            file_size = log_file.stat().st_size
+            max_size = 100 * 1024 * 1024  # 100 MB
+
+            if file_size > max_size:
+                # For very large files, read only the last portion
+                with open(log_file, 'rb') as f:
+                    f.seek(-max_size, os.SEEK_END)
+                    # Skip partial line at the beginning
+                    f.readline()
+                    content = f.read().decode('utf-8', errors='replace')
+                    all_lines = content.splitlines(keepends=True)
+                    recent_lines = all_lines[-lines:]
+            else:
+                # For smaller files, read all lines
+                with open(log_file, 'r', encoding='utf-8', errors='replace') as f:
+                    all_lines = f.readlines()
+                    recent_lines = all_lines[-lines:]
 
             # Apply filters
             filtered_lines = recent_lines
