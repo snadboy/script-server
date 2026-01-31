@@ -43,9 +43,8 @@
               <TextArea v-model="scriptConfig.description" :config="descriptionField" class="col s12"/>
             </div>
             <div class="row">
-              <Combobox v-model="scriptConfig.output_format" :config="outputFormatField" class="col s3"/>
-              <CheckBox v-model="scriptConfig.requires_terminal" :config="requiresTerminalField" class="col s3 checkbox-field"/>
-              <TextField v-model="scriptConfig.include" :config="includeScriptField" class="col s5 offset-s1"/>
+              <Combobox v-model="scriptConfig.output_format" :config="outputFormatField" class="col s4"/>
+              <CheckBox v-model="scriptConfig.requires_terminal" :config="requiresTerminalField" class="col s4 checkbox-field"/>
             </div>
           </div>
 
@@ -140,7 +139,6 @@ import {
   descriptionField,
   globalInstancesField,
   groupField,
-  includeScriptField,
   nameField,
   outputFormatField,
   requiresTerminalField,
@@ -194,7 +192,6 @@ export default {
       descriptionField,
       outputFormatField,
       requiresTerminalField,
-      includeScriptField,
       allowAllField,
       allowAllAdminsField,
       globalInstancesField,
