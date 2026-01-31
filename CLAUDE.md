@@ -52,7 +52,8 @@
 
 **Commits:**
 - `fd0b312` - Initial code quality improvements (6 files)
-- `e4d4fe4` - Fix all warnings in process_pty.py
+- `e4d4fe4` - Fix all warnings in process_pty.py (bare excepts, type hints)
+- `f97d7b0` - Add type narrowing assertions (eliminates 'Argument of type' warnings)
 
 **Files modified:**
 - src/project_manager/project_service.py (41 changes)
