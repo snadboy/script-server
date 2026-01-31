@@ -37,16 +37,8 @@
               <TextField v-model="scriptConfig.name" :config="nameField" class="col s6"/>
               <TextField v-model="scriptConfig.group" :config="groupField" class="col s5 offset-s1"/>
             </div>
-            <div class="row">
-              <ScriptPathField
-                :config-name="scriptConfig.name"
-                :new-config="false"
-                :original-path="originalScriptPath"
-                class="col s6"
-                @change="updateScript"
-              />
-              <TextField v-model="scriptConfig.working_directory" :config="workDirField" class="col s5 offset-s1"/>
-            </div>
+            <!-- Script path and working directory are auto-managed by the server -->
+            <!-- These fields are hidden from UI - edit the JSON file directly if needed -->
             <div class="row">
               <TextArea v-model="scriptConfig.description" :config="descriptionField" class="col s12"/>
             </div>
