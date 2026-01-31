@@ -19,6 +19,24 @@
 **Last Updated:** 2026-01-29
 **Docker Image:** `ghcr.io/snadboy/script-server:latest` (auto-builds on push to master)
 
+### Recent Session (2026-01-31) - Icon Visibility Fix
+
+**Fixed Requirements button appearing invisible due to identical Material Icons.**
+
+**Issue:**
+- User reported Requirements button was missing from sidebar
+- All 5 buttons existed in DOM but only 4 icons were visually distinguishable
+- Material Icons "storage" (Python Packages) and "list_alt" (Requirements) rendered as nearly identical list icons
+
+**Solution:**
+- Changed Python Packages icon: `storage` → `inventory_2` (box icon 📦)
+- Changed Requirements icon: `list_alt` → `assignment` (clipboard icon 📋)
+
+**Commit:** `a9d99fb` - Fix: Use distinctive Material Icons for Python Packages and Requirements buttons
+
+**Files modified:**
+- `web-src/src/main-app/components/MainAppSidebar.vue` (lines 19, 22)
+
 ### Recent Session (2026-01-29) - Part 3: Release & Integration
 
 **Merged verb branch to master and set up project integrations.**
