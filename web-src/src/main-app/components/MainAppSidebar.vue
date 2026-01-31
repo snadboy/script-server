@@ -16,7 +16,7 @@
         <i class="material-icons">description</i>
       </button>
       <button v-if="adminUser" class="packages-btn waves-effect waves-circle" @click="showPythonPackages = true" title="Python Packages">
-        <i class="material-icons">inventory_2</i>
+        <i class="material-icons">extension</i>
       </button>
       <button v-if="adminUser" class="requirements-btn waves-effect waves-circle" @click="showRequirements = true" title="Requirements">
         <i class="material-icons">assignment</i>
