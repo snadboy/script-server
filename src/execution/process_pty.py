@@ -6,16 +6,17 @@ import subprocess
 import sys
 import termios
 import time
+from typing import Dict, List, Optional, Union
 
 from execution import process_base
 from utils import process_utils, encoding_utils
 
-script_encodings = {}
+script_encodings: Dict[str, str] = {}
 
 LOGGER = logging.getLogger('script_server.process_pty')
 
 
-def _unset_output_flags(fd, *new_attributes):
+def _unset_output_flags(fd: int, *new_attributes: int) -> None:
     attributes = termios.tcgetattr(fd)
 
     for attribute in new_attributes:
@@ -26,15 +27,16 @@ def _unset_output_flags(fd, *new_attributes):
 
 
 class PtyProcessWrapper(process_base.ProcessWrapper):
-    def __init__(self, command, working_directory, all_env_variables):
+    def __init__(self, command: Union[str, List[str]], working_directory: str,
+                 all_env_variables: Dict[str, str]) -> None:
         super().__init__(command, working_directory, all_env_variables)
 
-        self.pty_master = None
-        self.pty_slave = None
+        self.pty_master: Optional[int] = None
+        self.pty_slave: Optional[int] = None
 
-        self.encoding = get_encoding(command, working_directory)
+        self.encoding: str = get_encoding(command, working_directory)
 
-    def start_execution(self, command, working_directory):
+    def start_execution(self, command: Union[str, List[str]], working_directory: str) -> None:
         master, slave = pty.openpty()
 
         env_variables = self.prepare_env_variables()
@@ -49,11 +51,10 @@ class PtyProcessWrapper(process_base.ProcessWrapper):
         self.pty_slave = slave
         self.pty_master = master
 
-        # ONLCR - transform \n to \r\n
         _unset_output_flags(self.pty_master, termios.ONLCR)
         fcntl.fcntl(self.pty_master, fcntl.F_SETFL, os.O_NONBLOCK)
 
-    def write_to_input(self, value):
+    def write_to_input(self, value: str) -> None:
         if self.is_finished():
             return
 
@@ -63,10 +64,10 @@ class PtyProcessWrapper(process_base.ProcessWrapper):
 
         os.write(self.pty_master, input_value.encode())
 
-    def wait_finish(self):
+    def wait_finish(self) -> None:
         self.process.wait()
 
-    def pipe_process_output(self):
+    def pipe_process_output(self) -> None:
         utf8_stream = self.encoding.lower() == 'utf-8'
 
         buffer = b''
@@ -132,12 +133,12 @@ class PtyProcessWrapper(process_base.ProcessWrapper):
                 if wait_new_output:
                     time.sleep(0.01)
 
-        except:
+        except Exception:
             self._write_script_output('\nUnexpected error occurred. Contact the administrator.')
 
             try:
                 self.kill()
-            except:
+            except Exception:
                 LOGGER.exception('Failed to kill a process')
 
             LOGGER.exception('Failed to read script output')
@@ -148,8 +149,8 @@ class PtyProcessWrapper(process_base.ProcessWrapper):
             self.output_stream.close()
 
 
-def get_encoding(command, working_directory):
-    encoding = None
+def get_encoding(command: Union[str, List[str]], working_directory: str) -> str:
+    encoding: Optional[str] = None
 
     split_command = command
     if isinstance(command, str):
