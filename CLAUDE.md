@@ -50,7 +50,9 @@
    - `schedule_service.py`: All ScheduleService methods
    - `project_service.py`: Optional parameters, staticmethod decorator
 
-**Commit:** `fd0b312` - refactor: Improve code quality with better exception handling and type hints
+**Commits:**
+- `fd0b312` - Initial code quality improvements (6 files)
+- `e4d4fe4` - Fix all warnings in process_pty.py
 
 **Files modified:**
 - src/project_manager/project_service.py (41 changes)
@@ -59,6 +61,7 @@
 - src/scheduling/scheduling_job.py (35 changes)
 - src/venv_manager/venv_service.py (8 changes)
 - src/web/server.py (4 changes)
+- src/execution/process_pty.py (16 changes - 2 bare excepts, comprehensive type hints)
 
 ### Recent Session (2026-01-31) - Part 1: Icon Visibility Fix
 
