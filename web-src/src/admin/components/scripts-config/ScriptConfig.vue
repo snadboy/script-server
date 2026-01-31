@@ -79,6 +79,11 @@ export default {
         if (result && result.navigate) {
           this.$router.push(result.path);
         }
+        // Explicitly return result to complete promise chain
+        return result;
+      }).catch((error) => {
+        // Re-throw to let PromisableButton handle error state
+        throw error;
       });
     },
 
