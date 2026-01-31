@@ -15,7 +15,7 @@
       <button v-if="adminUser" class="scripts-btn waves-effect waves-circle" @click="showScripts = true" title="Script Manager">
         <i class="material-icons">description</i>
       </button>
-      <button v-if="adminUser" class="packages-btn waves-effect waves-circle" @click="showPackages = true" title="Package Manager">
+      <button v-if="adminUser" class="packages-btn waves-effect waves-circle" @click="showPythonPackages = true" title="Python Packages">
         <i class="material-icons">storage</i>
       </button>
       <button v-if="adminUser" class="requirements-btn waves-effect waves-circle" @click="showRequirements = true" title="Requirements">
@@ -31,7 +31,7 @@
 
     <SettingsModal :visible="showSettings" @close="showSettings = false" />
     <ProjectsModal v-if="adminUser" :visible="showScripts" @close="showScripts = false" />
-    <PackagesModal v-if="adminUser" :visible="showPackages" @close="showPackages = false" />
+    <PythonPackagesModal v-if="adminUser" :visible="showPythonPackages" @update:visible="showPythonPackages = $event" />
     <RequirementsModal v-if="adminUser" :visible="showRequirements" @update:visible="showRequirements = $event" />
     <ServerLogsModal v-if="adminUser" :visible="showLogs" @update:visible="showLogs = $event" />
 
@@ -60,7 +60,7 @@ import SearchPanel from './SearchPanel';
 import SidebarBottomNav from './SidebarBottomNav';
 import SettingsModal from './SettingsModal';
 import ProjectsModal from './ProjectsModal';
-import PackagesModal from './PackagesModal';
+import PythonPackagesModal from './PythonPackagesModal';
 import RequirementsModal from './RequirementsModal';
 import ServerLogsModal from './ServerLogsModal';
 import ThemeToggle from '@/common/components/ThemeToggle';
@@ -73,7 +73,7 @@ export default {
     SidebarBottomNav,
     SettingsModal,
     ProjectsModal,
-    PackagesModal,
+    PythonPackagesModal,
     RequirementsModal,
     ServerLogsModal,
     ThemeToggle
@@ -84,7 +84,7 @@ export default {
       searchText: '',
       showSettings: false,
       showScripts: false,
-      showPackages: false,
+      showPythonPackages: false,
       showRequirements: false,
       showLogs: false,
       currentTime: new Date(),
