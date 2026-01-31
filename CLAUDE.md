@@ -21,18 +21,28 @@
 
 ### Recent Session (2026-01-31) - Icon Visibility Fix
 
-**Fixed Requirements button appearing invisible due to identical Material Icons.**
+**Fixed admin buttons appearing invisible due to Material Icons compatibility issues.**
 
 **Issue:**
 - User reported Requirements button was missing from sidebar
 - All 5 buttons existed in DOM but only 4 icons were visually distinguishable
 - Material Icons "storage" (Python Packages) and "list_alt" (Requirements) rendered as nearly identical list icons
+- Second issue: `inventory_2` icon doesn't exist in the Material Icons version bundled with the app
 
-**Solution:**
-- Changed Python Packages icon: `storage` → `inventory_2` (box icon 📦)
-- Changed Requirements icon: `list_alt` → `assignment` (clipboard icon 📋)
+**Solution (Final):**
+- Changed Python Packages icon: `storage` → `extension` (puzzle piece 🧩)
+- Changed Requirements icon: `list_alt` → `assignment` (clipboard 📋)
 
-**Commit:** `a9d99fb` - Fix: Use distinctive Material Icons for Python Packages and Requirements buttons
+**Final icon set:**
+- Script Manager: `description` (document 📄)
+- Python Packages: `extension` (puzzle piece 🧩)
+- Requirements: `assignment` (clipboard 📋)
+- Server Logs: `subject` (lines ☰)
+- Settings: `settings` (gear ⚙️)
+
+**Commits:**
+- `a9d99fb` - Initial fix attempt with inventory_2 and assignment icons
+- `2f43fd0` - Final fix using extension icon (inventory_2 not available in Material Icons v1)
 
 **Files modified:**
 - `web-src/src/main-app/components/MainAppSidebar.vue` (lines 19, 22)
