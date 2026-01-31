@@ -157,7 +157,7 @@ class PtyProcessWrapper(process_base.ProcessWrapper):
 
 
 def get_encoding(command: Union[str, List[str]], working_directory: str) -> str:
-    encoding: Optional[str] = None
+    encoding: str = sys.stdout.encoding or 'utf-8'
 
     split_command = command
     if isinstance(command, str):
@@ -167,8 +167,5 @@ def get_encoding(command: Union[str, List[str]], working_directory: str) -> str:
         program = split_command[0]
         if program in script_encodings:
             encoding = script_encodings[program]
-
-    if not encoding:
-        encoding = sys.stdout.encoding or 'utf-8'
 
     return encoding
