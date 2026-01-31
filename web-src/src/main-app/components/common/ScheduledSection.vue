@@ -45,7 +45,8 @@ import {mapState, mapActions} from 'vuex';
 import CollapsibleSection from './CollapsibleSection';
 import ScheduleCard from './ScheduleCard';
 import ScheduleModal from '@/main-app/components/schedule/ScheduleModal';
-import {formatNextExecution, getScriptDescription} from '@/main-app/utils/executionFormatters';
+import {formatNextExecution} from '@/main-app/utils/executionFormatters';
+import {createExecutionSectionMixin} from '@/main-app/mixins/executionSectionMixin';
 
 const STORAGE_KEY = 'executionSections.collapsed.scheduled';
 
@@ -57,6 +58,8 @@ export default {
     ScheduleCard,
     ScheduleModal
   },
+
+  mixins: [createExecutionSectionMixin(STORAGE_KEY)],
 
   props: {
     scriptFilter: {
@@ -75,7 +78,6 @@ export default {
 
   data() {
     return {
-      collapsed: this.loadCollapsedState(),
       expandedParams: null,
       deleting: null,
       toggling: null,
@@ -88,9 +90,6 @@ export default {
     ...mapState('allSchedules', {
       schedules: 'schedules',
       loading: 'loading'
-    }),
-    ...mapState('scripts', {
-      scripts: 'scripts'
     }),
 
     filteredSchedules() {
@@ -117,17 +116,6 @@ export default {
       return this.scriptFilter
         ? 'No scheduled executions for this script'
         : 'No scheduled executions';
-    },
-
-    // Create a map for efficient script description lookups (and ensure reactivity)
-    scriptsMap() {
-      const map = {};
-      if (this.scripts && this.scripts.length > 0) {
-        this.scripts.forEach(s => {
-          map[s.name] = s.description || '';
-        });
-      }
-      return map;
     }
   },
 
@@ -137,27 +125,6 @@ export default {
 
   methods: {
     ...mapActions('allSchedules', ['fetchAllSchedules', 'deleteSchedule', 'toggleScheduleEnabled']),
-
-    loadCollapsedState() {
-      try {
-        return localStorage.getItem(STORAGE_KEY) === 'true';
-      } catch (e) {
-        return false;
-      }
-    },
-
-    saveCollapsedState(collapsed) {
-      try {
-        localStorage.setItem(STORAGE_KEY, collapsed ? 'true' : 'false');
-      } catch (e) {
-        // Ignore localStorage errors
-      }
-    },
-
-    handleToggle(collapsed) {
-      this.collapsed = collapsed;
-      this.saveCollapsedState(collapsed);
-    },
 
     toggleParams(scheduleId) {
       this.expandedParams = this.expandedParams === scheduleId ? null : scheduleId;
@@ -207,32 +174,9 @@ export default {
     closeEditModal() {
       this.showEditModal = false;
       this.editingSchedule = null;
-    },
-
-    getScriptDesc(scriptName) {
-      return this.scriptsMap[scriptName] || '';
     }
   }
 };
 </script>
 
-<style scoped>
-.loading-state {
-  display: flex;
-  justify-content: center;
-  padding: 24px;
-}
-
-.spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid var(--separator-color);
-  border-top-color: var(--primary-color);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-</style>
+<style scoped src="@/main-app/styles/executionSection.css"></style>

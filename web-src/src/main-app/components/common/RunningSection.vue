@@ -37,11 +37,12 @@
 </template>
 
 <script>
-import {mapState, mapActions} from 'vuex';
+import {mapState} from 'vuex';
 import CollapsibleSection from './CollapsibleSection';
 import ExecutionCard from './ExecutionCard';
 import StopButton from './StopButton';
-import {getScheduleDescription, getScriptDescription, getScriptConfig, filterParametersByVerb} from '@/main-app/utils/executionFormatters';
+import {getScheduleDescription} from '@/main-app/utils/executionFormatters';
+import {createExecutionSectionMixin} from '@/main-app/mixins/executionSectionMixin';
 
 const STORAGE_KEY = 'executionSections.collapsed.running';
 
@@ -53,6 +54,8 @@ export default {
     ExecutionCard,
     StopButton
   },
+
+  mixins: [createExecutionSectionMixin(STORAGE_KEY)],
 
   props: {
     scriptFilter: {
@@ -69,12 +72,6 @@ export default {
     }
   },
 
-  data() {
-    return {
-      collapsed: this.loadCollapsedState()
-    };
-  },
-
   computed: {
     ...mapState('history', {
       executions: 'executions',
@@ -82,9 +79,6 @@ export default {
     }),
     ...mapState('allSchedules', {
       schedules: 'schedules'
-    }),
-    ...mapState('scripts', {
-      scripts: 'scripts'
     }),
 
     filteredExecutions() {
@@ -104,42 +98,10 @@ export default {
 
     badgeCount() {
       return this.filteredExecutions.length;
-    },
-
-    // Create a map for efficient script description lookups (and ensure reactivity)
-    scriptsMap() {
-      const map = {};
-      if (this.scripts && this.scripts.length > 0) {
-        this.scripts.forEach(s => {
-          map[s.name] = s.description || '';
-        });
-      }
-      return map;
     }
   },
 
   methods: {
-    loadCollapsedState() {
-      try {
-        return localStorage.getItem(STORAGE_KEY) === 'true';
-      } catch (e) {
-        return false;
-      }
-    },
-
-    saveCollapsedState(collapsed) {
-      try {
-        localStorage.setItem(STORAGE_KEY, collapsed ? 'true' : 'false');
-      } catch (e) {
-        // Ignore localStorage errors
-      }
-    },
-
-    handleToggle(collapsed) {
-      this.collapsed = collapsed;
-      this.saveCollapsedState(collapsed);
-    },
-
     handleClick(execution) {
       this.$emit('select', execution);
 
@@ -158,42 +120,9 @@ export default {
         return `${execution.script} (Execution ID: ${execution.id})`;
       }
       return `Execution ID: ${execution.id}`;
-    },
-
-    getScriptDesc(scriptName) {
-      return this.scriptsMap[scriptName] || '';
-    },
-
-    getVerbParameterName(scriptName) {
-      const scriptConfig = getScriptConfig(scriptName, this.scripts);
-      return scriptConfig?.verbs?.parameterName || null;
-    },
-
-    getFilteredParameters(execution) {
-      const scriptConfig = getScriptConfig(execution.script, this.scripts);
-      return filterParametersByVerb(execution.parameterValues, scriptConfig);
     }
   }
 };
 </script>
 
-<style scoped>
-.loading-state {
-  display: flex;
-  justify-content: center;
-  padding: 24px;
-}
-
-.spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid var(--separator-color);
-  border-top-color: var(--primary-color);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-</style>
+<style scoped src="@/main-app/styles/executionSection.css"></style>

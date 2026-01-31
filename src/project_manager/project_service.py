@@ -16,6 +16,7 @@ import zipfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
+from urllib.parse import urlparse
 
 try:
     import tomllib
@@ -72,7 +73,7 @@ class ProjectService:
             self.projects_dir = self.project_root / 'projects'
         self.scripts_dir = self.project_root / 'samples' / 'scripts'
         self.runners_dir = self.project_root / 'conf' / 'runners'
-        self.venv_python = self.project_root / 'venv' / 'bin' / 'python'
+        self.venv_python = self.project_root / '.venv' / 'bin' / 'python'
 
     def _ensure_projects_dir(self):
         """Create projects directory if it doesn't exist."""
@@ -147,6 +148,41 @@ class ProjectService:
             return None
         return self._load_meta(project_path)
 
+    def _validate_git_url(self, url: str) -> None:
+        """
+        Validate Git URL to prevent SSRF attacks.
+
+        Args:
+            url: Git repository URL
+
+        Raises:
+            ValueError: If URL is invalid or uses disallowed protocol/host
+        """
+        if not url or not url.strip():
+            raise ValueError('URL cannot be empty')
+
+        url = url.strip()
+
+        # Parse URL
+        try:
+            parsed = urlparse(url)
+        except Exception as e:
+            raise ValueError(f'Invalid URL: {e}')
+
+        # Only allow https:// protocol (not http, git, ssh, file, etc.)
+        if parsed.scheme != 'https':
+            raise ValueError(f'Only HTTPS URLs are allowed. Got: {parsed.scheme}://')
+
+        # Validate hostname exists
+        if not parsed.netloc:
+            raise ValueError('URL must include a hostname')
+
+        # Optional: Restrict to known Git hosting providers
+        # Uncomment to enable allowlist
+        # allowed_hosts = ['github.com', 'gitlab.com', 'bitbucket.org']
+        # if not any(parsed.netloc.endswith(host) for host in allowed_hosts):
+        #     raise ValueError(f'Git cloning is restricted to: {", ".join(allowed_hosts)}')
+
     def import_from_git(self, url: str, branch: str = None) -> dict:
         """
         Import a project by cloning a Git repository.
@@ -161,6 +197,9 @@ class ProjectService:
         Raises:
             Exception: If clone fails
         """
+        # Validate URL to prevent SSRF attacks
+        self._validate_git_url(url)
+
         self._ensure_projects_dir()
 
         # Extract repo name from URL
@@ -250,7 +289,17 @@ class ProjectService:
                 top_dirs = set(n.split('/')[0] for n in names if '/' in n)
 
                 extract_path = Path(tmpdir) / 'extracted'
-                zf.extractall(extract_path)
+                extract_path.mkdir(parents=True, exist_ok=True)
+
+                # Safely extract all files with zip-slip protection
+                for member in zf.namelist():
+                    # Validate path doesn't escape extraction directory
+                    member_path = (extract_path / member).resolve()
+                    if not str(member_path).startswith(str(extract_path.resolve())):
+                        raise ValueError(f'Invalid ZIP entry (path traversal): {member}')
+
+                    # Extract individual file
+                    zf.extract(member, extract_path)
 
                 # If single top-level dir, use its contents
                 if len(top_dirs) == 1:
