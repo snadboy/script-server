@@ -169,9 +169,6 @@ def get_encoding(command: Union[str, List[str]], working_directory: str) -> str:
             encoding = script_encodings[program]
 
     if not encoding:
-        if sys.stdout.encoding:
-            encoding = sys.stdout.encoding
-        else:
-            encoding = 'utf-8'
+        encoding = sys.stdout.encoding or 'utf-8'
 
     return encoding
