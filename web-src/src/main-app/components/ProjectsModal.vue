@@ -312,14 +312,14 @@
               />
             </div>
 
-            <!-- Generate Button -->
+            <!-- Create Script Button -->
             <div class="config-actions">
               <button
                 class="btn btn-primary"
                 :disabled="!effectiveEntryPoint || !configScriptName || generating"
                 @click="generateWrapper"
               >
-                {{ generating ? 'Generating...' : 'Generate Wrapper & Config' }}
+                {{ generating ? 'Creating Script...' : 'Create Script' }}
               </button>
             </div>
           </div>
@@ -634,7 +634,7 @@ export default {
     },
 
     async deleteProject(projectId) {
-      if (!confirm('Are you sure you want to delete this project? This will also remove any generated wrapper scripts and configs.')) {
+      if (!confirm('Are you sure you want to delete this project? This will also remove any associated scripts.')) {
         return;
       }
 
@@ -714,7 +714,7 @@ export default {
           }
         );
 
-        this.success = `Wrapper and config generated! Script "${this.configScriptName}" should now appear in the script list.`;
+        this.success = `Script "${this.configScriptName}" created successfully! It should now appear in your script list.`;
 
         // Reload project to get updated metadata
         await this.loadProjects();
@@ -723,7 +723,7 @@ export default {
           this.selectedProject = updated;
         }
       } catch (e) {
-        this.error = e.response?.data || 'Failed to generate wrapper';
+        this.error = e.response?.data || 'Failed to create script';
       } finally {
         this.generating = false;
       }
