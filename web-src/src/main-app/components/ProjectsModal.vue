@@ -312,45 +312,6 @@
               />
             </div>
 
-            <!-- Config Path (optional) -->
-            <div class="config-group">
-              <label class="config-label">Config Path (optional)</label>
-              <input
-                v-model="configPath"
-                type="text"
-                placeholder="/path/to/config.yaml"
-                class="form-input"
-              />
-            </div>
-
-            <!-- Config Command (optional) -->
-            <div class="config-group">
-              <label class="config-label">Config Command (optional)</label>
-              <input
-                v-model="configCmd"
-                type="text"
-                placeholder="run"
-                class="form-input"
-              />
-              <div class="form-help">
-                If specified, --config will be injected when this command is used
-              </div>
-            </div>
-
-            <!-- Wrapper Preview -->
-            <div class="config-group">
-              <div class="config-group-header">
-                <span class="config-label">Wrapper Script Preview</span>
-                <button class="btn btn-sm" @click="previewWrapper" :disabled="!effectiveEntryPoint">
-                  <i class="material-icons btn-icon-sm">refresh</i>
-                  Preview
-                </button>
-              </div>
-              <div v-if="wrapperPreview" class="wrapper-preview">
-                <pre>{{ wrapperPreview }}</pre>
-              </div>
-            </div>
-
             <!-- Generate Button -->
             <div class="config-actions">
               <button
@@ -422,9 +383,6 @@ export default {
       showCustomEntryPoint: false,
       configScriptName: '',
       configDescription: '',
-      configPath: '',
-      configCmd: '',
-      wrapperPreview: '',
       installedPackages: [],
       loadingPackages: false
     };
@@ -470,9 +428,6 @@ export default {
         this.customEntryPoint = '';
         this.configScriptName = newVal.name || '';
         this.configDescription = '';
-        this.configPath = '';
-        this.configCmd = '';
-        this.wrapperPreview = '';
         this.loadInstalledPackages();
       }
     }
@@ -742,26 +697,6 @@ export default {
       }
     },
 
-    async previewWrapper() {
-      if (!this.effectiveEntryPoint || !this.selectedProject) return;
-
-      this.error = null;
-
-      try {
-        const response = await axiosInstance.post(
-          `admin/projects/${encodeURIComponent(this.selectedProject.id)}/wrapper-preview`,
-          {
-            entry_point: this.effectiveEntryPoint,
-            config_path: this.configPath || undefined,
-            config_cmd: this.configCmd || undefined
-          }
-        );
-        this.wrapperPreview = response.data.wrapper_content;
-      } catch (e) {
-        this.error = e.response?.data || 'Failed to generate preview';
-      }
-    },
-
     async generateWrapper() {
       if (!this.effectiveEntryPoint || !this.configScriptName || !this.selectedProject) return;
 
@@ -774,8 +709,6 @@ export default {
           `admin/projects/${encodeURIComponent(this.selectedProject.id)}/wrapper`,
           {
             entry_point: this.effectiveEntryPoint,
-            config_path: this.configPath || undefined,
-            config_cmd: this.configCmd || undefined,
             script_name: this.configScriptName,
             description: this.configDescription || undefined
           }
@@ -1310,23 +1243,6 @@ export default {
   font-size: 13px;
   color: var(--font-color-disabled);
   font-style: italic;
-}
-
-.wrapper-preview {
-  background: var(--background-color-level-4dp);
-  border: 1px solid var(--separator-color);
-  border-radius: var(--radius-sm);
-  max-height: 200px;
-  overflow: auto;
-}
-
-.wrapper-preview pre {
-  margin: 0;
-  padding: 12px;
-  font-size: 11px;
-  font-family: monospace;
-  white-space: pre-wrap;
-  word-break: break-all;
 }
 
 .config-actions {
