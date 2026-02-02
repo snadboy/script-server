@@ -106,14 +106,6 @@
       </div>
 
       <div class="modal-footer">
-        <PromisableButton
-          v-if="scriptName"
-          :click="deleteScript"
-          class="delete-button"
-          icon-text="delete"
-          title="Delete"
-        />
-        <div class="spacer"></div>
         <button class="btn-flat waves-effect" @click="handleCancel">Cancel</button>
         <PromisableButton :click="save" :enabled="isFormValid" title="Save"/>
       </div>
@@ -360,37 +352,6 @@ export default {
             M.toast({ html: e.userMessage, classes: 'red' });
           } else {
             M.toast({ html: 'Failed to save script: ' + (e.message || 'Unknown error'), classes: 'red' });
-          }
-          throw e;
-        });
-    },
-
-    deleteScript() {
-      const confirmed = window.confirm(`Are you sure you want to delete "${this.scriptName}"?`);
-      if (!confirmed) {
-        return Promise.reject({ userMessage: 'Cancelled' });
-      }
-      return this.$store.dispatch(`${this.storeModule}/deleteScript`)
-        .then(() => {
-          // Close modal FIRST before refreshing scripts list
-          // This prevents the loading spinner from appearing when scriptConfig becomes null
-          this.$emit('deleted');
-          this.$emit('close');
-
-          // Show success message and refresh scripts list AFTER closing
-          this.$nextTick(() => {
-            M.toast({ html: 'Script deleted successfully', classes: 'green' });
-            this.$store.dispatch('scripts/init');
-          });
-
-          // Resolve promise immediately so button stops spinning
-          return Promise.resolve();
-        })
-        .catch((e) => {
-          if (e.userMessage) {
-            M.toast({ html: e.userMessage, classes: 'red' });
-          } else {
-            M.toast({ html: 'Failed to delete script', classes: 'red' });
           }
           throw e;
         });
@@ -644,19 +605,12 @@ export default {
 .modal-footer {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 12px;
   padding: 16px 24px;
   border-top: 1px solid var(--separator-color);
   flex-shrink: 0;
   background: var(--background-color-level-16dp);
-}
-
-.modal-footer .spacer {
-  flex: 1;
-}
-
-.modal-footer .delete-button {
-  color: var(--error-color) !important;
 }
 
 .modal-footer >>> .promisable-button[disabled] {

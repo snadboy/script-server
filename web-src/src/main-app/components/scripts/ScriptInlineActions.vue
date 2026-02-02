@@ -23,6 +23,14 @@
       <i class="material-icons">edit</i>
     </button>
 
+    <button
+        v-if="isAdmin"
+        class="action-btn delete-btn waves-effect waves-light"
+        title="Delete script"
+        @click="deleteScript">
+      <i class="material-icons">delete</i>
+    </button>
+
     <ExecuteModal
         :visible="showExecuteModal"
         :script-name="scriptName"
@@ -37,8 +45,7 @@
         :visible="showEditModal"
         :script-name="scriptName"
         @close="showEditModal = false"
-        @saved="handleEditSaved"
-        @deleted="handleEditDeleted"/>
+        @saved="handleEditSaved"/>
   </div>
 </template>
 
@@ -137,12 +144,38 @@ export default {
       }
     },
 
-    handleEditDeleted() {
-      this.showEditModal = false;
-      // Navigate to home if we were viewing this script
-      if (this.selectedScript === this.scriptName) {
-        this.$router.push('/');
+    deleteScript() {
+      const confirmed = window.confirm(`Are you sure you want to delete "${this.scriptName}"?`);
+      if (!confirmed) {
+        return;
       }
+
+      // Store the script name before deleting (component may unmount)
+      const scriptName = this.scriptName;
+      const isCurrentScript = this.selectedScript === scriptName;
+
+      // Call delete API
+      this.$store.dispatch('adminScriptConfig/init', scriptName)
+        .then(() => {
+          return this.$store.dispatch('adminScriptConfig/deleteScript');
+        })
+        .then(() => {
+          M.toast({ html: 'Script deleted successfully', classes: 'green' });
+
+          // Navigate away if viewing the deleted script
+          if (isCurrentScript) {
+            this.$router.push('/');
+          }
+
+          // Refresh scripts list
+          this.$nextTick(() => {
+            this.$store.dispatch('scripts/init');
+          });
+        })
+        .catch((e) => {
+          const message = e.userMessage || 'Failed to delete script';
+          M.toast({ html: message, classes: 'red' });
+        });
     }
   }
 }
@@ -191,6 +224,17 @@ export default {
 .schedule-btn:hover {
   background-color: var(--hover-color);
   color: var(--primary-color);
+}
+
+.delete-btn {
+  background-color: var(--surface-color);
+  color: var(--error-color);
+  border: 1px solid var(--separator-color);
+}
+
+.delete-btn:hover {
+  background-color: var(--error-color);
+  color: white;
 }
 
 .action-btn.disabled {

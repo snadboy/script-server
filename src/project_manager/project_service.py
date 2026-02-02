@@ -586,7 +586,8 @@ class ProjectService:
         project_id: str,
         entry_point: str,
         config_path: Optional[str] = None,
-        config_cmd: Optional[str] = None
+        config_cmd: Optional[str] = None,
+        script_name: Optional[str] = None
     ) -> str:
         """
         Generate a wrapper script for the project.
@@ -596,6 +597,7 @@ class ProjectService:
             entry_point: Entry point string (e.g., "module.main:app")
             config_path: Optional path to config file
             config_cmd: Optional command that uses config (e.g., "run")
+            script_name: Optional script name to make wrapper filename unique
 
         Returns:
             Path to the generated wrapper script
@@ -647,7 +649,15 @@ if len(sys.argv) >= 2 and sys.argv[1] == '{config_cmd}' and '--config' not in sy
 
         # Write wrapper script
         self.scripts_dir.mkdir(parents=True, exist_ok=True)
-        wrapper_filename = f"{project_id}.py"
+
+        # Use script_name in filename if provided to allow multiple scripts per project
+        if script_name:
+            # Sanitize script name for filesystem (replace spaces/special chars with underscores)
+            safe_name = ''.join(c if c.isalnum() or c in ('-', '_') else '_' for c in script_name)
+            wrapper_filename = f"{project_id}_{safe_name}.py"
+        else:
+            wrapper_filename = f"{project_id}.py"
+
         wrapper_path = self.scripts_dir / wrapper_filename
 
         with open(wrapper_path, 'w') as f:
@@ -656,7 +666,7 @@ if len(sys.argv) >= 2 and sys.argv[1] == '{config_cmd}' and '--config' not in sy
         # Make executable
         wrapper_path.chmod(0o755)
 
-        # Update metadata
+        # Update metadata (keep as single wrapper_script for backward compatibility)
         meta['wrapper_script'] = str(wrapper_path)
         self._save_meta(project_path, meta)
 
@@ -713,13 +723,17 @@ if len(sys.argv) >= 2 and sys.argv[1] == '{config_cmd}' and '--config' not in sy
 
         # Write config file
         self.runners_dir.mkdir(parents=True, exist_ok=True)
-        config_filename = f"{project_id}.json"
+
+        # Use script_name for filename to allow multiple scripts per project
+        # Sanitize script name for filesystem
+        safe_name = ''.join(c if c.isalnum() or c in ('-', '_', ' ') else '_' for c in script_name)
+        config_filename = f"{safe_name}.json"
         config_path = self.runners_dir / config_filename
 
         with open(config_path, 'w') as f:
             json.dump(config, f, indent=2)
 
-        # Update metadata
+        # Update metadata (keep as single runner_config for backward compatibility)
         meta['runner_config'] = str(config_path)
         self._save_meta(project_path, meta)
 

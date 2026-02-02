@@ -298,7 +298,11 @@
                 type="text"
                 :placeholder="selectedProject.name"
                 class="form-input"
+                :class="{ 'input-error': scriptNameError }"
               />
+              <div v-if="scriptNameError" class="validation-error">
+                {{ scriptNameError }}
+              </div>
             </div>
 
             <!-- Description -->
@@ -316,7 +320,7 @@
             <div class="config-actions">
               <button
                 class="btn btn-primary"
-                :disabled="!effectiveEntryPoint || !configScriptName || generating"
+                :disabled="!effectiveEntryPoint || !configScriptName || scriptNameError || generating"
                 @click="generateWrapper"
               >
                 {{ generating ? 'Creating Script...' : 'Create Script' }}
@@ -404,6 +408,26 @@ export default {
     allDependenciesInstalled() {
       return this.selectedProject?.dependencies?.length > 0 &&
              this.missingDependencies.length === 0;
+    },
+
+    existingScriptNames() {
+      const adminScripts = this.$store.state.adminScripts?.scripts || [];
+      return adminScripts.map(s => s.name.toLowerCase());
+    },
+
+    scriptNameError() {
+      if (!this.configScriptName || !this.configScriptName.trim()) {
+        return null; // Don't show error for empty field
+      }
+      const nameLower = this.configScriptName.toLowerCase();
+      const exists = this.existingScriptNames.includes(nameLower);
+      console.log('[ProjectsModal] Checking script name:', this.configScriptName);
+      console.log('[ProjectsModal] Existing names:', this.existingScriptNames);
+      console.log('[ProjectsModal] Duplicate found:', exists);
+      if (exists) {
+        return 'A script with this name already exists';
+      }
+      return null;
     }
   },
 
@@ -413,6 +437,10 @@ export default {
         this.error = null;
         this.success = null;
         this.loadProjects();
+        // Load adminScripts store for name validation
+        if (this.$store.state.adminScripts) {
+          this.$store.dispatch('adminScripts/init');
+        }
       }
     },
 
@@ -722,6 +750,18 @@ export default {
         if (updated) {
           this.selectedProject = updated;
         }
+
+        // Refresh scripts list in sidebar
+        await this.$store.dispatch('scripts/init');
+
+        // Refresh adminScripts store to update validation
+        if (this.$store.state.adminScripts) {
+          await this.$store.dispatch('adminScripts/init');
+        }
+
+        // Reset form
+        this.configScriptName = '';
+        this.configDescription = '';
       } catch (e) {
         this.error = e.response?.data || 'Failed to create script';
       } finally {
@@ -1095,6 +1135,16 @@ export default {
 .form-help {
   font-size: 12px;
   color: var(--font-color-disabled);
+  margin-top: 4px;
+}
+
+.form-input.input-error {
+  border-color: #f44336;
+}
+
+.validation-error {
+  font-size: 12px;
+  color: #f44336;
   margin-top: 4px;
 }
 

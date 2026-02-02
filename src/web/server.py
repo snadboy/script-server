@@ -1544,9 +1544,9 @@ class GenerateWrapperHandler(BaseRequestHandler):
             if not script_name:
                 raise tornado.web.HTTPError(400, reason='Script name is required')
 
-            # Generate wrapper script
+            # Generate wrapper script (pass script_name for unique filename)
             wrapper_path = project_service.generate_wrapper(
-                project_id, entry_point, config_path, config_cmd
+                project_id, entry_point, config_path, config_cmd, script_name
             )
 
             # Generate runner config

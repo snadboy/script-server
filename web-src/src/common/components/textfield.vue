@@ -152,6 +152,14 @@ export default {
         return 'required';
       }
 
+      // Custom validation function
+      if (this.config.validate && typeof this.config.validate === 'function') {
+        const customError = this.config.validate(value);
+        if (customError) {
+          return customError;
+        }
+      }
+
       if (!empty) {
         var typeError = getValidByTypeError(value, this.config.type, this.config.min, this.config.max,
             this.config.max_length, this.config.regex);

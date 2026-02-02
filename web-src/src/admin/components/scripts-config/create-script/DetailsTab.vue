@@ -1,7 +1,7 @@
 <template>
   <div class="details-tab">
     <div class="row">
-      <TextField v-model="scriptConfig.name" :config="nameField" class="col s6"/>
+      <TextField v-model="scriptConfig.name" :config="nameFieldWithValidation" class="col s6" @error="handleNameError"/>
       <TextField v-model="scriptConfig.group" :config="groupField" class="col s5 offset-s1"/>
     </div>
     <!-- Script path and working directory are auto-managed for imported projects -->
@@ -67,11 +67,35 @@ export default {
       workDirField,
       descriptionField,
       outputFormatField,
-      requiresTerminalField
+      requiresTerminalField,
+      nameValidationError: null
     };
   },
 
   computed: {
+    existingScriptNames() {
+      const adminScripts = this.$store.state.adminScripts?.scripts || [];
+      return adminScripts.map(s => s.name.toLowerCase());
+    },
+
+    nameFieldWithValidation() {
+      const self = this;
+      return {
+        ...nameField,
+        get required() {
+          return nameField.required;
+        },
+        validate(value) {
+          if (!value || !value.trim()) {
+            return 'Script name is required';
+          }
+          if (self.existingScriptNames.includes(value.toLowerCase())) {
+            return 'A script with this name already exists';
+          }
+          return '';
+        }
+      };
+    },
     storeModule() {
       return this.$store.state.adminScriptConfig ? 'adminScriptConfig' : 'scriptConfig';
     },
@@ -83,6 +107,12 @@ export default {
   methods: {
     updateScript(updatedFields) {
       this.$store.dispatch(`${this.storeModule}/setScript`, updatedFields);
+    },
+
+    handleNameError(error) {
+      this.nameValidationError = error;
+      // Emit to parent to disable save button
+      this.$emit('validation-error', { field: 'name', error });
     }
   }
 }

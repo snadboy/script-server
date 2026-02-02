@@ -44,7 +44,7 @@
 
         <!-- Details Tab -->
         <div v-if="currentTabId === 'details'" class="tab-panel">
-          <DetailsTab :path-readonly="true" />
+          <DetailsTab :path-readonly="true" @validation-error="handleValidationError" />
         </div>
 
         <!-- Parameters Tab -->
@@ -131,6 +131,9 @@ export default {
       // Installed packages
       installedPackages: [],
 
+      // Validation state
+      validationErrors: {},
+
       // Original parent for modal body append
       originalParent: null,
       boundFixOverlayDimensions: null
@@ -194,10 +197,11 @@ export default {
 
     isFormValid() {
       if (!this.scriptConfig) return false;
+      const hasValidationErrors = Object.keys(this.validationErrors).length > 0;
       const hasName = this.scriptConfig.name && this.scriptConfig.name.trim().length > 0;
       const hasScript = this.scriptConfig.script_path ||
         (this.scriptConfig.script && (this.scriptConfig.script.path || this.scriptConfig.script.command));
-      return hasName && hasScript;
+      return !hasValidationErrors && hasName && hasScript;
     },
 
     nextButtonLabel() {
@@ -243,6 +247,7 @@ export default {
       this.success = null;
       this.saving = false;
       this.importedProject = null;
+      this.validationErrors = {};
       this.configData = {
         entryPoint: '',
         scriptName: '',
@@ -272,6 +277,14 @@ export default {
     handleSuccess(successMsg) {
       this.success = successMsg;
       this.error = null;
+    },
+
+    handleValidationError({ field, error }) {
+      if (error) {
+        this.$set(this.validationErrors, field, error);
+      } else {
+        this.$delete(this.validationErrors, field);
+      }
     },
 
     handleNext() {
