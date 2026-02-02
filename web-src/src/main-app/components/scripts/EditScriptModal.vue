@@ -374,10 +374,10 @@ export default {
         .then(() => {
           M.toast({ html: 'Script deleted successfully', classes: 'green' });
           this.$store.dispatch('scripts/init');
-          // Emit deleted event - parent will close the modal
+          // Emit both events to ensure modal closes
           this.$emit('deleted');
+          this.$emit('close');
           // Resolve promise immediately so button stops spinning
-          // (parent's @deleted handler will close the modal)
           return Promise.resolve();
         })
         .catch((e) => {
