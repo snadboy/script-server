@@ -1,180 +1,395 @@
 <template>
-  <form class="parameter-config-form col">
-    <div class="row">
-      <Textfield v-model="name" :config="nameField" class="col s4" @error="handleError(nameField, $event)"/>
-      <Checkbox v-model="required" :config="requiredField" class="col s3 offset-s1"
-                @error="handleError(requiredField, $event)"/>
-      <Combobox v-model="type" :config="typeField" :disabled="noValue || constant"
-                :dropdownContainer="this.$el"
-                class="col s4" @error="handleError(typeField, $event)"/>
+  <div class="parameter-form">
+    <!-- Basic Section -->
+    <div class="section-basic">
+      <div class="row mb-2">
+        <Textfield
+          v-model="name"
+          :config="nameField"
+          class="col s4"
+          @error="handleError(nameField, $event)"
+        />
+        <TextArea
+          v-model="description"
+          :config="descriptionField"
+          class="col s8"
+          @error="handleError(descriptionField, $event)"
+        />
+      </div>
+
+      <div class="row mb-2">
+        <Combobox
+          v-model="type"
+          :config="typeField"
+          :dropdownContainer="this.$el"
+          class="col s4"
+          @error="handleError(typeField, $event)"
+        />
+        <div class="col s8">
+          <label>
+            <input
+              type="checkbox"
+              v-model="required"
+              class="filled-in"
+            />
+            <span>Required</span>
+          </label>
+        </div>
+      </div>
     </div>
 
+    <!-- Separator -->
+    <div class="section-divider"></div>
 
-    <div class="row">
-      <Combobox v-model="passAs"
-                :config="passAsField"
-                class="col s3"/>
+    <!-- Parameter Behavior Section -->
+    <div class="section-behavior">
+      <h6 class="section-title">Parameter Behavior</h6>
 
-      <Checkbox v-if="!noValue && (passAs === 'argument' || passAs === 'argument + env_variable')"
-                v-model="sameArgParam"
-                :config="sameArgParamField"
-                class="col s3" @error="handleError(sameArgParamField, $event)"/>
+      <div class="row mb-2">
+        <Textfield
+          v-model="param"
+          :config="paramField"
+          class="col s4"
+          @error="handleError(paramField, $event)"
+        />
+        <Combobox
+          v-model="passAs"
+          :config="passAsField"
+          class="col s4"
+          @error="handleError(passAsField, $event)"
+        />
+      </div>
 
-      <Textfield
-          v-if="passAs === 'argument' || passAs === 'argument + env_variable'"
-          v-model="param" :config="paramField" class="col s3" @error="handleError(paramField, $event)"/>
-
-      <Textfield
-          v-if="passAs === 'env_variable' || passAs === 'argument + env_variable'"
-          v-model="envVar"
-          :config="envVarField"
-          class="col s3"
-          @error="handleError(envVarField, $event)"/>
-
-      <Textfield v-if="passAs === 'stdin'"
-                 v-model="stdinExpectedText"
-                 :config="stdinExpectedTextField"
-                 class="col s6"/>
-
+      <div v-if="type !== 'flag' && (passAs === 'argument' || passAs === 'argument + env_variable')" class="row mb-1">
+        <div class="col s12">
+          <label>
+            <input
+              type="checkbox"
+              v-model="sameArgParam"
+              class="filled-in"
+            />
+            <span>Combine param with value (-param=value)</span>
+          </label>
+        </div>
+      </div>
     </div>
 
-    <div class="row">
-      <Checkbox v-model="noValue" :config="noValueField" class="col s3"
-                @error="handleError(noValueField, $event)"/>
-      <Checkbox v-model="secure" :config="secureField" class="col s3"
-                @error="handleError(secureField, $event)"/>
-    </div>
-    <div v-if="selectedType !== 'file_upload' && !noValue" class="row">
-      <Textfield v-model="defaultValue" :class="{s6: !isExtendedDefault, s8: isExtendedDefault}"
-                 :config="defaultValueField" class="col"
-                 @error="handleError(defaultValueField, $event)"/>
-      <Checkbox v-model="constant" :config="constantField" class="col s3 offset-s1"
-                @error="handleError(constantField, $event)"/>
-    </div>
-    <div v-if="!constant" class="row">
-            <TextArea :config="descriptionField" @error="handleError(descriptionField, $event)" class="col s12"
-                      v-model="description"/>
-    </div>
-    <div v-if="selectedType === 'int'" class="row">
-      <Textfield v-model="min" :config="minField" class="col s5" @error="handleError(minField, $event)"/>
-      <Textfield v-model="max" :config="maxField" class="col s6 offset-s1"
-                 @error="handleError(maxField, $event)"/>
-    </div>
-    <div v-if="(selectedType === 'list' || selectedType === 'multiselect' || selectedType === 'editable_list')"
-         class="row">
-      <Textfield v-if="allowedValuesFromScript" v-model="allowedValuesScript"
-                 :config="allowedValuesScriptField"
-                 class="col s8" @error="handleError(allowedValuesScriptField, $event)"/>
-      <ChipsList v-else v-model="allowedValues" class="col s8" title="Allowed values"
-                 @error="handleError('Allowed values', $event)"/>
-      <Checkbox v-model="allowedValuesFromScript" :config="allowedValuesFromScriptField"
-                class="col s2"
-                @error="handleError(allowedValuesFromScriptField, $event)"/>
-      <Checkbox v-if="allowedValuesFromScript" v-model="allowedValuesScriptShellEnabled"
-                :config="allowedValuesScriptShellEnabledField"
-                class="col s2"
-                @error="handleError(allowedValuesScriptShellEnabledField, $event)"/>
-    </div>
-    <div v-if="(selectedType === 'multiselect')" class="row">
-      <Combobox v-model="multiselectArgumentType" :config="multiselectArgumentTypeField"
-                class="col s4" @error="handleError(multiselectArgumentTypeField, $event)"/>
+    <!-- Separator -->
+    <div class="section-divider"></div>
 
-      <Textfield v-if="!multiselectArgumentType || multiselectArgumentType ==='single_argument'" v-model="separator"
-                 :config="separatorField" class="col s2 offset-s1"
-                 @error="handleError(separatorField, $event)"/>
-    </div>
-    <div v-if="(selectedType === 'server_file')" class="row">
-      <Textfield v-model="fileDir" :config="fileDirField" class="col s5"
-                 @error="handleError(fileDirField, $event)"/>
-      <Checkbox v-model="recursive" :config="recursiveField" class="col s2 offset-s1"
-                @error="handleError(recursiveField, $event)"/>
-      <Combobox v-model="fileType" :config="fileTypeField" class="col s3 offset-s1"
-                @error="handleError(fileTypeField, $event)"/>
-      <ChipsList v-model="fileExtensions" class="col s12"
-                 title="Allowed file extensions"
-                 @error="handleError('Allowed file extensions', $event)"/>
-      <ChipsList v-model="excludedFiles" class="col s12"
-                 title="Excluded files"
-                 @error="handleError('Excluded files', $event)"/>
-    </div>
-    <div v-if="selectedType === 'text' || selectedType === undefined || selectedType === 'multiline_text'" class="row">
-      <Textfield v-model="regexConfigPattern" :config="regexPatternField" class="col s4"
-                 @error="handleError(regexPatternField, $event)"/>
-      <Textfield v-model="regexConfigDescription" :config="regexDescriptionField" class="col s4"
-                 @error="handleError(regexDescriptionField, $event)"/>
-      <Textfield v-model="max_length" :config="maxLengthField" class="col s4"
-                 @error="handleError(maxLengthField, $event)"/>
-    </div>
+    <!-- Constraints Section (Type-Specific) -->
+    <div class="section-constraints">
+      <h6 class="section-title bold">Constraints</h6>
 
-    <div v-if="selectedType !== 'multiline_text'" class="row">
-      <Textfield v-model="uiWidthWeight"
-                 :config="uiWidthWeightField"
-                 class="col s2"
-                 @error="handleError(uiWidthWeightField, $event)"/>
-    </div>
+      <!-- Text Type Constraints -->
+      <div v-if="type === 'text'" class="constraints-text">
+        <div class="row mb-2">
+          <Textfield
+            v-model="minLength"
+            :config="minLengthField"
+            class="col s3"
+            @error="handleError(minLengthField, $event)"
+          />
+          <Textfield
+            v-model="maxLength"
+            :config="maxLengthField"
+            class="col s3"
+            @error="handleError(maxLengthField, $event)"
+          />
+          <Textfield
+            v-model="defaultValue"
+            :config="{ name: 'Default value' }"
+            class="col s6"
+            @error="handleError('Default value', $event)"
+          />
+        </div>
 
-    <div class="row">
-      <Combobox v-model="uiSeparatorType"
-                :config="uiSeparatorTypeField"
-                class="col s2"
-                @error="handleError(uiSeparatorTypeField, $event)"/>
-      <Textfield v-model="uiSeparatorTitle"
-                 :config="uiSeparatorTitleField"
-                 class="col s4"
-                 @error="handleError(uiSeparatorTitleField, $event)"/>
+        <div class="row mb-2">
+          <Textfield
+            v-model="regexPattern"
+            :config="regexPatternField"
+            class="col s12"
+            @error="handleError(regexPatternField, $event)"
+          />
+        </div>
 
-    </div>
+        <div v-if="regexPattern" class="row mb-2">
+          <Textfield
+            v-model="regexDescription"
+            :config="regexDescriptionField"
+            class="col s12"
+            @error="handleError(regexDescriptionField, $event)"
+          />
+        </div>
+      </div>
 
-    <div v-if="type === 'list' || type === 'multiselect'" class="row">
-      <ParameterSeparator :separator="{'type': 'line', 'title': 'Values UI Mapping'}" class="col s12"/>
-      <ParameterValuesUiMapping v-model="valuesUiMapping" class="col s12"/>
+      <!-- Int Type Constraints -->
+      <div v-if="type === 'int'" class="constraints-int">
+        <div class="row mb-2">
+          <Textfield
+            v-model="min"
+            :config="minField"
+            class="col s4"
+            @error="handleError(minField, $event)"
+          />
+          <Textfield
+            v-model="max"
+            :config="maxFieldComputed"
+            class="col s4"
+            @error="handleError(maxFieldComputed, $event)"
+          />
+          <Textfield
+            v-model="defaultValue"
+            :config="{ name: 'Default value', type: 'int' }"
+            class="col s4"
+            @error="handleError('Default value', $event)"
+          />
+        </div>
+      </div>
+
+      <!-- Bool Type Constraints -->
+      <div v-if="type === 'bool'" class="constraints-bool">
+        <div class="row mb-2">
+          <div class="col s12">
+            <label class="field-label">Default value</label>
+            <p>
+              <label>
+                <input
+                  type="radio"
+                  v-model="defaultValue"
+                  value="true"
+                  name="bool-default"
+                />
+                <span>True</span>
+              </label>
+            </p>
+            <p>
+              <label>
+                <input
+                  type="radio"
+                  v-model="defaultValue"
+                  value="false"
+                  name="bool-default"
+                />
+                <span>False</span>
+              </label>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- List Type Constraints -->
+      <div v-if="type === 'list'" class="constraints-list">
+        <!-- Selection Mode -->
+        <div class="row mb-2">
+          <div class="col s12">
+            <label class="field-label">Selection mode</label>
+            <p>
+              <label>
+                <input
+                  type="radio"
+                  v-model="listSelectionMode"
+                  value="single"
+                  name="selection-mode"
+                />
+                <span>Single selection</span>
+              </label>
+              <label class="ml-4">
+                <input
+                  type="radio"
+                  v-model="listSelectionMode"
+                  value="multiple"
+                  name="selection-mode"
+                />
+                <span>Multiple selection</span>
+              </label>
+            </p>
+          </div>
+        </div>
+
+        <!-- List Values Table -->
+        <div class="row mb-2">
+          <div class="col s12">
+            <label class="field-label">List values</label>
+            <table class="list-values-table">
+              <thead>
+                <tr>
+                  <th>Value (sent to script)</th>
+                  <th>UI Display (shown to user)</th>
+                  <th width="50"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(item, index) in listValues" :key="item.id || index">
+                  <td>
+                    <input
+                      type="text"
+                      v-model="item.value"
+                      class="list-value-input"
+                      placeholder="e.g., prod"
+                      @blur="handleListValueBlur"
+                      @keydown.tab="handleValueTab($event, item)"
+                      :ref="`value-${item.id}`"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="text"
+                      v-model="item.uiValue"
+                      class="list-value-input"
+                      placeholder="e.g., Production"
+                      @blur="handleListValueBlur"
+                      :ref="`uiValue-${item.id}`"
+                    />
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      class="btn-flat btn-small"
+                      @click="removeListValue(index)"
+                    >
+                      <i class="material-icons">delete</i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <button
+              type="button"
+              class="btn-flat btn-small mt-1"
+              @click="addListValue"
+            >
+              <i class="material-icons left">add</i>
+              Add Value
+            </button>
+          </div>
+        </div>
+
+        <!-- Default Value -->
+        <div class="row mb-2">
+          <Combobox
+            v-model="defaultValue"
+            :config="{
+              name: 'Default value',
+              type: 'list',
+              values: listValuesForDropdown
+            }"
+            class="col s6"
+            @error="handleError('Default value', $event)"
+          />
+        </div>
+
+        <!-- Multiple Selection Format -->
+        <div v-if="listSelectionMode === 'multiple'" class="row mb-2">
+          <div class="col s12">
+            <label class="field-label">How to pass multiple values</label>
+            <p>
+              <label>
+                <input
+                  type="radio"
+                  v-model="multiselectFormat"
+                  value="single_argument"
+                  name="multiselect-format"
+                />
+                <span>Single argument: <code>-env prod,staging</code></span>
+              </label>
+            </p>
+            <p>
+              <label>
+                <input
+                  type="radio"
+                  v-model="multiselectFormat"
+                  value="argument_per_value"
+                  name="multiselect-format"
+                />
+                <span>Separate arguments: <code>-env prod staging</code></span>
+              </label>
+            </p>
+            <p>
+              <label>
+                <input
+                  type="radio"
+                  v-model="multiselectFormat"
+                  value="repeat_param_value"
+                  name="multiselect-format"
+                />
+                <span>Repeat parameter: <code>-env prod -env staging</code></span>
+              </label>
+            </p>
+          </div>
+        </div>
+
+        <!-- Separator (only for single_argument) -->
+        <div
+          v-if="listSelectionMode === 'multiple' && multiselectFormat === 'single_argument'"
+          class="row mb-2"
+        >
+          <Textfield
+            v-model="separator"
+            :config="separatorField"
+            class="col s2"
+            @error="handleError(separatorField, $event)"
+          />
+        </div>
+      </div>
+
+      <!-- Flag Type Info -->
+      <div v-if="type === 'flag'" class="constraints-flag">
+        <div class="info-box">
+          <i class="material-icons">info</i>
+          <span>
+            This parameter passes only the flag without a value.<br>
+            Example: <code>-v</code> or <code>--verbose</code>
+          </span>
+        </div>
+      </div>
+
+      <!-- Constant Type Constraints -->
+      <div v-if="type === 'constant'" class="constraints-constant">
+        <div class="row mb-2">
+          <Textfield
+            v-model="defaultValue"
+            :config="{
+              name: 'Constant value (visible but read-only)',
+              required: true
+            }"
+            class="col s12"
+            @error="handleError('Constant value', $event)"
+          />
+        </div>
+        <div class="info-box">
+          <i class="material-icons">info</i>
+          <span>
+            Constant parameters are visible but read-only. Users will see this value but cannot change it.
+          </span>
+        </div>
+      </div>
     </div>
-  </form>
+  </div>
 </template>
 
 <script>
-import ParameterValuesUiMapping from '@/admin/components/scripts-config/ParameterValuesUiMapping.vue';
 import Checkbox from '@/common/components/checkbox';
-import ChipsList from '@/common/components/ChipsList';
 import Combobox from '@/common/components/combobox';
 import TextArea from '@/common/components/TextArea';
 import Textfield from '@/common/components/textfield';
-import {forEachKeyValue, isBlankString, isEmptyArray, isEmptyObject, isEmptyString} from '@/common/utils/common';
-import ParameterSeparator from '@/main-app/components/scripts/ParameterSeparator.vue';
+import {isEmptyString} from '@/common/utils/common';
 import get from 'lodash/get';
 import Vue from 'vue';
 import {
-  allowedValuesFromScriptField,
-  allowedValuesScriptField,
-  allowedValuesScriptShellEnabledField,
-  constantField,
-  defaultValueField,
   descriptionField,
-  envVarField,
-  fileDirField,
-  fileTypeField,
   maxField,
-  maxLengthField,
   minField,
-  multiselectArgumentTypeField,
   nameField,
-  noValueField,
   paramField,
   passAsField,
-  recursiveField,
   regexDescriptionField,
   regexPatternField,
-  requiredField,
-  sameArgParamField,
-  secureField,
   separatorField,
-  stdinExpectedTextField,
-  typeField,
-  uiSeparatorTitleField,
-  uiSeparatorTypeField,
-  uiWidthWeightField
+  typeField
 } from './parameter-fields';
 
+// Helper function to update value reactively
 function updateValue(value, configField, newValue) {
   if (!value.hasOwnProperty(configField)) {
     Object.assign(value, {[configField]: newValue});
@@ -184,7 +399,7 @@ function updateValue(value, configField, newValue) {
 
 export default {
   name: 'ParameterConfigForm',
-  components: {ParameterValuesUiMapping, ParameterSeparator, ChipsList, TextArea, Checkbox, Combobox, Textfield},
+  components: {Checkbox, Combobox, TextArea, Textfield},
   props: {
     value: {
       type: Object,
@@ -192,99 +407,74 @@ export default {
     }
   },
 
-  mounted: function () {
-    const simpleFields = {
-      name: 'name',
-      description: 'description',
-      param: 'param',
-      sameArgParam: 'same_arg_param',
-      envVar: 'env_var',
-      type: 'type',
-      noValue: 'no_value',
-      required: 'required',
-      constant: 'constant',
-      secure: 'secure',
-      min: 'min',
-      max: 'max',
-      max_length: 'max_length',
-      multiselectArgumentType: 'multiselect_argument_type',
-      separator: 'separator',
-      fileDir: 'file_dir',
-      recursive: 'file_recursive',
-      fileType: 'file_type',
-      stdinExpectedText: 'stdin_expected_text',
-      valuesUiMapping: 'values_ui_mapping'
-    };
-
-    forEachKeyValue(simpleFields, (vmField, configField) => {
-      this.$watch(vmField, (newValue) => updateValue(this.value, configField, newValue));
-    });
-  },
-
   data() {
     return {
       name: null,
-      param: null,
-      sameArgParam: null,
-      envVar: null,
-      passAs: null,
-      stdinExpectedText: null,
-      type: null,
-      noValue: null,
-      required: null,
       description: null,
+      param: null,
+      passAs: 'argument + env_variable',
+      sameArgParam: false,
+      type: 'text',
+      required: false,
+
+      // Type-specific fields
       min: null,
       max: null,
-      max_length: null,
-      regexConfigPattern: null,
-      regexConfigDescription: null,
-      allowedValues: null,
-      allowedValuesScript: null,
-      allowedValuesFromScript: null,
-      allowedValuesScriptShellEnabled: null,
-      valuesUiMapping: null,
-      defaultValue: null,
-      constant: null,
-      secure: null,
-      separator: null,
-      multiselectArgumentType: null,
-      fileDir: null,
-      recursive: null,
-      fileType: null,
-      fileExtensions: null,
-      excludedFiles: null,
-      uiWidthWeight: null,
-      uiSeparatorType: null,
-      uiSeparatorTitle: null,
+      minLength: 0,
+      maxLength: 100,
+      regexPattern: '',
+      regexDescription: '',
+      defaultValue: '',
+      separator: ',',
+
+      // List-specific fields
+      listSelectionMode: 'single',
+      multiselectFormat: 'single_argument',
+      listValues: [],
+      nextListItemId: 1,  // Counter for unique IDs
+
+      // Internal flags
+      isLoading: false,  // Prevent reactivity loops
+      isTabbing: false,  // Track if user is tabbing between fields
+
+      // Field definitions
       nameField,
-      paramField: Object.assign({}, paramField),
-      passAsField,
-      stdinExpectedTextField,
-      envVarField,
-      typeField,
-      noValueField,
-      requiredField,
-      secureField,
       descriptionField,
+      paramField,
+      passAsField,
+      typeField,
       minField,
-      maxField: Object.assign({}, maxField),
-      maxLengthField,
+      maxField,
       regexPatternField,
       regexDescriptionField,
-      allowedValuesScriptField,
-      allowedValuesFromScriptField,
-      defaultValueField: Object.assign({}, defaultValueField),
-      constantField,
-      sameArgParamField,
-      multiselectArgumentTypeField,
       separatorField,
-      fileDirField,
-      recursiveField,
-      fileTypeField,
-      allowedValuesScriptShellEnabledField: allowedValuesScriptShellEnabledField,
-      uiWidthWeightField,
-      uiSeparatorTypeField,
-      uiSeparatorTitleField
+      minLengthField: {
+        name: 'Min length',
+        type: 'int',
+        min: 0,
+        required: true
+      },
+      maxLengthField: {
+        name: 'Max length',
+        type: 'int',
+        min: 1,
+        required: true
+      }
+    };
+  },
+
+  computed: {
+    maxFieldComputed() {
+      return {
+        ...this.maxField,
+        min: this.min
+      };
+    },
+    listValuesForDropdown() {
+      // Filter out empty values for the default value dropdown
+      return this.listValues
+        .map(v => v.value)
+        .filter(v => !isEmptyString(v));
     }
   },
 
@@ -292,215 +482,322 @@ export default {
     value: {
       immediate: true,
       handler(config) {
-        if (config) {
-          this.name = config['name'];
-          this.description = config['description'];
-          this.param = config['param'];
-          this.envVar = config['env_var'];
-          this.type = config['type'];
-          this.noValue = get(config, 'no_value', false);
-          this.required = get(config, 'required', false);
-          this.min = config['min'];
-          this.max = config['max'];
-          this.max_length = config['max_length'];
-          this.regexConfigPattern = get(config, 'regex.pattern', '');
-          this.regexConfigDescription = get(config, 'regex.description', '');
-          this.constant = !!get(config, 'constant', false);
-          this.secure = !!get(config, 'secure', false);
-          this.multiselectArgumentType = get(config, 'multiselect_argument_type', 'single_argument');
-          this.sameArgParam = !!get(config, 'same_arg_param', false);
-          this.separator = get(config, 'separator', ',');
-          this.fileDir = config['file_dir'];
-          this.recursive = !!get(config, 'file_recursive', false);
-          this.fileType = get(config, 'file_type', 'any');
-          this.fileExtensions = get(config, 'file_extensions', []);
-          this.excludedFiles = get(config, 'excluded_files', []);
-          this.stdinExpectedText = get(config, 'stdin_expected_text')
-          this.passAs = get(config, 'pass_as', 'argument + env_variable')
-          this.valuesUiMapping = get(config, 'values_ui_mapping', {})
-
-          this.uiWidthWeight = config['ui']?.['width_weight']
-          this.uiSeparatorType = config['ui']?.['separator_before']?.['type']
-          this.uiSeparatorTitle = config['ui']?.['separator_before']?.['title']
-
-          const defaultValue = get(config, 'default', '');
-          if (this.isRecursiveFile()) {
-            if (Array.isArray(defaultValue)) {
-              this.defaultValue = defaultValue.join('/');
-              if (this.defaultValue.startsWith('//')) {
-                this.defaultValue = this.defaultValue.substring(1);
-              }
-
-            } else {
-              this.defaultValue = defaultValue;
-            }
-          } else {
-            this.defaultValue = defaultValue.toString();
-          }
-
-          const allowedValues = get(config, 'values', []);
-          if (Array.isArray(allowedValues) || !allowedValues['script']) {
-            this.allowedValues = allowedValues;
-            this.allowedValuesFromScript = false;
-            this.allowedValuesScript = '';
-            this.allowedValuesScriptShellEnabled = false
-          } else {
-            this.allowedValues = [];
-            this.allowedValuesFromScript = true;
-            this.allowedValuesScript = allowedValues['script'];
-            this.allowedValuesScriptShellEnabled = get(allowedValues, 'shell', false);
-          }
+        if (config && !this.isLoading) {
+          // Only reload from backend if not already loading
+          // This prevents resetting the array during add/remove operations
+          this.isLoading = true;
+          this.fromBackendConfig(config);
+          this.$nextTick(() => {
+            this.isLoading = false;
+          });
         }
       }
     },
-    noValue: {
-      immediate: true,
-      handler(noValue) {
-        Vue.set(this.paramField, 'required', noValue);
+
+    // Watch all fields and sync to backend
+    name() { if (!this.isLoading) this.syncToBackend(); },
+    description() { if (!this.isLoading) this.syncToBackend(); },
+    param() { if (!this.isLoading) this.syncToBackend(); },
+    passAs() { if (!this.isLoading) this.syncToBackend(); },
+    sameArgParam() { if (!this.isLoading) this.syncToBackend(); },
+    type(newType, oldType) {
+      // Initialize listValues when switching to list type
+      if (newType === 'list' && oldType !== 'list' && this.listValues.length === 0) {
+        this.listValues = [{
+          id: this.nextListItemId++,
+          value: '',
+          uiValue: ''
+        }];
       }
+      if (!this.isLoading) this.syncToBackend();
     },
-    constant: {
-      immediate: true,
-      handler(constant) {
-        Vue.set(this.defaultValueField, 'required', constant);
-        Vue.set(this.defaultValueField, 'name', constant ? 'Constant value' : defaultValueField.name);
-      }
-    },
-    min: {
-      handler(min) {
-        Vue.set(this.maxField, 'min', min);
-      }
-    },
-    fileExtensions(fileExtensions) {
-      if (isEmptyArray(fileExtensions)) {
-        this.$delete(this.value, 'file_extensions');
-      } else {
-        updateValue(this.value, 'file_extensions', fileExtensions);
-      }
-    },
-    excludedFiles(excludedFiles) {
-      if (isEmptyArray(excludedFiles)) {
-        this.$delete(this.value, 'excluded_files');
-      } else {
-        updateValue(this.value, 'excluded_files', excludedFiles);
-      }
-    },
-    allowedValuesFromScript() {
-      this.updateAllowedValues();
-    },
-    allowedValues() {
-      this.updateAllowedValues();
-    },
-    allowedValuesScript() {
-      this.updateAllowedValues();
-    },
-    allowedValuesScriptShellEnabled() {
-      this.updateAllowedValues();
-    },
-    regexConfigPattern() {
-      this.updateRegexConfig();
-    },
-    regexConfigDescription() {
-      this.updateRegexConfig();
-    },
-    defaultValue() {
-      if (this.selectedType === 'multiselect') {
-        updateValue(this.value, 'default', this.defaultValue.split(',').filter(s => !isEmptyString(s)));
-      } else if (this.isRecursiveFile()) {
-        let path = this.defaultValue.split('/').filter(s => !isEmptyString(s));
-        if (this.defaultValue.startsWith('/')) {
-          path = ['/', ...path];
-        }
-        updateValue(this.value, 'default', path);
-      } else {
-        updateValue(this.value, 'default', this.defaultValue);
-      }
-    },
-    uiWidthWeight() {
-      this.updateUiFields()
-    },
-    uiSeparatorType() {
-      this.updateUiFields()
-    },
-    uiSeparatorTitle() {
-      this.updateUiFields()
-    },
-    passAs() {
-      if (this.passAs === 'argument + env_variable') {
-        this.$delete(this.value, 'pass_as');
-      } else {
-        updateValue(this.value, 'pass_as', this.passAs);
-      }
-    }
+    required() { if (!this.isLoading) this.syncToBackend(); },
+    min() { if (!this.isLoading) this.syncToBackend(); },
+    max() { if (!this.isLoading) this.syncToBackend(); },
+    minLength() { if (!this.isLoading) this.syncToBackend(); },
+    maxLength() { if (!this.isLoading) this.syncToBackend(); },
+    regexPattern() { if (!this.isLoading) this.syncToBackend(); },
+    regexDescription() { if (!this.isLoading) this.syncToBackend(); },
+    defaultValue() { if (!this.isLoading) this.syncToBackend(); },
+    separator() { if (!this.isLoading) this.syncToBackend(); },
+    listSelectionMode() { if (!this.isLoading) this.syncToBackend(); },
+    multiselectFormat() { if (!this.isLoading) this.syncToBackend(); }
+    // Note: listValues watcher removed - now syncs only on blur or add/remove
+    // Deep watching caused re-renders on every keystroke, losing focus
   },
-
-  computed: {
-    selectedType() {
-      if (this.noValue || this.constant) {
-        return null;
-      }
-
-      return this.type;
-    },
-    isExtendedDefault() {
-      return (this.selectedType === 'multiselect') || (this.isRecursiveFile());
-    }
-  },
-
 
   methods: {
-    updateRegexConfig() {
-      updateValue(this.value, 'regex', {
-        pattern: this.regexConfigPattern,
-        description: this.regexConfigDescription
+    addListValue() {
+      // Set loading flag to prevent value watcher from resetting the array
+      const wasLoading = this.isLoading;
+      this.isLoading = true;
+
+      // Add new empty row with unique ID
+      this.listValues.push({
+        id: this.nextListItemId++,
+        value: '',
+        uiValue: ''
+      });
+
+      // Sync after Vue updates, WHILE isLoading is still true
+      this.$nextTick(() => {
+        if (!wasLoading) {
+          this.syncToBackend();
+        }
+        // Restore loading flag AFTER sync completes
+        this.$nextTick(() => {
+          this.isLoading = wasLoading;
+        });
       });
     },
-    updateAllowedValues() {
-      if (this.allowedValuesFromScript) {
-        updateValue(this.value, 'values', {
-          script: this.allowedValuesScript,
-          shell: this.allowedValuesScriptShellEnabled
+
+    removeListValue(index) {
+      // Set loading flag to prevent value watcher from resetting the array
+      const wasLoading = this.isLoading;
+      this.isLoading = true;
+
+      // Remove row
+      this.listValues.splice(index, 1);
+
+      // Sync after Vue updates, WHILE isLoading is still true
+      this.$nextTick(() => {
+        if (!wasLoading) {
+          this.syncToBackend();
+        }
+        // Restore loading flag AFTER sync completes
+        this.$nextTick(() => {
+          this.isLoading = wasLoading;
         });
-      } else {
-        updateValue(this.value, 'values', this.allowedValues);
-      }
+      });
     },
-    isRecursiveFile() {
-      return (this.selectedType === 'server_file') && (this.recursive);
-    },
-    updateUiFields() {
-      const newUiConfig = {}
 
-      if (this.uiWidthWeight) {
-        newUiConfig['width_weight'] = parseInt(this.uiWidthWeight)
+    handleListValueBlur() {
+      // Don't sync if user is just tabbing between fields
+      if (this.isTabbing) return;
+
+      // Sync when user finishes editing a list value
+      if (!this.isLoading) this.syncToBackend();
+    },
+
+    handleValueTab(event, item) {
+      event.preventDefault();
+
+      // Set tabbing flag to prevent blur sync
+      this.isTabbing = true;
+
+      // Auto-fill the UI Display if empty
+      if (!item.uiValue && item.value) {
+        item.uiValue = item.value;
       }
 
-      const separatorType = !isEmptyString(this.uiSeparatorType) && (this.uiSeparatorType !== 'none')
-          ? this.uiSeparatorType
-          : null;
-      const separatorTitle = !isBlankString(this.uiSeparatorTitle)
-          ? this.uiSeparatorTitle
-          : null;
+      // Focus and select the UI Display input
+      this.$nextTick(() => {
+        const uiInput = this.$refs[`uiValue-${item.id}`];
 
-      if (separatorType || separatorTitle) {
-        newUiConfig['separator_before'] = {}
-        if (separatorType) {
-          newUiConfig['separator_before']['type'] = separatorType
+        if (uiInput) {
+          // $refs in v-for returns an array
+          const input = Array.isArray(uiInput) ? uiInput[0] : uiInput;
+
+          if (input) {
+            input.focus();
+            input.select();
+
+            // Clear tabbing flag after a delay
+            setTimeout(() => {
+              this.isTabbing = false;
+            }, 100);
+          }
         }
-        if (separatorTitle) {
-          newUiConfig['separator_before']['title'] = separatorTitle
+      });
+    },
+
+    // Convert from backend config format to UI state
+    fromBackendConfig(config) {
+      this.name = config.name || '';
+      this.description = config.description || '';
+      this.param = config.param || '';
+      this.passAs = config.pass_as || 'argument + env_variable';
+      this.sameArgParam = !!get(config, 'same_arg_param', false);
+      this.required = !!get(config, 'required', false);
+
+      // Determine simplified type
+      if (config.no_value) {
+        this.type = 'flag';
+      } else if (config.constant) {
+        this.type = 'constant';
+        this.defaultValue = config.default || '';
+      } else if (config.type === 'multiselect') {
+        this.type = 'list';
+        this.listSelectionMode = 'multiple';
+        this.multiselectFormat = config.multiselect_argument_type || 'single_argument';
+        this.separator = config.separator || ',';
+        this.loadListValues(config);
+      } else if (config.type === 'list') {
+        // Check if it's a bool type (list with only 'true' and 'false')
+        const values = config.values || [];
+        if (values.length === 2 && values.includes('true') && values.includes('false')) {
+          this.type = 'bool';
+          this.defaultValue = config.default || 'false';
+        } else {
+          this.type = 'list';
+          this.listSelectionMode = 'single';
+          this.loadListValues(config);
         }
+      } else if (config.type === 'editable_list') {
+        this.type = 'list';
+        this.listSelectionMode = 'single';
+        this.loadListValues(config);
+      } else if (config.type === 'multiline_text' || config.type === 'ip' ||
+                 config.type === 'ip4' || config.type === 'ip6') {
+        // Migrate old types to text
+        this.type = 'text';
+        this.maxLength = config.max_length || 100;
+        this.minLength = 0;
+        if (config.regex) {
+          this.regexPattern = config.regex.pattern || '';
+          this.regexDescription = config.regex.description || '';
+        }
+        this.defaultValue = config.default || '';
+      } else {
+        this.type = config.type || 'text';
       }
 
-      if (!isEmptyObject(newUiConfig)) {
-        updateValue(this.value, 'ui', newUiConfig);
-      } else {
-        this.$delete(this.value, 'ui');
+      // Type-specific properties
+      if (this.type === 'text') {
+        this.maxLength = config.max_length || 100;
+        this.minLength = 0;
+        if (config.regex) {
+          this.regexPattern = config.regex.pattern || '';
+          this.regexDescription = config.regex.description || '';
+        }
+        this.defaultValue = config.default || '';
+      } else if (this.type === 'int') {
+        this.min = config.min;
+        this.max = config.max;
+        this.defaultValue = config.default || '';
+      } else if (this.type === 'bool') {
+        this.defaultValue = config.default || 'false';
+      } else if (this.type === 'list') {
+        this.defaultValue = config.default || '';
       }
     },
+
+    loadListValues(config) {
+      const values = config.values || [];
+      const uiMapping = config.values_ui_mapping || {};
+
+      this.listValues = values.map(val => ({
+        id: this.nextListItemId++,
+        value: val,
+        uiValue: uiMapping[val] || val
+      }));
+
+      // If no values exist, add one empty row to get started
+      if (this.listValues.length === 0) {
+        this.listValues.push({
+          id: this.nextListItemId++,
+          value: '',
+          uiValue: ''
+        });
+      }
+
+      this.defaultValue = config.default || '';
+    },
+
+    // Convert from UI state to backend config format
+    syncToBackend() {
+      if (!this.value) return;
+
+      const config = {
+        name: this.name,
+        description: this.description,
+        required: this.required,
+        param: this.param,
+        same_arg_param: this.sameArgParam
+      };
+
+      // Pass as (only set if not default)
+      if (this.passAs !== 'argument + env_variable') {
+        config.pass_as = this.passAs;
+      }
+
+      // Type-specific serialization
+      if (this.type === 'text') {
+        config.type = 'text';
+        config.max_length = this.maxLength;
+        if (this.regexPattern) {
+          config.regex = {
+            pattern: this.regexPattern,
+            description: this.regexDescription
+          };
+        }
+        if (this.defaultValue) {
+          config.default = this.defaultValue;
+        }
+      } else if (this.type === 'int') {
+        config.type = 'int';
+        if (this.min !== null && this.min !== '') config.min = parseInt(this.min);
+        if (this.max !== null && this.max !== '') config.max = parseInt(this.max);
+        if (this.defaultValue) {
+          config.default = this.defaultValue;
+        }
+      } else if (this.type === 'bool') {
+        // Backend uses list type
+        config.type = 'list';
+        config.values = ['true', 'false'];
+        if (this.defaultValue) {
+          config.default = this.defaultValue;
+        }
+      } else if (this.type === 'list') {
+        const values = this.listValues.map(v => v.value).filter(v => !isEmptyString(v));
+
+        if (this.listSelectionMode === 'multiple') {
+          config.type = 'multiselect';
+          config.multiselect_argument_type = this.multiselectFormat;
+          if (this.multiselectFormat === 'single_argument') {
+            config.separator = this.separator || ',';
+          }
+        } else {
+          config.type = 'list';
+        }
+
+        config.values = values;
+
+        // Add UI mapping if different from values
+        const hasMapping = this.listValues.some(v => v.uiValue && v.uiValue !== v.value);
+        if (hasMapping) {
+          config.values_ui_mapping = {};
+          this.listValues.forEach(v => {
+            if (v.uiValue && !isEmptyString(v.value)) {
+              config.values_ui_mapping[v.value] = v.uiValue;
+            }
+          });
+        }
+
+        if (this.defaultValue) {
+          config.default = this.defaultValue;
+        }
+      } else if (this.type === 'flag') {
+        // Backend uses no_value
+        config.no_value = true;
+      } else if (this.type === 'constant') {
+        // Backend uses constant flag
+        config.constant = true;
+        config.default = this.defaultValue;
+      }
+
+      // Update the value object
+      Object.keys(this.value).forEach(key => {
+        this.$delete(this.value, key);
+      });
+      Object.keys(config).forEach(key => {
+        updateValue(this.value, key, config[key]);
+      });
+    },
+
     handleError(fieldConfig, error) {
       let fieldName;
-      if (fieldConfig instanceof String) {
+      if (typeof fieldConfig === 'string') {
         fieldName = fieldConfig;
       } else {
         fieldName = fieldConfig.name;
@@ -508,15 +805,127 @@ export default {
       this.$emit('error', {fieldName, message: error});
     }
   }
-}
+};
 </script>
 
 <style scoped>
-.parameter-config-form >>> .col.checkbox {
-  margin-top: 2.1em;
+.parameter-form {
+  padding: 1rem;
 }
 
-.parameter-config-form >>> .row {
+.section-divider {
+  border-bottom: 1px solid #e0e0e0;
+  margin: 1.5rem 0;
+}
+
+.section-title {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+  color: #424242;
+}
+
+.section-title.bold {
+  font-weight: 700;
+  color: #212121;
+}
+
+.mb-1 {
+  margin-bottom: 0.5rem;
+}
+
+.mb-2 {
+  margin-bottom: 1rem;
+}
+
+.ml-4 {
+  margin-left: 2rem;
+}
+
+.mt-1 {
+  margin-top: 0.5rem;
+}
+
+.field-label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #424242;
+  margin-bottom: 0.5rem;
+}
+
+.list-values-table {
+  width: 100%;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+}
+
+.list-values-table thead th {
+  background: #f5f5f5;
+  padding: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+  color: #424242;
+}
+
+.list-values-table tbody td {
+  padding: 0.5rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.list-values-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.list-value-input {
+  width: 100%;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-size: 0.9rem;
+}
+
+.list-value-input:focus {
+  outline: none;
+  border-color: #26a69a;
+}
+
+.info-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #e3f2fd;
+  border-left: 4px solid #2196f3;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: #1565c0;
+}
+
+.info-box i {
+  font-size: 1.25rem;
+  color: #2196f3;
+}
+
+.info-box code {
+  background: #bbdefb;
+  padding: 0.125rem 0.375rem;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+}
+
+/* Override Materialize radio button spacing */
+[type="radio"]:not(:checked) + span,
+[type="radio"]:checked + span {
+  padding-left: 2rem;
+}
+
+/* Fix Materialize row margin */
+.parameter-form .row {
   margin-bottom: 0;
 }
 </style>

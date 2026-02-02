@@ -40,15 +40,11 @@ export const typeField = {
     values: [
         'text',
         'int',
+        'bool',
         'list',
-        'multiselect',
-        'editable_list',
-        'file_upload',
-        'server_file',
-        'multiline_text',
-        'ip',
-        'ip4',
-        'ip6']
+        'flag',
+        'constant'
+    ]
 };
 
 export const noValueField = {
