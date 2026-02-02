@@ -62,14 +62,18 @@
 
       <div v-if="type !== 'flag' && (passAs === 'argument' || passAs === 'argument + env_variable')" class="row mb-1">
         <div class="col s12">
-          <label>
+          <label :class="{ disabled: type === 'bool' && boolFlagMode === 'dual' }">
             <input
               type="checkbox"
               v-model="sameArgParam"
               class="filled-in"
+              :disabled="type === 'bool' && boolFlagMode === 'dual'"
             />
             <span>Combine param with value (-param=value)</span>
           </label>
+          <span v-if="type === 'bool' && boolFlagMode === 'dual'" class="helper-text grey-text">
+            Not applicable for dual-flag mode
+          </span>
         </div>
       </div>
     </div>
@@ -149,6 +153,52 @@
 
       <!-- Bool Type Constraints -->
       <div v-if="type === 'bool'" class="constraints-bool">
+        <!-- Flag mode selection -->
+        <div class="row mb-2">
+          <div class="col s12">
+            <label class="field-label">Boolean flag mode</label>
+            <p>
+              <label>
+                <input
+                  type="radio"
+                  v-model="boolFlagMode"
+                  value="single"
+                  name="bool-flag-mode"
+                />
+                <span>Single flag with value (e.g., --enabled true/false)</span>
+              </label>
+            </p>
+            <p>
+              <label>
+                <input
+                  type="radio"
+                  v-model="boolFlagMode"
+                  value="dual"
+                  name="bool-flag-mode"
+                />
+                <span>Dual flags (different flags for true/false)</span>
+              </label>
+            </p>
+          </div>
+        </div>
+
+        <!-- Dual flags mode -->
+        <div v-if="boolFlagMode === 'dual'" class="row mb-2">
+          <Textfield
+            v-model="paramTrue"
+            :config="{ name: 'Flag if true', placeholder: '--verbose', required: true }"
+            class="col s6"
+            @error="handleError('Flag if true', $event)"
+          />
+          <Textfield
+            v-model="paramFalse"
+            :config="{ name: 'Flag if false', placeholder: '--quiet', required: true }"
+            class="col s6"
+            @error="handleError('Flag if false', $event)"
+          />
+        </div>
+
+        <!-- Default value -->
         <div class="row mb-2">
           <div class="col s12">
             <label class="field-label">Default value</label>
@@ -433,6 +483,11 @@ export default {
       listValues: [],
       nextListItemId: 1,  // Counter for unique IDs
 
+      // Boolean dual-flag mode
+      boolFlagMode: 'single',  // 'single' or 'dual'
+      paramTrue: '',           // Flag when true
+      paramFalse: '',          // Flag when false
+
       // Internal flags
       isLoading: false,  // Prevent reactivity loops
       isTabbing: false,  // Track if user is tabbing between fields
@@ -521,7 +576,10 @@ export default {
     defaultValue() { if (!this.isLoading) this.syncToBackend(); },
     separator() { if (!this.isLoading) this.syncToBackend(); },
     listSelectionMode() { if (!this.isLoading) this.syncToBackend(); },
-    multiselectFormat() { if (!this.isLoading) this.syncToBackend(); }
+    multiselectFormat() { if (!this.isLoading) this.syncToBackend(); },
+    boolFlagMode() { if (!this.isLoading) this.syncToBackend(); },
+    paramTrue() { if (!this.isLoading) this.syncToBackend(); },
+    paramFalse() { if (!this.isLoading) this.syncToBackend(); }
     // Note: listValues watcher removed - now syncs only on blur or add/remove
     // Deep watching caused re-renders on every keystroke, losing focus
   },
@@ -638,6 +696,16 @@ export default {
         if (values.length === 2 && values.includes('true') && values.includes('false')) {
           this.type = 'bool';
           this.defaultValue = config.default || 'false';
+
+          // Check for dual-flag mode
+          if (config.dual_flags) {
+            this.boolFlagMode = 'dual';
+            this.paramTrue = config.param_true || '';
+            this.paramFalse = config.param_false || '';
+          } else {
+            this.boolFlagMode = 'single';
+            // param is already loaded from config.param
+          }
         } else {
           this.type = 'list';
           this.listSelectionMode = 'single';
@@ -745,6 +813,18 @@ export default {
         // Backend uses list type
         config.type = 'list';
         config.values = ['true', 'false'];
+
+        if (this.boolFlagMode === 'dual') {
+          config.dual_flags = true;
+          config.param_true = this.paramTrue;
+          config.param_false = this.paramFalse;
+          config.no_value = true;  // No value passed, just the flag
+        } else {
+          // Single flag mode - use regular param
+          config.dual_flags = false;
+          // param is already set from the main param field
+        }
+
         if (this.defaultValue) {
           config.default = this.defaultValue;
         }

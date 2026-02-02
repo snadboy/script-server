@@ -307,6 +307,19 @@ def _build_param_args(parameter, option_name, value):
     """Build command line arguments for a single parameter."""
     result = []
 
+    # Handle dual-flag mode for boolean parameters
+    if parameter.dual_flags:
+        from model.model_helper import read_bool
+        # Use different flag based on true/false value
+        bool_value = read_bool(value)
+        if bool_value:
+            if parameter.param_true:
+                result.append(parameter.param_true)
+        else:
+            if parameter.param_false:
+                result.append(parameter.param_false)
+        return result
+
     if parameter.no_value:
         if value is True and option_name:
             result.append(option_name)

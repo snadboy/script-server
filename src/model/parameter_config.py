@@ -50,7 +50,10 @@ ParameterUiSeparator = namedtuple('ParameterUiSeparator', ['type', 'title'])
     'file_extensions',
     'file_recursive',
     'ui_width_weight',
-    'verb_position')  # Positional placement for verb commands: 'after_verb' or 'end'
+    'verb_position',  # Positional placement for verb commands: 'after_verb' or 'end'
+    'dual_flags',  # Enable dual-flag mode for boolean parameters
+    'param_true',  # Flag to use when value is true (dual-flag mode)
+    'param_false')  # Flag to use when value is false (dual-flag mode)
 class ParameterModel(object):
     def __init__(self, parameter_config, username, audit_name,
                  other_params_supplier,
@@ -121,6 +124,11 @@ class ParameterModel(object):
         self.verb_position = read_str_from_config(config, 'verb_position', blank_to_none=True,
                                                    allowed_values=['after_verb', 'end'])
 
+        # Parse dual-flag configuration for boolean parameters
+        self.dual_flags = read_bool_from_config('dual_flags', config, default=False)
+        self.param_true = config.get('param_true')
+        self.param_false = config.get('param_false')
+
         ui_config = config.get('ui')
         if ui_config:
             self.ui_width_weight = read_int_from_config('width_weight', ui_config)
@@ -151,6 +159,11 @@ class ParameterModel(object):
         if self.type == PARAM_TYPE_SERVER_FILE:
             if not self.file_dir:
                 raise Exception('Parameter ' + param_log_name + ' has missing config file_dir')
+
+        # Validate dual-flag configuration
+        if self.dual_flags:
+            if not self.param_true or not self.param_false:
+                raise Exception('Parameter ' + param_log_name + ' has dual_flags enabled but missing param_true or param_false')
 
     def str_name(self):
         names = (name for name in (self.name, self.param, self.description) if name)
@@ -626,6 +639,9 @@ def get_sorted_config(param_config):
     key_order = ['name', 'required',
                  'param',
                  'same_arg_param',
+                 'dual_flags',
+                 'param_true',
+                 'param_false',
                  'type', 'no_value', 'default', 'constant', 'description',
                  'secure',
                  'values',
