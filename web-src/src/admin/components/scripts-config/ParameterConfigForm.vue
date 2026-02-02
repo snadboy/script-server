@@ -60,20 +60,16 @@
         />
       </div>
 
-      <div v-if="type !== 'flag' && (passAs === 'argument' || passAs === 'argument + env_variable')" class="row mb-1">
+      <div v-if="type !== 'flag' && type !== 'bool' && (passAs === 'argument' || passAs === 'argument + env_variable')" class="row mb-1">
         <div class="col s12">
-          <label :class="{ disabled: type === 'bool' && boolFlagMode === 'dual' }">
+          <label>
             <input
               type="checkbox"
               v-model="sameArgParam"
               class="filled-in"
-              :disabled="type === 'bool' && boolFlagMode === 'dual'"
             />
             <span>Combine param with value (-param=value)</span>
           </label>
-          <span v-if="type === 'bool' && boolFlagMode === 'dual'" class="helper-text grey-text">
-            Not applicable for dual-flag mode
-          </span>
         </div>
       </div>
     </div>
@@ -153,28 +149,39 @@
 
       <!-- Bool Type Constraints -->
       <div v-if="type === 'bool'" class="constraints-bool">
-        <!-- Flag mode selection -->
+        <!-- Command-line format selection -->
         <div class="row mb-2">
           <div class="col s12">
-            <label class="field-label">Boolean flag mode</label>
+            <label class="field-label">Command-line format</label>
             <p>
               <label>
                 <input
                   type="radio"
-                  v-model="boolFlagMode"
-                  value="single"
-                  name="bool-flag-mode"
+                  v-model="boolFormat"
+                  value="separate"
+                  name="bool-format"
                 />
-                <span>Single flag with value (e.g., --enabled true/false)</span>
+                <span>Separate flag and value (--enabled true / --enabled false)</span>
               </label>
             </p>
             <p>
               <label>
                 <input
                   type="radio"
-                  v-model="boolFlagMode"
+                  v-model="boolFormat"
+                  value="combined"
+                  name="bool-format"
+                />
+                <span>Combined flag and value (--enabled=true / --enabled=false)</span>
+              </label>
+            </p>
+            <p>
+              <label>
+                <input
+                  type="radio"
+                  v-model="boolFormat"
                   value="dual"
-                  name="bool-flag-mode"
+                  name="bool-format"
                 />
                 <span>Dual flags (different flags for true/false)</span>
               </label>
@@ -182,8 +189,8 @@
           </div>
         </div>
 
-        <!-- Dual flags mode -->
-        <div v-if="boolFlagMode === 'dual'" class="row mb-2">
+        <!-- Dual flags inputs -->
+        <div v-if="boolFormat === 'dual'" class="row mb-2">
           <Textfield
             v-model="paramTrue"
             :config="{ name: 'Flag if true', placeholder: '--verbose', required: true }"
@@ -483,10 +490,10 @@ export default {
       listValues: [],
       nextListItemId: 1,  // Counter for unique IDs
 
-      // Boolean dual-flag mode
-      boolFlagMode: 'single',  // 'single' or 'dual'
-      paramTrue: '',           // Flag when true
-      paramFalse: '',          // Flag when false
+      // Boolean format mode
+      boolFormat: 'separate',  // 'separate', 'combined', or 'dual'
+      paramTrue: '',           // Flag when true (for dual mode)
+      paramFalse: '',          // Flag when false (for dual mode)
 
       // Internal flags
       isLoading: false,  // Prevent reactivity loops
@@ -577,7 +584,7 @@ export default {
     separator() { if (!this.isLoading) this.syncToBackend(); },
     listSelectionMode() { if (!this.isLoading) this.syncToBackend(); },
     multiselectFormat() { if (!this.isLoading) this.syncToBackend(); },
-    boolFlagMode() { if (!this.isLoading) this.syncToBackend(); },
+    boolFormat() { if (!this.isLoading) this.syncToBackend(); },
     paramTrue() { if (!this.isLoading) this.syncToBackend(); },
     paramFalse() { if (!this.isLoading) this.syncToBackend(); }
     // Note: listValues watcher removed - now syncs only on blur or add/remove
@@ -687,15 +694,17 @@ export default {
           this.type = 'bool';
           this.defaultValue = config.default || 'false';
 
-          // Check for dual-flag mode
+          // Detect boolean format
           if (config.dual_flags) {
-            this.boolFlagMode = 'dual';
+            this.boolFormat = 'dual';
             this.paramTrue = config.param_true || '';
             this.paramFalse = config.param_false || '';
+          } else if (config.same_arg_param) {
+            this.boolFormat = 'combined';
           } else {
-            this.boolFlagMode = 'single';
-            // param is already loaded from config.param
+            this.boolFormat = 'separate';
           }
+          // param is already loaded from config.param
         } else if (config.type === 'multiselect') {
           this.type = 'list';
           this.listSelectionMode = 'multiple';
@@ -821,15 +830,23 @@ export default {
         config.type = 'list';
         config.values = ['true', 'false'];
 
-        if (this.boolFlagMode === 'dual') {
+        if (this.boolFormat === 'dual') {
+          // Dual flags: different flags for true/false
           config.dual_flags = true;
           config.param_true = this.paramTrue;
           config.param_false = this.paramFalse;
+          config.same_arg_param = false;
           // Note: no_value is NOT set for dual-flag booleans
           // The executor handles dual_flags separately
-        } else {
-          // Single flag mode - use regular param
+        } else if (this.boolFormat === 'combined') {
+          // Combined: --param=true or --param=false
           config.dual_flags = false;
+          config.same_arg_param = true;
+          // param is already set from the main param field
+        } else {
+          // Separate: --param true or --param false
+          config.dual_flags = false;
+          config.same_arg_param = false;
           // param is already set from the main param field
         }
 
