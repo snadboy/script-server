@@ -372,11 +372,17 @@ export default {
       }
       return this.$store.dispatch(`${this.storeModule}/deleteScript`)
         .then(() => {
-          M.toast({ html: 'Script deleted successfully', classes: 'green' });
-          this.$store.dispatch('scripts/init');
-          // Emit both events to ensure modal closes
+          // Close modal FIRST before refreshing scripts list
+          // This prevents the loading spinner from appearing when scriptConfig becomes null
           this.$emit('deleted');
           this.$emit('close');
+
+          // Show success message and refresh scripts list AFTER closing
+          this.$nextTick(() => {
+            M.toast({ html: 'Script deleted successfully', classes: 'green' });
+            this.$store.dispatch('scripts/init');
+          });
+
           // Resolve promise immediately so button stops spinning
           return Promise.resolve();
         })
