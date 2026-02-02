@@ -679,21 +679,11 @@ export default {
       this.required = !!get(config, 'required', false);
 
       // Determine simplified type
-      if (config.no_value) {
-        this.type = 'flag';
-      } else if (config.constant) {
-        this.type = 'constant';
-        this.defaultValue = config.default || '';
-      } else if (config.type === 'multiselect') {
-        this.type = 'list';
-        this.listSelectionMode = 'multiple';
-        this.multiselectFormat = config.multiselect_argument_type || 'single_argument';
-        this.separator = config.separator || ',';
-        this.loadListValues(config);
-      } else if (config.type === 'list') {
-        // Check if it's a bool type (list with only 'true' and 'false')
+      // Check for boolean types FIRST (including dual-flag booleans with no_value)
+      if (config.type === 'list') {
         const values = config.values || [];
         if (values.length === 2 && values.includes('true') && values.includes('false')) {
+          // This is a boolean parameter
           this.type = 'bool';
           this.defaultValue = config.default || 'false';
 
@@ -706,11 +696,28 @@ export default {
             this.boolFlagMode = 'single';
             // param is already loaded from config.param
           }
+        } else if (config.type === 'multiselect') {
+          this.type = 'list';
+          this.listSelectionMode = 'multiple';
+          this.multiselectFormat = config.multiselect_argument_type || 'single_argument';
+          this.separator = config.separator || ',';
+          this.loadListValues(config);
         } else {
           this.type = 'list';
           this.listSelectionMode = 'single';
           this.loadListValues(config);
         }
+      } else if (config.type === 'multiselect') {
+        this.type = 'list';
+        this.listSelectionMode = 'multiple';
+        this.multiselectFormat = config.multiselect_argument_type || 'single_argument';
+        this.separator = config.separator || ',';
+        this.loadListValues(config);
+      } else if (config.no_value) {
+        this.type = 'flag';
+      } else if (config.constant) {
+        this.type = 'constant';
+        this.defaultValue = config.default || '';
       } else if (config.type === 'editable_list') {
         this.type = 'list';
         this.listSelectionMode = 'single';
@@ -818,7 +825,8 @@ export default {
           config.dual_flags = true;
           config.param_true = this.paramTrue;
           config.param_false = this.paramFalse;
-          config.no_value = true;  // No value passed, just the flag
+          // Note: no_value is NOT set for dual-flag booleans
+          // The executor handles dual_flags separately
         } else {
           // Single flag mode - use regular param
           config.dual_flags = false;
