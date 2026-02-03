@@ -44,7 +44,7 @@
         <div v-else-if="activeTab === 'parameters'" class="tab-content">
           <ProjectParametersEditor
             v-model="parameters"
-            :verbs="verbs"
+            :verbs="verbsConfig"
             :shared-parameters="sharedParameters"
             @update:modelValue="markUnsaved"
             @update:verbs="updateVerbs"
@@ -360,7 +360,8 @@ export default {
 }
 
 .tab-content {
-  min-height: 400px;
+  /* Removed min-height to prevent pushing footer off screen */
+  min-height: 0;
 }
 
 .loading-state {
