@@ -92,30 +92,62 @@
           <!-- Where Used (Verb Association) -->
           <div v-if="verbs && verbs.options" class="form-group">
             <label>Where Used</label>
-            <div class="where-used-display">
-              <span
-                v-if="isSharedParameter(param.name)"
-                class="usage-badge usage-global"
-                title="Available to all verbs"
-              >
+
+            <!-- Shared Parameter Toggle -->
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                :checked="isSharedParameter(param.name)"
+                @change="toggleSharedParameter(param.name, $event)"
+              />
+              <span>
                 <i class="material-icons">public</i>
-                All Verbs (Shared)
+                Shared - Available to all verbs
               </span>
-              <template v-else>
-                <span
-                  v-for="verb in getVerbsUsingParameter(param.name)"
+            </label>
+
+            <!-- Individual Verb Selection (only if not shared) -->
+            <div v-if="!isSharedParameter(param.name)" class="verb-selection">
+              <div class="verb-selection-header">
+                <span class="verb-selection-label">Select Verbs:</span>
+                <div class="verb-selection-actions">
+                  <button
+                    type="button"
+                    class="link-button"
+                    @click="selectAllVerbs(param.name)"
+                  >
+                    Select All
+                  </button>
+                  <span class="separator">|</span>
+                  <button
+                    type="button"
+                    class="link-button"
+                    @click="deselectAllVerbs(param.name)"
+                  >
+                    Deselect All
+                  </button>
+                </div>
+              </div>
+
+              <div class="verb-checkboxes">
+                <label
+                  v-for="verb in verbs.options"
                   :key="verb.name"
-                  class="usage-badge usage-verb"
-                  :title="`Used by ${verb.label}`"
+                  class="verb-checkbox-label"
                 >
-                  <i class="material-icons">label</i>
-                  {{ verb.label }}
-                </span>
-                <span v-if="getVerbsUsingParameter(param.name).length === 0" class="usage-none">
-                  <i class="material-icons">warning</i>
-                  Not used by any verb
-                </span>
-              </template>
+                  <input
+                    type="checkbox"
+                    :checked="isParameterInVerb(param.name, verb)"
+                    @change="toggleParameterInVerb(param.name, verb, $event)"
+                  />
+                  <span>{{ verb.label }}</span>
+                </label>
+              </div>
+
+              <p v-if="getVerbsUsingParameter(param.name).length === 0" class="warning-message">
+                <i class="material-icons">warning</i>
+                This parameter is not used by any verb
+              </p>
             </div>
           </div>
 
@@ -331,7 +363,7 @@ export default {
     }
   },
 
-  emits: ['update:modelValue'],
+  emits: ['update:modelValue', 'update:verbs', 'update:sharedParameters'],
 
   computed: {
     parameters: {
@@ -441,6 +473,86 @@ export default {
       return this.verbs.options.filter(verb => {
         return verb.parameters && verb.parameters.includes(paramName);
       });
+    },
+
+    toggleSharedParameter(paramName, event) {
+      const isChecked = event.target.checked;
+      const updatedShared = [...(this.sharedParameters || [])];
+
+      if (isChecked) {
+        // Add to shared parameters
+        if (!updatedShared.includes(paramName)) {
+          updatedShared.push(paramName);
+        }
+        // Remove from all individual verbs
+        if (this.verbs && this.verbs.options) {
+          this.verbs.options.forEach(verb => {
+            if (verb.parameters && verb.parameters.includes(paramName)) {
+              verb.parameters = verb.parameters.filter(p => p !== paramName);
+            }
+          });
+          this.$emit('update:verbs', this.verbs);
+        }
+      } else {
+        // Remove from shared parameters
+        const index = updatedShared.indexOf(paramName);
+        if (index > -1) {
+          updatedShared.splice(index, 1);
+        }
+      }
+
+      this.$emit('update:sharedParameters', updatedShared);
+    },
+
+    isParameterInVerb(paramName, verb) {
+      return verb.parameters && verb.parameters.includes(paramName);
+    },
+
+    toggleParameterInVerb(paramName, verb, event) {
+      const isChecked = event.target.checked;
+
+      if (!verb.parameters) {
+        verb.parameters = [];
+      }
+
+      if (isChecked) {
+        // Add parameter to verb
+        if (!verb.parameters.includes(paramName)) {
+          verb.parameters.push(paramName);
+        }
+      } else {
+        // Remove parameter from verb
+        verb.parameters = verb.parameters.filter(p => p !== paramName);
+      }
+
+      this.$emit('update:verbs', this.verbs);
+    },
+
+    selectAllVerbs(paramName) {
+      if (!this.verbs || !this.verbs.options) return;
+
+      this.verbs.options.forEach(verb => {
+        if (!verb.parameters) {
+          verb.parameters = [];
+        }
+        if (!verb.parameters.includes(paramName)) {
+          verb.parameters.push(paramName);
+        }
+      });
+
+      this.$emit('update:verbs', this.verbs);
+    },
+
+    deselectAllVerbs(paramName) {
+      if (!this.verbs || !this.verbs.options) return;
+
+      this.verbs.options.forEach(verb => {
+        if (verb.parameters) {
+          verb.parameters = verb.parameters.filter(p => p !== paramName);
+        }
+      });
+
+      this.$emit('update:verbs', this.verbs);
     }
   }
 };
@@ -848,5 +960,116 @@ export default {
 
 .usage-none .material-icons {
   font-size: 16px;
+}
+
+/* Verb Selection Controls */
+.verb-selection {
+  margin-top: 12px;
+  padding: 12px;
+  background: #f9f9f9;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+}
+
+.verb-selection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.verb-selection-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.verb-selection-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: #2196f3;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.link-button:hover {
+  color: #1976d2;
+}
+
+.separator {
+  color: #ccc;
+  font-size: 12px;
+}
+
+.verb-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+.verb-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.verb-checkbox-label:hover {
+  background: #f5f5f5;
+  border-color: #2196f3;
+}
+
+.verb-checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.verb-checkbox-label span {
+  font-size: 13px;
+  color: #333;
+  font-weight: 400;
+}
+
+.warning-message {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: #fff3e0;
+  border-left: 3px solid #ff9800;
+  border-radius: 4px;
+  color: #e65100;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.warning-message .material-icons {
+  font-size: 18px;
+}
+
+/* Shared parameter checkbox with icon */
+.checkbox-label .material-icons {
+  font-size: 18px;
+  vertical-align: middle;
+  margin-right: 4px;
 }
 </style>

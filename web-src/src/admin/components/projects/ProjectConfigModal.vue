@@ -47,6 +47,8 @@
             :verbs="verbs"
             :shared-parameters="sharedParameters"
             @update:modelValue="markUnsaved"
+            @update:verbs="updateVerbs"
+            @update:sharedParameters="updateSharedParameters"
           />
         </div>
 
@@ -212,6 +214,16 @@ export default {
 
     markUnsaved() {
       this.hasUnsavedChanges = true;
+    },
+
+    updateVerbs(updatedVerbs) {
+      this.verbs = updatedVerbs;
+      this.markUnsaved();
+    },
+
+    updateSharedParameters(updatedShared) {
+      this.sharedParameters = updatedShared;
+      this.markUnsaved();
     },
 
     close() {
