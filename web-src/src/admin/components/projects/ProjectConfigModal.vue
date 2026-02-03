@@ -271,6 +271,7 @@ export default {
   max-height: 90vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden; /* Prevent entire modal from scrolling */
 }
 
 .modal-header {
@@ -279,6 +280,7 @@ export default {
   justify-content: space-between;
   padding: 20px 24px;
   border-bottom: 1px solid var(--border-color, #e0e0e0);
+  flex-shrink: 0; /* Prevent header from shrinking */
 }
 
 .modal-title {
@@ -317,6 +319,7 @@ export default {
   display: flex;
   border-bottom: 1px solid var(--border-color, #e0e0e0);
   background: var(--tabs-background, #f9f9f9);
+  flex-shrink: 0; /* Prevent tabs from shrinking */
 }
 
 .tab-btn {
@@ -356,7 +359,8 @@ export default {
   overflow-y: auto;
   padding: 24px;
   min-height: 0;
-  max-height: calc(90vh - 200px);
+  /* Allow scrolling but ensure footer stays visible */
+  overflow-x: hidden;
 }
 
 .tab-content {
@@ -428,6 +432,8 @@ export default {
   gap: 12px;
   padding: 16px 24px;
   border-top: 1px solid var(--border-color, #e0e0e0);
+  background: var(--background-color, #fff);
+  flex-shrink: 0; /* Prevent footer from shrinking */
 }
 
 .btn {
