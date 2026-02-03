@@ -89,6 +89,36 @@
             />
           </div>
 
+          <!-- Where Used (Verb Association) -->
+          <div v-if="verbs && verbs.options" class="form-group">
+            <label>Where Used</label>
+            <div class="where-used-display">
+              <span
+                v-if="isSharedParameter(param.name)"
+                class="usage-badge usage-global"
+                title="Available to all verbs"
+              >
+                <i class="material-icons">public</i>
+                All Verbs (Shared)
+              </span>
+              <template v-else>
+                <span
+                  v-for="verb in getVerbsUsingParameter(param.name)"
+                  :key="verb.name"
+                  class="usage-badge usage-verb"
+                  :title="`Used by ${verb.label}`"
+                >
+                  <i class="material-icons">label</i>
+                  {{ verb.label }}
+                </span>
+                <span v-if="getVerbsUsingParameter(param.name).length === 0" class="usage-none">
+                  <i class="material-icons">warning</i>
+                  Not used by any verb
+                </span>
+              </template>
+            </div>
+          </div>
+
           <!-- CLI Flag -->
           <div class="form-row">
             <div class="form-group">
@@ -290,6 +320,14 @@ export default {
     modelValue: {
       type: Array,
       default: () => []
+    },
+    verbs: {
+      type: Object,
+      default: null
+    },
+    sharedParameters: {
+      type: Array,
+      default: () => []
     }
   },
 
@@ -389,6 +427,20 @@ export default {
     updateListValues(param, paramIndex) {
       // Just emit update when list values change
       this.emitUpdate();
+    },
+
+    isSharedParameter(paramName) {
+      return this.sharedParameters && this.sharedParameters.includes(paramName);
+    },
+
+    getVerbsUsingParameter(paramName) {
+      if (!this.verbs || !this.verbs.options) {
+        return [];
+      }
+
+      return this.verbs.options.filter(verb => {
+        return verb.parameters && verb.parameters.includes(paramName);
+      });
     }
   }
 };
@@ -591,6 +643,11 @@ export default {
   padding: 8px 0;
 }
 
+.checkbox-label span {
+  color: #333 !important;
+  font-weight: 500;
+}
+
 .checkbox-label input[type="checkbox"] {
   width: 18px;
   height: 18px;
@@ -744,6 +801,52 @@ export default {
 }
 
 .btn-sm .material-icons {
+  font-size: 16px;
+}
+
+/* Where Used display */
+.where-used-display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.usage-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.usage-badge .material-icons {
+  font-size: 16px;
+}
+
+.usage-global {
+  background: #4caf50;
+  color: white;
+}
+
+.usage-verb {
+  background: #2196f3;
+  color: white;
+}
+
+.usage-none {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #ff9800;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.usage-none .material-icons {
   font-size: 16px;
 }
 </style>
