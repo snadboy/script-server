@@ -9,48 +9,6 @@
     </div>
 
     <template v-if="verbsEnabled">
-      <div class="row">
-        <TextField
-          v-model="config.parameter_name"
-          :config="parameterNameField"
-          class="col s4"
-        />
-        <TextField
-          v-model="config.default"
-          :config="defaultField"
-          class="col s4"
-        />
-        <CheckBox
-          v-model="config.required"
-          :config="requiredField"
-          class="col s3 offset-s1 checkbox-field"
-        />
-      </div>
-
-      <div class="row">
-        <div class="col s12">
-          <label class="section-label">Shared Parameters</label>
-          <p class="helper-text">Parameters that are visible for ALL verbs (e.g., --verbose, --debug)</p>
-          <div class="parameter-checkboxes">
-            <label
-              v-for="param in availableParameters"
-              :key="param.name"
-              class="parameter-checkbox"
-            >
-              <input
-                type="checkbox"
-                :checked="isSharedParameter(param.name)"
-                @change="toggleSharedParameter(param.name, $event.target.checked)"
-              />
-              <span>{{ param.name }}</span>
-            </label>
-          </div>
-          <p v-if="availableParameters.length === 0" class="grey-text">
-            No parameters defined yet. Add parameters in the Parameters tab first.
-          </p>
-        </div>
-      </div>
-
       <div class="verbs-section">
         <h6>Verb Options</h6>
         <p class="helper-text">Define the subcommands/verbs for this script (e.g., create, delete, list)</p>
@@ -62,7 +20,7 @@
             class="verb-list-item"
           >
             <div class="collapsible-header verb-header primary-color-light">
-              <i class="material-icons">unfold_more</i>
+              <i class="material-icons expand-icon">chevron_right</i>
               <span>{{ option.name || 'New Verb' }}</span>
               <div style="flex: 1 1 0"></div>
               <a class="btn-flat waves-circle" @click.stop="deleteVerb(option)">
@@ -78,7 +36,6 @@
             <div class="collapsible-body">
               <VerbOptionEditor
                 :option="option"
-                :available-parameters="nonSharedParameters"
               />
             </div>
           </li>
@@ -89,6 +46,58 @@
             </div>
           </li>
         </ul>
+      </div>
+
+      <div class="verb-config-section">
+        <h6>Verb Configuration</h6>
+        <div class="row">
+          <TextField
+            v-model="config.parameter_name"
+            :config="parameterNameField"
+            class="col s4"
+          />
+          <div class="col s4">
+            <label class="section-label">Default Verb</label>
+            <select
+              v-model="config.default"
+              class="browser-default default-verb-select"
+            >
+              <option value="">None</option>
+              <option
+                v-for="option in verbOptions"
+                :key="option.name"
+                :value="option.name"
+              >
+                {{ option.label || option.name }}
+              </option>
+            </select>
+            <p class="helper-text select-helper">Which verb to pre-select by default</p>
+          </div>
+          <CheckBox
+            v-model="config.required"
+            :config="requiredField"
+            class="col s3 offset-s1 checkbox-field"
+          />
+        </div>
+
+        <div class="row">
+          <div class="col s12">
+            <label class="section-label">Pass As</label>
+            <select
+              v-model="verbPassMode"
+              class="browser-default default-verb-select"
+            >
+              <option
+                v-for="mode in passAsModes"
+                :key="mode.value"
+                :value="mode.value"
+              >
+                {{ mode.label }}
+              </option>
+            </select>
+            <p class="helper-text select-helper">How the verb is passed on command line</p>
+          </div>
+        </div>
       </div>
     </template>
 
@@ -122,10 +131,6 @@ export default {
     value: {
       type: Object,
       default: null
-    },
-    sharedParameters: {
-      type: Array,
-      default: () => []
     },
     availableParameters: {
       type: Array,
@@ -170,7 +175,6 @@ export default {
         } else if (!enabled) {
           this.config = null;
           this.$emit('input', null);
-          this.$emit('update:sharedParameters', []);
         }
       }
     },
@@ -179,33 +183,106 @@ export default {
       return this.config?.options || [];
     },
 
-    sharedParametersList: {
-      get() {
-        return this.sharedParameters || [];
-      },
-      set(value) {
-        this.$emit('update:sharedParameters', value);
+    passAsModes() {
+      const paramName = this.config?.parameter_name || 'verb';
+
+      // Use actual verb name for examples: default verb, or first option, or fallback to 'run'
+      let exampleVerb = this.config?.default;
+      if (!exampleVerb && this.config?.options && this.config.options.length > 0) {
+        exampleVerb = this.config.options[0].name || 'run';
       }
+      if (!exampleVerb) {
+        exampleVerb = 'run';
+      }
+
+      return [
+        {
+          value: 'flag',
+          label: `Flag with value (e.g., --${paramName} ${exampleVerb})`
+        },
+        {
+          value: 'positional',
+          label: `Positional (e.g., script.py ${exampleVerb})`
+        },
+        {
+          value: 'keyvalue',
+          label: `Long option with = (e.g., --${paramName}=${exampleVerb})`
+        }
+      ];
     },
 
-    nonSharedParameters() {
-      return this.availableParameters.filter(
-        param => !this.isSharedParameter(param.name)
-      );
+    verbPassMode: {
+      get() {
+        if (!this.config) return 'flag';
+
+        // Check if it's positional (no param set or verb_position is after_verb)
+        if (!this.config.param || this.config.verb_position === 'after_verb') {
+          return 'positional';
+        }
+
+        // Check if it's --key=value format (param starts with -- and ends with =)
+        if (this.config.param && this.config.param.startsWith('--') && this.config.param.endsWith('=')) {
+          return 'keyvalue';
+        }
+
+        // Otherwise it's a flag with value
+        return 'flag';
+      },
+      set(mode) {
+        if (!this.config) return;
+
+        switch (mode) {
+          case 'positional':
+            // Set verb_position to after_verb, clear param
+            this.$set(this.config, 'verb_position', 'after_verb');
+            this.$set(this.config, 'param', '');
+            this.$set(this.config, 'no_value', false);
+            break;
+          case 'keyvalue':
+            // Set param to --parameter_name=
+            const paramName = this.config.parameter_name || 'verb';
+            this.$set(this.config, 'param', `--${paramName}=`);
+            this.$set(this.config, 'verb_position', undefined);
+            this.$set(this.config, 'no_value', false);
+            break;
+          case 'flag':
+          default:
+            // Set param to --parameter_name, clear verb_position
+            const flagName = this.config.parameter_name || 'verb';
+            this.$set(this.config, 'param', `--${flagName}`);
+            this.$set(this.config, 'verb_position', undefined);
+            this.$set(this.config, 'no_value', false);
+            break;
+        }
+      }
     }
   },
 
   mounted() {
-    if (this.$refs.verbsPanel) {
-      M.Collapsible.init(this.$refs.verbsPanel, {
-        onOpenEnd: () => {
-          this.openingNewVerb = false;
-        }
-      });
-    }
+    this.initCollapsible();
   },
 
   methods: {
+    initCollapsible() {
+      this.$nextTick(() => {
+        if (this.$refs.verbsPanel) {
+          // Destroy existing instance if it exists
+          const existing = M.Collapsible.getInstance(this.$refs.verbsPanel);
+          if (existing) {
+            existing.destroy();
+          }
+
+          // Initialize new instance
+          M.Collapsible.init(this.$refs.verbsPanel, {
+            accordion: false,
+            onOpenEnd: () => {
+              this.openingNewVerb = false;
+            }
+          });
+        }
+      });
+    },
+
     initConfig() {
       if (this.value) {
         // Ensure options array exists
@@ -221,26 +298,12 @@ export default {
       return {
         parameter_name: 'verb',
         required: true,
-        default: null,
+        default: '',
+        param: '--verb',
+        no_value: false,
+        verb_position: undefined,
         options: []
       };
-    },
-
-    isSharedParameter(paramName) {
-      return this.sharedParametersList.includes(paramName);
-    },
-
-    toggleSharedParameter(paramName, checked) {
-      const list = [...this.sharedParametersList];
-      const index = list.indexOf(paramName);
-
-      if (checked && index === -1) {
-        list.push(paramName);
-      } else if (!checked && index !== -1) {
-        list.splice(index, 1);
-      }
-
-      this.sharedParametersList = list;
     },
 
     addVerb() {
@@ -256,16 +319,21 @@ export default {
         required_parameters: []
       };
 
-      const lastIndex = this.config.options.length;
       this.config.options.push(newVerb);
       this.setVerbKey(newVerb);
 
       this.$nextTick(() => {
         this.openingNewVerb = true;
-        const collapsible = M.Collapsible.getInstance(this.$refs.verbsPanel);
-        if (collapsible) {
-          collapsible.open(lastIndex);
-        }
+        this.initCollapsible();
+
+        // Open the newly added verb after collapsible is initialized
+        this.$nextTick(() => {
+          const collapsible = M.Collapsible.getInstance(this.$refs.verbsPanel);
+          if (collapsible) {
+            const lastIndex = this.config.options.length - 1;
+            collapsible.open(lastIndex);
+          }
+        });
       });
     },
 
@@ -331,6 +399,8 @@ export default {
       handler(options) {
         if (options) {
           options.forEach(verb => this.setVerbKey(verb));
+          // Reinitialize collapsible when verbs change
+          this.initCollapsible();
         }
       }
     },
@@ -377,34 +447,9 @@ export default {
   margin-bottom: 12px;
 }
 
-.parameter-checkboxes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.parameter-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  min-width: 150px;
-}
-
-.parameter-checkbox input[type="checkbox"] {
-  position: static;
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.parameter-checkbox span {
-  font-size: 14px;
-  color: var(--font-color-main, #fff);
-}
-
 .verbs-section {
-  margin-top: 24px;
+  margin-top: 0;
+  margin-bottom: 24px;
 }
 
 .verbs-section h6 {
@@ -415,10 +460,61 @@ export default {
   color: var(--font-color-main, #fff);
 }
 
+.verb-config-section {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+}
+
+.verb-config-section h6 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--font-color-main, #fff);
+}
+
+.default-verb-select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2));
+  border-radius: 4px;
+  background: var(--background-color, rgba(255, 255, 255, 0.05));
+  color: var(--font-color-main, #fff);
+  font-size: 14px;
+  opacity: 1 !important;
+  appearance: menulist;
+  margin-top: 8px;
+}
+
+.default-verb-select:focus {
+  border-color: var(--primary-color, #2196F3);
+  outline: none;
+}
+
+.default-verb-select option {
+  background: var(--background-color, #424242);
+  color: var(--font-color-main, #fff);
+}
+
+.select-helper {
+  margin-top: 4px;
+  margin-bottom: 0;
+}
+
 .collapsible-header.verb-header {
   padding-top: 8px;
   padding-bottom: 8px;
   align-items: center;
+}
+
+.expand-icon {
+  transition: transform 0.3s ease;
+}
+
+/* Rotate chevron when expanded */
+.verb-list-item.active .expand-icon {
+  transform: rotate(90deg);
 }
 
 .btn-flat {
@@ -444,5 +540,25 @@ export default {
 .checkbox-field {
   display: flex;
   align-items: center;
+}
+
+/* Fix input field visibility */
+.verb-config-editor >>> input[type="text"] {
+  background: #fff !important;
+  color: #333 !important;
+  border: 1px solid #ddd !important;
+}
+
+.verb-config-editor >>> input[type="text"]:focus {
+  border-color: #2196F3 !important;
+  outline: none;
+}
+
+.verb-config-editor >>> .input-field label {
+  color: #666 !important;
+}
+
+.verb-config-editor >>> .input-field label.active {
+  color: #2196F3 !important;
 }
 </style>

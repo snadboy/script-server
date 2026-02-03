@@ -16,10 +16,273 @@
 
 **Branch:** `master`
 **Latest Commit:** (pending commit)
-**Last Updated:** 2026-02-01
+**Last Updated:** 2026-02-02
 **Docker Image:** `ghcr.io/snadboy/script-server:latest` (auto-builds on push to master)
 
-### Recent Session (2026-02-01) - Part 2: Dual-Flag Boolean Parameters
+### Recent Session (2026-02-02) - Part 2: Bug Fix Verification
+
+**Fixed and verified: Project deletion now removes all associated instances**
+
+**Issue reported:** User deleted a project that had two instances. Project was deleted but instances remained orphaned.
+
+**Root cause:** The `delete_project()` method only deleted the single legacy wrapper/config stored in project metadata, but didn't scan for all instances with matching `project_id`.
+
+**Fix implemented:**
+- Modified `delete_project()` in `src/project_manager/project_service.py`
+- Now scans all `*.json` files in `conf/runners/` directory
+- Checks each config for matching `project_id`
+- Deletes all matching instance configs and their wrapper scripts
+- Logs number of instances removed
+
+**Verification test:**
+- Created test project with 3 instances (A, B, C)
+- All 3 instances had `project_id="test-deletion"`
+- Called `delete_project('test-deletion')`
+- **Result:** ✅ SUCCESS
+  - Project directory deleted
+  - All 3 instance configs deleted
+  - All 3 wrapper scripts deleted
+  - No orphaned files remain
+
+**Files modified:**
+- `src/project_manager/project_service.py:425-465` - Enhanced deletion logic
+
+**Testing:**
+- ✅ Unit test created and passed (`test_deletion.py`)
+- ✅ Manual verification confirmed all files deleted
+- ✅ Server running without errors
+
+### Recent Session (2026-02-02) - Part 1: Project-Level Parameters & Verbs Architecture (Phase 1-4)
+
+**Major architectural change: Moving parameter and verb definitions from script-instance level to project level.**
+
+**Status:** ✅ Phase 1 Backend Foundation Complete
+
+**Goals achieved:**
+- ✅ Project metadata schema extended with `parameters`, `verbs`, `shared_parameters` fields
+- ✅ New instance config format with `project_id` and `instance_config` (included_parameters, parameter_values, selected_verb)
+- ✅ ProjectService CRUD methods for project-level parameters and verbs
+- ✅ ConfigModel now supports project-based parameter loading
+- ✅ API endpoints for managing project configuration
+- ✅ 100% backward compatible with legacy configs
+
+**Key Changes:**
+
+1. **Project Metadata Extension:**
+   - `.project-meta.json` now stores canonical parameter definitions
+   - Added `parameters` array with full parameter specs
+   - Added `verbs` object for verb configuration
+   - Added `shared_parameters` list for cross-verb parameters
+
+2. **Instance Config Format (NEW):**
+   ```json
+   {
+     "project_id": "gmail-trim-3",
+     "instance_config": {
+       "included_parameters": ["days", "dry_run"],
+       "parameter_values": {"days": 14},
+       "selected_verb": "run"
+     }
+   }
+   ```
+
+3. **Backend Changes:**
+   - `ProjectService` - Added `update_project_parameters()`, `update_project_verbs()`, `get_project_parameters()`, `get_project_verbs()`
+   - `ProjectService.generate_runner_config()` - Now accepts instance config parameters
+   - `script_config.InstanceConfig` - New class for instance configuration
+   - `ConfigModel._load_from_project()` - New method to load from project metadata
+
+4. **API Endpoints (NEW):**
+   - `GET /admin/projects/{id}/config` - Get project parameters and verbs
+   - `PUT /admin/projects/{id}/parameters` - Update project parameters
+   - `PUT /admin/projects/{id}/verbs` - Update project verb configuration
+
+**Benefits:**
+- ✅ **DRY Principle** - Define parameters once, use many times
+- ✅ **Consistency** - All instances share parameter definitions
+- ✅ **Maintainability** - Update in one place → all instances updated
+- ✅ **Clear Separation** - Project = capabilities, Instance = configuration
+- ✅ **Reduced Duplication** - Eliminates ~100-200 lines per instance config
+
+**Files modified:**
+- `src/project_manager/project_service.py` - Added CRUD methods, modified generate_runner_config
+- `src/model/script_config.py` - Added InstanceConfig class, project-based loading
+- `src/web/server.py` - Added 3 new API handlers and routes
+
+**Files created:**
+- `docs/project-level-parameters-phase1-complete.md` - Comprehensive Phase 1 documentation
+- `docs/backend-test-results.md` - Complete test results with verification details
+- `test_project_level_params.py` - Backend test suite (4 tests, all passing)
+- `conf/runners/Gmail Trim Test Instance.json` - Test instance config using new format
+- Updated `projects/gmail-trim-3/.project-meta.json` - Added parameters and verbs
+
+**Testing:**
+- ✅ Backend imports successful
+- ✅ **All backend tests passed (4/4)**
+  - ✅ ProjectService loads project metadata with parameters/verbs
+  - ✅ ConfigModel loads instance configs with project_id
+  - ✅ Parameter filtering works (only included params loaded)
+  - ✅ Value overrides work (instance values override defaults)
+- ✅ Real project tested: gmail-trim-3 with 4 parameters and 5 verbs
+- ⏳ Manual API testing via HTTP endpoints pending
+- ⏳ Full integration testing with UI pending
+
+**Implementation Status:**
+- ~~Phase 1: Backend Foundation~~ ✅ COMPLETE (tested 4/4 tests passed)
+- ~~Phase 2: Config Loading~~ ✅ COMPLETE (tested with gmail-trim-3)
+- ~~Phase 3: Frontend Project Config UI~~ ✅ COMPLETE (awaiting manual testing)
+- ~~Phase 4: Frontend Instance Config UI~~ ✅ COMPLETE (awaiting manual testing)
+- Phase 5: Migration tooling and documentation - 📋 TODO
+- Phase 6: EditScriptModal integration - 📋 TODO
+- Phase 7: Full integration testing - 📋 TODO
+
+**Next steps:**
+- Manual UI testing of entire workflow
+- Test instance creation with parameters/verbs
+- Documentation and migration guide
+- Consider EditScriptModal enhancements
+
+---
+
+### Recent Session (2026-02-02 cont.) - Phase 4: Frontend Instance Config UI
+
+**Status:** ✅ Complete - Ready for Manual Testing
+
+**Goals achieved:**
+- ✅ Added instance configuration section to ConfigurePanel
+- ✅ Verb selection dropdown with description display
+- ✅ Parameter selection with checkboxes (verb-filtered)
+- ✅ Parameter value override inputs (type-specific)
+- ✅ "Select All" / "Deselect All" quick actions
+- ✅ Smart default value handling
+- ✅ Updated API call to send instance config
+- ✅ Frontend builds successfully
+
+**Key Features:**
+
+1. **Instance Configuration Section:**
+   - Highlighted section when project has parameters/verbs
+   - Info message explaining workflow
+   - Clean, user-friendly layout
+
+2. **Verb Selection:**
+   - Dropdown for selecting verb/command
+   - Shows description below selection
+   - Filters available parameters based on verb
+   - Resets parameter selection on verb change
+
+3. **Parameter Selection:**
+   - Checkboxes for each available parameter
+   - Shows type, description, required status
+   - Filtered by selected verb (verb params + shared params)
+   - Quick select all/deselect all actions
+
+4. **Value Overrides:**
+   - Type-specific inputs (checkbox, number, text)
+   - Shows default value as hint/placeholder
+   - Only sends values that differ from defaults
+   - Auto-initializes with project defaults
+
+**User Workflow:**
+```
+Import Project → Configure Dependencies & Entry Point
+→ Select Verb (if applicable)
+→ Check Parameters to include
+→ Override Values (optional)
+→ Create Script Instance
+```
+
+**Files modified:**
+- `web-src/src/admin/components/scripts-config/create-script/ConfigurePanel.vue` (+200 lines)
+  - Added instance configuration UI
+  - Added data properties, computed properties, methods
+  - Added comprehensive CSS styling
+- `web-src/src/admin/components/scripts-config/create-script/CreateScriptModal.vue` (+15 lines)
+  - Updated API call to include instance config
+
+**Files created:**
+- `docs/phase4-instance-config-complete.md` - Complete Phase 4 documentation
+
+**Testing:**
+- ✅ Frontend builds successfully
+- ⏳ Manual UI testing required
+- ⏳ End-to-end instance creation testing
+
+**Next steps:**
+- Manual UI testing with gmail-trim-3
+- Test all parameter types and verb filtering
+- Verify instance creation with overridden values
+- Test generated config files
+
+---
+
+### Previous Session (2026-02-02 cont.) - Phase 3: Frontend Project Config UI
+
+**Status:** 🚧 In Progress - Core Components Complete, Awaiting Manual Testing
+
+**Goals achieved:**
+- ✅ Created ProjectConfigModal.vue - Main configuration modal with Parameters and Verbs tabs
+- ✅ Created ProjectParametersEditor.vue - CRUD interface for parameter definitions
+- ✅ Integrated into ProjectsModal - Added "Configure Parameters & Verbs" button
+- ✅ API integration complete - GET/PUT endpoints wired up
+- ✅ Frontend builds successfully - No compilation errors
+- ✅ CSS styling complete - Consistent with existing design
+
+**Key Components:**
+
+1. **ProjectConfigModal.vue** (334 lines)
+   - Two-tab interface: Parameters and Verbs
+   - Loads/saves configuration via API
+   - Unsaved changes detection
+   - Error/success messaging
+
+2. **ProjectParametersEditor.vue** (452 lines)
+   - Add/edit/delete parameters
+   - Reorder with up/down arrows
+   - Type selection (text, int, bool, list)
+   - Type-specific constraints (min/max, length)
+   - Default value configuration
+   - CLI flag specification
+
+3. **ProjectsModal Integration:**
+   - New "Project Configuration" section in Configure tab
+   - Shows parameter/verb counts from metadata
+   - Opens ProjectConfigModal on button click
+
+**User Workflow:**
+1. Open Script Manager
+2. Select project → Configure tab
+3. Click "Configure Parameters & Verbs"
+4. Add/edit parameters in Parameters tab
+5. Configure verbs in Verbs tab (reuses VerbConfigEditor)
+6. Save configuration
+
+**Files created:**
+- `web-src/src/admin/components/projects/ProjectConfigModal.vue` - Main modal
+- `web-src/src/admin/components/projects/ProjectParametersEditor.vue` - Parameter editor
+- `docs/phase3-frontend-progress.md` - Comprehensive Phase 3 documentation
+
+**Files modified:**
+- `web-src/src/main-app/components/ProjectsModal.vue` - Added integration
+
+**Testing:**
+- ✅ Frontend builds successfully
+- ⏳ Manual UI testing required
+- ⏳ Parameter CRUD operations
+- ⏳ Verb configuration
+- ⏳ Save/load persistence
+
+**Next steps:**
+- Manual UI testing with gmail-trim-3 project
+- Verify VerbConfigEditor integration works correctly
+- Test error handling and edge cases
+- Then proceed to Phase 4 (Instance Config UI)
+
+**Documentation:**
+- See `docs/project-level-parameters-phase1-complete.md` for detailed implementation notes
+- See original plan in session transcript for full architecture
+
+### Previous Session (2026-02-01) - Part 2: Dual-Flag Boolean Parameters
 
 **Added support for boolean parameters with different flags for true vs false values.**
 

@@ -1,0 +1,105 @@
+{
+  "id": "gmail-trim-3",
+  "name": "Gmail Trim",
+  "import_type": "local",
+  "source_url": "/home/snadboy/projects/gmail-trim",
+  "imported_at": "2026-02-03T14:43:00.000000",
+  "entry_points": [
+    "gmail_cleanup.main:app"
+  ],
+  "dependencies": [
+    "google-api-python-client",
+    "structlog",
+    "pyyaml",
+    "pydantic",
+    "requests",
+    "google-auth-oauthlib",
+    "pydantic-settings",
+    "typer",
+    "google-auth"
+  ],
+  "wrapper_script": "samples/scripts/gmail-trim-3.py",
+  "runner_config": null,
+  "parameters": [
+    {
+      "name": "days",
+      "type": "int",
+      "description": "Number of days to keep emails",
+      "required": false,
+      "default": 30,
+      "min": 1,
+      "max": 365,
+      "param": "-d"
+    },
+    {
+      "name": "dry_run",
+      "type": "bool",
+      "description": "Preview deletions without actually deleting",
+      "required": false,
+      "default": true,
+      "param": "--dry-run",
+      "no_value": true
+    },
+    {
+      "name": "verbose",
+      "type": "bool",
+      "description": "Enable verbose logging (DEBUG level)",
+      "required": false,
+      "default": false,
+      "param": "-v",
+      "no_value": true
+    },
+    {
+      "name": "config_file",
+      "type": "text",
+      "description": "Path to YAML configuration file",
+      "required": false,
+      "param": "-c"
+    }
+  ],
+  "verbs": {
+    "parameter_name": "command",
+    "required": true,
+    "default": "run",
+    "param": "",
+    "verb_position": "after_verb",
+    "options": [
+      {
+        "name": "run",
+        "label": "Run Cleanup",
+        "description": "Execute email cleanup process",
+        "parameters": ["days", "dry_run", "verbose", "config_file"],
+        "required_parameters": []
+      },
+      {
+        "name": "auth",
+        "label": "Authenticate",
+        "description": "Authenticate with Google APIs",
+        "parameters": ["verbose"],
+        "required_parameters": []
+      },
+      {
+        "name": "labels",
+        "label": "List Labels",
+        "description": "List all Gmail labels",
+        "parameters": ["verbose"],
+        "required_parameters": []
+      },
+      {
+        "name": "groups",
+        "label": "List Contact Groups",
+        "description": "List all Google contact groups",
+        "parameters": ["verbose"],
+        "required_parameters": []
+      },
+      {
+        "name": "config",
+        "label": "Show Config",
+        "description": "Display effective configuration",
+        "parameters": ["config_file", "verbose"],
+        "required_parameters": []
+      }
+    ]
+  },
+  "shared_parameters": ["verbose"]
+}
