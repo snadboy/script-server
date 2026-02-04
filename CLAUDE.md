@@ -16,7 +16,7 @@
 ## Current State
 
 **Branch:** `master`
-**Latest Commit:** `4cf99d0` - Updated session notes
+**Latest Commit:** `909c8eb` - Reorganize CLAUDE.md by feature area and add layout playground
 **Docker Image:** `ghcr.io/snadboy/script-server:latest` (auto-builds via GitHub Actions)
 **Local Server:** Running on http://localhost:5000
 
@@ -163,4 +163,5 @@ Detailed implementation notes organized by feature area:
 ---
 
 **Last Updated:** 2026-02-04
-**Session History:** Detailed session notes moved to `docs/features/` for better organization
+**Session History:** Detailed session notes organized by feature in `docs/features/`
+**Layout Playground:** `verb-parameters-layout-playground.html` - Interactive tool for tweaking dialog UX
