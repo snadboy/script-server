@@ -370,7 +370,7 @@
     </div>
 
     <!-- Project Configuration Modal -->
-    <ProjectConfigModal
+    <ProjectConfigPlaygroundModal
       :visible="showProjectConfig"
       :project="selectedProject"
       @close="closeProjectConfig"
@@ -383,14 +383,14 @@
 <script>
 import {axiosInstance} from '@/common/utils/axios_utils';
 import DirectoryBrowserModal from './common/DirectoryBrowserModal.vue';
-import ProjectConfigModal from '@/admin/components/projects/ProjectConfigModal.vue';
+import ProjectConfigPlaygroundModal from '@/admin/components/projects/ProjectConfigPlaygroundModal.vue';
 
 export default {
   name: 'ProjectsModal',
 
   components: {
     DirectoryBrowserModal,
-    ProjectConfigModal
+    ProjectConfigPlaygroundModal
   },
 
   props: {
