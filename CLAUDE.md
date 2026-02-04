@@ -15,7 +15,7 @@
 ## Current State
 
 **Branch:** `master`
-**Latest Commit:** (pending commit)
+**Latest Commit:** `acb4bf2` - Phase 5 complete with master-detail UX
 **Last Updated:** 2026-02-03
 **Docker Image:** `ghcr.io/snadboy/script-server:latest` (auto-builds on push to master)
 
