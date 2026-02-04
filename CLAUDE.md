@@ -16,7 +16,7 @@
 ## Current State
 
 **Branch:** `master`
-**Latest Commit:** `909c8eb` - Reorganize CLAUDE.md by feature area and add layout playground
+**Latest Commit:** `45327ad` - Implement playground-based ProjectConfigModal with dark theme
 **Docker Image:** `ghcr.io/snadboy/script-server:latest` (auto-builds via GitHub Actions)
 **Local Server:** Running on http://localhost:5000
 
