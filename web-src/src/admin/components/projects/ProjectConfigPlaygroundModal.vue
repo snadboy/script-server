@@ -1,5 +1,5 @@
 <template>
-  <div v-if="visible" class="dialog-overlay" @click.self="close">
+  <div v-if="visible" class="dialog-overlay">
     <div class="dialog-preview">
       <!-- Header -->
       <div class="dialog-header">
@@ -286,7 +286,7 @@
           </div>
 
           <template v-if="verbsEnabled">
-            <!-- Verbs Table -->
+            <!-- Empty State -->
             <div v-if="verbOptions.length === 0" class="empty-state">
               <i class="material-icons">category</i>
               <p>No verbs defined yet</p>
@@ -296,7 +296,15 @@
               </button>
             </div>
 
+            <!-- Verbs List with Configuration -->
             <div v-else class="master-detail">
+              <!-- Add Verb Button (before table) -->
+              <button class="btn-add-top" @click="addVerb">
+                <i class="material-icons">add</i>
+                Add Verb
+              </button>
+
+              <!-- Verbs Table -->
               <div class="master-table-container">
                 <table class="master-table">
                   <thead>
@@ -347,32 +355,7 @@
                 </table>
               </div>
 
-              <!-- Global Settings (Collapsible) -->
-              <div class="global-settings">
-                <div class="global-header" @click="globalExpanded = !globalExpanded">
-                  <span>Global Verb Settings</span>
-                  <i class="material-icons">{{ globalExpanded ? 'expand_less' : 'expand_more' }}</i>
-                </div>
-                <div v-show="globalExpanded" class="global-content">
-                  <div class="form-group">
-                    <label class="form-label">Parameter Name</label>
-                    <input
-                      v-model="verbsConfig.parameter_name"
-                      class="form-input"
-                      placeholder="verb"
-                      @input="markUnsaved"
-                    />
-                  </div>
-                  <div class="form-group">
-                    <label class="checkbox-label">
-                      <input v-model="verbsConfig.required" type="checkbox" @change="markUnsaved" />
-                      Verb Required
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Verb Detail Panel -->
+              <!-- Verb Configuration (immediately after table) -->
               <div v-if="selectedVerbIndex !== null" class="detail-panel">
                 <div class="section-header">Verb Configuration</div>
 
@@ -407,44 +390,73 @@
                   ></textarea>
                 </div>
 
-                <div v-if="parameters.length > 0" class="section-header">Available Parameters</div>
-                <div v-if="parameters.length > 0" class="checkbox-group">
-                  <label
-                    v-for="param in parameters"
-                    :key="param.name"
-                    class="checkbox-label"
-                  >
-                    <input
-                      type="checkbox"
-                      :checked="isParameterSelected(param.name)"
-                      @change="toggleParameter(param.name, $event)"
-                    />
-                    {{ param.name }}
-                  </label>
-                </div>
-
-                <div v-if="selectedVerb.parameters?.length > 0" class="section-header">Required Parameters</div>
-                <div v-if="selectedVerb.parameters?.length > 0" class="checkbox-group">
-                  <label
-                    v-for="paramName in selectedVerb.parameters"
-                    :key="paramName"
-                    class="checkbox-label"
-                  >
-                    <input
-                      type="checkbox"
-                      :checked="isParameterRequired(paramName)"
-                      @change="toggleRequired(paramName, $event)"
-                    />
-                    {{ paramName }}
-                  </label>
+                <div v-if="parameters.length > 0" class="section-header">Parameter Selection</div>
+                <div v-if="parameters.length > 0" class="parameter-selection-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Parameter</th>
+                        <th>Type</th>
+                        <th>Use in Verb</th>
+                        <th>Required</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="param in parameters" :key="param.name">
+                        <td class="param-name">{{ param.name }}</td>
+                        <td class="param-type">{{ param.type }}</td>
+                        <td class="param-checkbox">
+                          <label class="checkbox-label-inline">
+                            <input
+                              type="checkbox"
+                              :checked="isParameterSelected(param.name)"
+                              @change="toggleParameter(param.name, $event)"
+                            />
+                          </label>
+                        </td>
+                        <td class="param-checkbox">
+                          <label class="checkbox-label-inline">
+                            <input
+                              type="checkbox"
+                              :checked="isParameterRequired(param.name)"
+                              :disabled="!isParameterSelected(param.name)"
+                              @change="toggleRequired(param.name, $event)"
+                            />
+                          </label>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div v-if="parameters.length === 0" class="empty-message">
+                    No parameters defined. Add parameters in the Parameters tab first.
+                  </div>
                 </div>
               </div>
 
-              <!-- Add Verb Button -->
-              <button class="btn-add-bottom" @click="addVerb">
-                <i class="material-icons">add</i>
-                Add Verb
-              </button>
+              <!-- Global Settings (Collapsible) - after Verb Configuration -->
+              <div class="global-settings">
+                <div class="global-header" @click="globalExpanded = !globalExpanded">
+                  <span>Global Verb Settings</span>
+                  <i class="material-icons">{{ globalExpanded ? 'expand_less' : 'expand_more' }}</i>
+                </div>
+                <div v-show="globalExpanded" class="global-content">
+                  <div class="form-group">
+                    <label class="form-label">Parameter Name</label>
+                    <input
+                      v-model="verbsConfig.parameter_name"
+                      class="form-input"
+                      placeholder="verb"
+                      @input="markUnsaved"
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label class="checkbox-label">
+                      <input v-model="verbsConfig.required" type="checkbox" @change="markUnsaved" />
+                      Verb selection required (user must choose a verb to execute)
+                    </label>
+                  </div>
+                </div>
+              </div>
             </div>
           </template>
         </div>
@@ -530,6 +542,21 @@ export default {
         this.reset();
       }
     }
+  },
+
+  mounted() {
+    // Add Esc key listener
+    this.handleEscape = (event) => {
+      if (event.key === 'Escape' && this.visible) {
+        this.close();
+      }
+    };
+    document.addEventListener('keydown', this.handleEscape);
+  },
+
+  beforeUnmount() {
+    // Remove Esc key listener
+    document.removeEventListener('keydown', this.handleEscape);
   },
 
   methods: {
@@ -1013,7 +1040,7 @@ export default {
 }
 
 .master-table td {
-  padding: 10px 12px;
+  padding: 6px 12px;
   color: #ccc;
 }
 
@@ -1138,9 +1165,101 @@ textarea.form-input {
 }
 
 input[type='checkbox'] {
-  width: auto;
+  /* Force native checkbox appearance - override Materialize */
+  width: 16px;
+  height: 16px;
   margin: 0;
   cursor: pointer;
+  /* Show native checkbox (not Materialize's custom one) */
+  opacity: 1 !important;
+  position: relative !important;
+  pointer-events: auto !important;
+  -webkit-appearance: checkbox;
+  -moz-appearance: checkbox;
+  appearance: checkbox;
+}
+
+/* Override Materialize's checkbox pseudo-elements */
+input[type='checkbox'] + span:before,
+input[type='checkbox'] + span:after {
+  display: none !important;
+}
+
+/* Parameter Selection Table */
+.parameter-selection-table {
+  margin-top: 8px;
+}
+
+.parameter-selection-table table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #252525;
+  border: 1px solid #3a3a3a;
+  border-radius: 4px;
+}
+
+.parameter-selection-table thead {
+  background: #2a2a2a;
+}
+
+.parameter-selection-table th {
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: #888;
+  border-bottom: 1px solid #3a3a3a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.parameter-selection-table td {
+  padding: 6px 12px;
+  font-size: 13px;
+  color: #ccc;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.parameter-selection-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.parameter-selection-table tbody tr:hover {
+  background: #2a2a2a;
+}
+
+.parameter-selection-table .param-name {
+  font-weight: 500;
+  color: #e0e0e0;
+}
+
+.parameter-selection-table .param-type {
+  color: #888;
+  font-size: 12px;
+}
+
+.parameter-selection-table .param-checkbox {
+  text-align: center;
+  width: 80px;
+}
+
+.checkbox-label-inline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.parameter-selection-table input[type='checkbox']:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.parameter-selection-table .empty-message {
+  padding: 24px;
+  text-align: center;
+  color: #888;
+  font-size: 13px;
 }
 
 /* List Options */
@@ -1222,6 +1341,7 @@ input[type='checkbox'] {
 
 /* Buttons */
 .btn-add,
+.btn-add-top,
 .btn-add-bottom {
   background: #4a90e2;
   color: white;
@@ -1238,8 +1358,13 @@ input[type='checkbox'] {
 }
 
 .btn-add:hover,
+.btn-add-top:hover,
 .btn-add-bottom:hover {
   background: #357abd;
+}
+
+.btn-add-top {
+  margin-bottom: 16px;
 }
 
 .btn-add-bottom {
