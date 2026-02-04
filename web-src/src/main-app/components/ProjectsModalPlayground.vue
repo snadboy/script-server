@@ -838,7 +838,8 @@ export default {
 
 <style scoped>
 /* CSS Variables - Compact Playground Design */
-:root {
+.projects-modal-overlay {
+  /* Define CSS variables on component root */
   --dialog-bg: #1a1a1a;
   --card-bg: #222222;
   --accent: #5dade2;
@@ -853,9 +854,8 @@ export default {
   --tab-size: 14px;
   --card-title-size: 16px;
   --card-desc-size: 13px;
-}
 
-.projects-modal-overlay {
+  /* Component styles */
   position: fixed;
   top: 0;
   left: 0;
