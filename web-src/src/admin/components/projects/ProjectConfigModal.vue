@@ -356,16 +356,22 @@ export default {
 
 .modal-body {
   flex: 1 1 auto;
-  overflow-y: auto;
+  overflow-y: auto !important; /* Force scrollbar */
   overflow-x: hidden;
   padding: 24px;
   min-height: 0;
   /* Ensure body doesn't exceed available space - conservative to guarantee footer visibility */
   max-height: calc(90vh - 220px); /* Account for header ~70px, tabs ~50px, footer ~80px, margin ~20px */
+  /* Debug: add visible scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
 }
 
 .tab-content {
   /* No min-height to prevent pushing footer off screen */
+  /* Ensure content doesn't force overflow beyond modal-body */
+  max-width: 100%;
+  overflow: visible;
 }
 
 .loading-state {
