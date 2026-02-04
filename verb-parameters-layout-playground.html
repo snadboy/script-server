@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verb/Parameters Dialog Layout Playground</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #1a1a1a;
+      color: #e0e0e0;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      grid-template-rows: 1fr auto;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .controls {
+      background: #252525;
+      padding: 24px;
+      overflow-y: auto;
+      border-right: 1px solid #333;
+    }
+
+    .preview {
+      background: #2a2a2a;
+      padding: 40px;
+      overflow-y: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .prompt-area {
+      grid-column: 1 / -1;
+      background: #1f1f1f;
+      border-top: 1px solid #333;
+      padding: 20px 24px;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    h1 {
+      font-size: 18px;
+      margin-bottom: 24px;
+      color: #fff;
+    }
+
+    .control-group {
+      margin-bottom: 24px;
+    }
+
+    .control-group h3 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #aaa;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .control {
+      margin-bottom: 16px;
+    }
+
+    .control label {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 6px;
+      color: #ccc;
+    }
+
+    .control input[type="range"] {
+      width: 100%;
+      height: 6px;
+      background: #333;
+      border-radius: 3px;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    .control input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: #4a90e2;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .control input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      background: #4a90e2;
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+    }
+
+    .control input[type="color"] {
+      width: 100%;
+      height: 36px;
+      border: 1px solid #333;
+      border-radius: 4px;
+      background: #1a1a1a;
+      cursor: pointer;
+    }
+
+    .control select {
+      width: 100%;
+      padding: 8px;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 4px;
+      color: #e0e0e0;
+      font-size: 13px;
+    }
+
+    .value-display {
+      display: inline-block;
+      font-size: 12px;
+      color: #888;
+      margin-left: 8px;
+    }
+
+    .presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .preset-btn {
+      padding: 8px 12px;
+      background: #333;
+      border: 1px solid #444;
+      border-radius: 4px;
+      color: #e0e0e0;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .preset-btn:hover {
+      background: #3a3a3a;
+      border-color: #555;
+    }
+
+    .preset-btn:active {
+      transform: scale(0.95);
+    }
+
+    .theme-toggle {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .theme-btn {
+      flex: 1;
+      padding: 10px;
+      background: #333;
+      border: 2px solid #444;
+      border-radius: 4px;
+      color: #e0e0e0;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .theme-btn.active {
+      background: #4a90e2;
+      border-color: #4a90e2;
+      color: #fff;
+    }
+
+    /* Dialog Preview Styles */
+    .dialog-preview {
+      width: 900px;
+      max-width: 95%;
+      border-radius: 8px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+
+    .dialog-preview.light {
+      background: #fff;
+    }
+
+    .dialog-preview.dark {
+      background: #1e1e1e;
+    }
+
+    .dialog-header {
+      padding: 20px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .dialog-preview.light .dialog-header {
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .dialog-preview.dark .dialog-header {
+      border-bottom: 1px solid #333;
+    }
+
+    .dialog-title {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .dialog-preview.light .dialog-title {
+      color: #212121;
+    }
+
+    .dialog-preview.dark .dialog-title {
+      color: #e0e0e0;
+    }
+
+    .dialog-tabs {
+      display: flex;
+    }
+
+    .dialog-preview.light .dialog-tabs {
+      background: #fafafa;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .dialog-preview.dark .dialog-tabs {
+      background: #252525;
+      border-bottom: 1px solid #333;
+    }
+
+    .dialog-tab {
+      padding: 12px 24px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .dialog-preview.light .dialog-tab {
+      color: #666;
+    }
+
+    .dialog-preview.dark .dialog-tab {
+      color: #999;
+    }
+
+    .dialog-tab.active {
+      color: #4a90e2;
+      border-bottom-color: #4a90e2;
+    }
+
+    .dialog-preview.light .dialog-tab.active {
+      background: #fff;
+    }
+
+    .dialog-preview.dark .dialog-tab.active {
+      background: #1e1e1e;
+    }
+
+    .dialog-content {
+      padding: 24px;
+    }
+
+    .master-detail {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .master-table-container {
+      overflow-y: auto;
+      border-radius: 4px;
+      margin-bottom: 16px;
+    }
+
+    .master-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .master-table thead {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .master-table th {
+      text-align: left;
+      padding: 12px;
+      font-weight: 600;
+    }
+
+    .dialog-preview.light .master-table th {
+      color: #424242;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .dialog-preview.dark .master-table th {
+      color: #ccc;
+      border-bottom: 2px solid #333;
+    }
+
+    .master-table td {
+      padding: 10px 12px;
+    }
+
+    .dialog-preview.light .master-table td {
+      color: #424242;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .dialog-preview.dark .master-table td {
+      color: #ccc;
+      border-bottom: 1px solid #2a2a2a;
+    }
+
+    .master-table tbody tr {
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .dialog-preview.light .master-table tbody tr:hover {
+      background: #fafafa;
+    }
+
+    .dialog-preview.dark .master-table tbody tr:hover {
+      background: #252525;
+    }
+
+    .detail-panel {
+      border-radius: 4px;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .section-header {
+      font-weight: 600;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+    }
+
+    .dialog-preview.light .section-header {
+      color: #212121;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .dialog-preview.dark .section-header {
+      color: #e0e0e0;
+      border-bottom: 2px solid #333;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+
+    .dialog-preview.light .form-label {
+      color: #424242;
+    }
+
+    .dialog-preview.dark .form-label {
+      color: #ccc;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+
+    select.form-input {
+      cursor: pointer;
+      appearance: auto;
+    }
+
+    textarea.form-input {
+      resize: vertical;
+      font-family: inherit;
+    }
+
+    .dialog-preview.light .form-input {
+      background: #fff;
+      border: 1px solid #ddd;
+      color: #212121;
+    }
+
+    .dialog-preview.dark .form-input {
+      background: #2a2a2a;
+      border: 1px solid #3a3a3a;
+      color: #e0e0e0;
+    }
+
+    input[type="checkbox"] {
+      width: auto;
+      margin: 0;
+      cursor: pointer;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .badge-required {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    .badge-optional {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .dialog-preview.dark .badge-required {
+      background: #4a2626;
+      color: #ff8a80;
+    }
+
+    .dialog-preview.dark .badge-optional {
+      background: #264a26;
+      color: #80ff80;
+    }
+
+    /* Prompt area */
+    #prompt-output {
+      flex: 1;
+      font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #e0e0e0;
+      white-space: pre-wrap;
+    }
+
+    #copy-btn {
+      padding: 10px 20px;
+      background: #4a90e2;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      align-self: flex-start;
+    }
+
+    #copy-btn:hover {
+      background: #357abd;
+    }
+
+    #copy-btn:active {
+      transform: scale(0.95);
+    }
+
+    #copy-btn.copied {
+      background: #2e7d32;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .checkbox-group {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+    }
+
+    .dialog-preview.light .checkbox-label {
+      color: #424242;
+    }
+
+    .dialog-preview.dark .checkbox-label {
+      color: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <h1>Layout Controls</h1>
+
+    <div class="control-group">
+      <h3>Theme</h3>
+      <div class="theme-toggle">
+        <button class="theme-btn active" data-theme="light" onclick="setTheme('light')">☀️ Light</button>
+        <button class="theme-btn" data-theme="dark" onclick="setTheme('dark')">🌙 Dark</button>
+      </div>
+    </div>
+
+    <div class="presets">
+      <button class="preset-btn" onclick="applyPreset('default')">Default</button>
+      <button class="preset-btn" onclick="applyPreset('compact')">Compact</button>
+      <button class="preset-btn" onclick="applyPreset('spacious')">Spacious</button>
+      <button class="preset-btn" onclick="applyPreset('minimal')">Minimal</button>
+    </div>
+
+    <div class="control-group">
+      <h3>Active Tab</h3>
+      <div class="control">
+        <select id="activeTab" onchange="updateAll()">
+          <option value="parameters">Parameters</option>
+          <option value="verbs">Verbs</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <h3>Table Dimensions</h3>
+      <div class="control">
+        <label>Parameters Table Height <span class="value-display" id="paramsTableHeightVal">300px</span></label>
+        <input type="range" id="paramsTableHeight" min="100" max="500" value="300" oninput="updateAll()">
+      </div>
+      <div class="control">
+        <label>Verbs Table Height <span class="value-display" id="verbsTableHeightVal">250px</span></label>
+        <input type="range" id="verbsTableHeight" min="100" max="500" value="250" oninput="updateAll()">
+      </div>
+    </div>
+
+    <div class="control-group">
+      <h3>Detail Panel</h3>
+      <div class="control">
+        <label>Max Height <span class="value-display" id="detailHeightVal">400px</span></label>
+        <input type="range" id="detailHeight" min="200" max="600" value="400" oninput="updateAll()">
+      </div>
+      <div class="control">
+        <label>Padding <span class="value-display" id="detailPaddingVal">20px</span></label>
+        <input type="range" id="detailPadding" min="12" max="40" value="20" oninput="updateAll()">
+      </div>
+    </div>
+
+    <div class="control-group">
+      <h3>Spacing</h3>
+      <div class="control">
+        <label>Table-Detail Gap <span class="value-display" id="gapVal">16px</span></label>
+        <input type="range" id="gap" min="8" max="40" value="16" oninput="updateAll()">
+      </div>
+      <div class="control">
+        <label>Content Padding <span class="value-display" id="contentPaddingVal">24px</span></label>
+        <input type="range" id="contentPadding" min="12" max="48" value="24" oninput="updateAll()">
+      </div>
+    </div>
+
+    <div class="control-group">
+      <h3>Typography</h3>
+      <div class="control">
+        <label>Table Font Size <span class="value-display" id="tableFontVal">13px</span></label>
+        <input type="range" id="tableFont" min="11" max="16" value="13" oninput="updateAll()">
+      </div>
+      <div class="control">
+        <label>Form Font Size <span class="value-display" id="formFontVal">13px</span></label>
+        <input type="range" id="formFont" min="11" max="16" value="13" oninput="updateAll()">
+      </div>
+      <div class="control">
+        <label>Section Header Size <span class="value-display" id="headerFontVal">14px</span></label>
+        <input type="range" id="headerFont" min="12" max="18" value="14" oninput="updateAll()">
+      </div>
+    </div>
+
+    <div class="control-group">
+      <h3>Borders & Corners</h3>
+      <div class="control">
+        <label>Border Radius <span class="value-display" id="radiusVal">4px</span></label>
+        <input type="range" id="radius" min="0" max="12" value="4" oninput="updateAll()">
+      </div>
+      <div class="control">
+        <label>Border Width <span class="value-display" id="borderWidthVal">1px</span></label>
+        <input type="range" id="borderWidth" min="0" max="3" value="1" oninput="updateAll()">
+      </div>
+    </div>
+
+    <div class="control-group">
+      <h3 id="colorThemeLabel">Light Theme Colors</h3>
+      <div class="control">
+        <label>Dialog Background</label>
+        <input type="color" id="dialogBg" value="#ffffff" oninput="updateAll()">
+      </div>
+      <div class="control">
+        <label>Border Color</label>
+        <input type="color" id="borderColor" value="#e0e0e0" oninput="updateAll()">
+      </div>
+      <div class="control">
+        <label>Table Header Background</label>
+        <input type="color" id="headerBg" value="#f5f5f5" oninput="updateAll()">
+      </div>
+      <div class="control">
+        <label>Detail Panel Background</label>
+        <input type="color" id="detailBg" value="#fafafa" oninput="updateAll()">
+      </div>
+      <div class="control">
+        <label>Selected Row Background</label>
+        <input type="color" id="selectedBg" value="#e3f2fd" oninput="updateAll()">
+      </div>
+      <div class="control">
+        <label>Text Color</label>
+        <input type="color" id="textColor" value="#424242" oninput="updateAll()">
+      </div>
+      <div class="control">
+        <label>Input Background</label>
+        <input type="color" id="inputBg" value="#ffffff" oninput="updateAll()">
+      </div>
+    </div>
+  </div>
+
+  <div class="preview">
+    <div class="dialog-preview light" id="dialogPreview">
+      <div class="dialog-header">
+        <div class="dialog-title">Configure Project Parameters & Verbs</div>
+      </div>
+
+      <div class="dialog-tabs">
+        <div class="dialog-tab active" data-tab="parameters">Parameters</div>
+        <div class="dialog-tab" data-tab="verbs">Verbs</div>
+      </div>
+
+      <div class="dialog-content" id="dialogContent">
+        <!-- Parameters Tab -->
+        <div class="tab-content active" id="parameters-tab">
+          <div class="master-detail">
+            <div class="master-table-container" id="paramsTableContainer">
+              <table class="master-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Required</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody id="paramsTableBody">
+                  <tr class="selected">
+                    <td>days</td>
+                    <td>int</td>
+                    <td><span class="badge badge-required">Required</span></td>
+                    <td>Number of days to keep emails</td>
+                  </tr>
+                  <tr>
+                    <td>dry_run</td>
+                    <td>bool</td>
+                    <td><span class="badge badge-optional">Optional</span></td>
+                    <td>Preview changes without executing</td>
+                  </tr>
+                  <tr>
+                    <td>verbose</td>
+                    <td>bool</td>
+                    <td><span class="badge badge-optional">Optional</span></td>
+                    <td>Enable detailed logging output</td>
+                  </tr>
+                  <tr>
+                    <td>labels</td>
+                    <td>list</td>
+                    <td><span class="badge badge-optional">Optional</span></td>
+                    <td>Gmail labels to process</td>
+                  </tr>
+                  <tr>
+                    <td>batch_size</td>
+                    <td>int</td>
+                    <td><span class="badge badge-optional">Optional</span></td>
+                    <td>Messages to process per batch</td>
+                  </tr>
+                  <tr>
+                    <td>timeout</td>
+                    <td>int</td>
+                    <td><span class="badge badge-optional">Optional</span></td>
+                    <td>API request timeout in seconds</td>
+                  </tr>
+                  <tr>
+                    <td>format</td>
+                    <td>list</td>
+                    <td><span class="badge badge-optional">Optional</span></td>
+                    <td>Output format (json, csv, table)</td>
+                  </tr>
+                  <tr>
+                    <td>output_file</td>
+                    <td>text</td>
+                    <td><span class="badge badge-optional">Optional</span></td>
+                    <td>Path to save output results</td>
+                  </tr>
+                  <tr>
+                    <td>api_key</td>
+                    <td>text</td>
+                    <td><span class="badge badge-required">Required</span></td>
+                    <td>Gmail API authentication key</td>
+                  </tr>
+                  <tr>
+                    <td>max_threads</td>
+                    <td>int</td>
+                    <td><span class="badge badge-optional">Optional</span></td>
+                    <td>Maximum concurrent threads</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="detail-panel" id="paramsDetailPanel">
+              <div class="section-header" id="basicHeader">Basic Information</div>
+              <div class="form-group">
+                <label class="form-label">Parameter Name</label>
+                <input type="text" class="form-input" value="days">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Type</label>
+                <select class="form-input">
+                  <option>text</option>
+                  <option selected>int</option>
+                  <option>bool</option>
+                  <option>list</option>
+                  <option>flag</option>
+                  <option>constant</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Description</label>
+                <input type="text" class="form-input" value="Number of days to keep emails">
+              </div>
+              <div class="form-group">
+                <label class="checkbox-label" style="margin-top: 8px;">
+                  <input type="checkbox" checked> Required
+                </label>
+              </div>
+
+              <div class="section-header" style="margin-top: 24px;">Parameter Behavior</div>
+              <div class="form-group">
+                <label class="form-label">CLI Flag (param)</label>
+                <input type="text" class="form-input" value="--days">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Pass As</label>
+                <select class="form-input">
+                  <option>argument</option>
+                  <option selected>--param=VALUE</option>
+                  <option>--param VALUE</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="checkbox-label" style="margin-top: 8px;">
+                  <input type="checkbox"> Combine param with value
+                </label>
+              </div>
+
+              <div class="section-header" style="margin-top: 24px;">Constraints</div>
+              <div class="form-group">
+                <label class="form-label">Minimum Value</label>
+                <input type="number" class="form-input" value="1">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Maximum Value</label>
+                <input type="number" class="form-input" value="365">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Default Value</label>
+                <input type="number" class="form-input" value="30">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Verbs Tab -->
+        <div class="tab-content" id="verbs-tab">
+          <div class="master-detail">
+            <div class="master-table-container" id="verbsTableContainer">
+              <table class="master-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Label</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody id="verbsTableBody">
+                  <tr class="selected">
+                    <td>run</td>
+                    <td>Run Cleanup</td>
+                    <td>Execute the email cleanup process</td>
+                  </tr>
+                  <tr>
+                    <td>auth</td>
+                    <td>Authenticate</td>
+                    <td>Set up Gmail API authentication</td>
+                  </tr>
+                  <tr>
+                    <td>labels</td>
+                    <td>List Labels</td>
+                    <td>Display all available Gmail labels</td>
+                  </tr>
+                  <tr>
+                    <td>groups</td>
+                    <td>Show Groups</td>
+                    <td>List message groups and counts</td>
+                  </tr>
+                  <tr>
+                    <td>config</td>
+                    <td>Configuration</td>
+                    <td>View or update configuration settings</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="detail-panel" id="verbsDetailPanel">
+              <div class="section-header">Verb Configuration</div>
+              <div class="form-group">
+                <label class="form-label">Verb Name</label>
+                <input type="text" class="form-input" value="run">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Display Label</label>
+                <input type="text" class="form-input" value="Run Cleanup">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea class="form-input" rows="2">Execute the email cleanup process</textarea>
+              </div>
+
+              <div class="section-header" style="margin-top: 24px;">Available Parameters</div>
+              <div class="checkbox-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" checked disabled> days
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" checked disabled> dry_run
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" checked disabled> verbose
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" checked disabled> labels
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" disabled> batch_size
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" disabled> timeout
+                </label>
+              </div>
+
+              <div class="section-header" style="margin-top: 24px;">Required Parameters</div>
+              <div class="checkbox-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" checked disabled> days
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" disabled> dry_run
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" disabled> verbose
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" disabled> labels
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="prompt-area">
+    <div id="prompt-output">Adjust the controls to customize the layout...</div>
+    <button id="copy-btn" onclick="copyPrompt()">Copy Prompt</button>
+  </div>
+
+  <script>
+    const state = {
+      currentTheme: 'light',
+      activeTab: 'parameters',
+      paramsTableHeight: 300,
+      verbsTableHeight: 250,
+      detailHeight: 400,
+      detailPadding: 20,
+      gap: 16,
+      contentPadding: 24,
+      tableFont: 13,
+      formFont: 13,
+      headerFont: 14,
+      radius: 4,
+      borderWidth: 1,
+      // Light theme colors
+      light: {
+        dialogBg: '#ffffff',
+        borderColor: '#e0e0e0',
+        headerBg: '#f5f5f5',
+        detailBg: '#fafafa',
+        selectedBg: '#e3f2fd',
+        textColor: '#424242',
+        inputBg: '#ffffff'
+      },
+      // Dark theme colors
+      dark: {
+        dialogBg: '#1e1e1e',
+        borderColor: '#333333',
+        headerBg: '#252525',
+        detailBg: '#2a2a2a',
+        selectedBg: '#1a3a52',
+        textColor: '#cccccc',
+        inputBg: '#2a2a2a'
+      }
+    };
+
+    const DEFAULTS = JSON.parse(JSON.stringify(state));
+
+    function setTheme(theme) {
+      state.currentTheme = theme;
+      document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.theme === theme);
+      });
+      document.getElementById('colorThemeLabel').textContent =
+        theme === 'light' ? 'Light Theme Colors' : 'Dark Theme Colors';
+
+      // Load theme colors into controls
+      const colors = state[theme];
+      document.getElementById('dialogBg').value = colors.dialogBg;
+      document.getElementById('borderColor').value = colors.borderColor;
+      document.getElementById('headerBg').value = colors.headerBg;
+      document.getElementById('detailBg').value = colors.detailBg;
+      document.getElementById('selectedBg').value = colors.selectedBg;
+      document.getElementById('textColor').value = colors.textColor;
+      document.getElementById('inputBg').value = colors.inputBg;
+
+      updateAll();
+    }
+
+    function syncState() {
+      state.activeTab = document.getElementById('activeTab').value;
+      state.paramsTableHeight = parseInt(document.getElementById('paramsTableHeight').value);
+      state.verbsTableHeight = parseInt(document.getElementById('verbsTableHeight').value);
+      state.detailHeight = parseInt(document.getElementById('detailHeight').value);
+      state.detailPadding = parseInt(document.getElementById('detailPadding').value);
+      state.gap = parseInt(document.getElementById('gap').value);
+      state.contentPadding = parseInt(document.getElementById('contentPadding').value);
+      state.tableFont = parseInt(document.getElementById('tableFont').value);
+      state.formFont = parseInt(document.getElementById('formFont').value);
+      state.headerFont = parseInt(document.getElementById('headerFont').value);
+      state.radius = parseInt(document.getElementById('radius').value);
+      state.borderWidth = parseInt(document.getElementById('borderWidth').value);
+
+      // Save current theme colors
+      const theme = state.currentTheme;
+      state[theme].dialogBg = document.getElementById('dialogBg').value;
+      state[theme].borderColor = document.getElementById('borderColor').value;
+      state[theme].headerBg = document.getElementById('headerBg').value;
+      state[theme].detailBg = document.getElementById('detailBg').value;
+      state[theme].selectedBg = document.getElementById('selectedBg').value;
+      state[theme].textColor = document.getElementById('textColor').value;
+      state[theme].inputBg = document.getElementById('inputBg').value;
+    }
+
+    function updateValueDisplays() {
+      document.getElementById('paramsTableHeightVal').textContent = state.paramsTableHeight + 'px';
+      document.getElementById('verbsTableHeightVal').textContent = state.verbsTableHeight + 'px';
+      document.getElementById('detailHeightVal').textContent = state.detailHeight + 'px';
+      document.getElementById('detailPaddingVal').textContent = state.detailPadding + 'px';
+      document.getElementById('gapVal').textContent = state.gap + 'px';
+      document.getElementById('contentPaddingVal').textContent = state.contentPadding + 'px';
+      document.getElementById('tableFontVal').textContent = state.tableFont + 'px';
+      document.getElementById('formFontVal').textContent = state.formFont + 'px';
+      document.getElementById('headerFontVal').textContent = state.headerFont + 'px';
+      document.getElementById('radiusVal').textContent = state.radius + 'px';
+      document.getElementById('borderWidthVal').textContent = state.borderWidth + 'px';
+    }
+
+    function renderPreview() {
+      const preview = document.getElementById('dialogPreview');
+      const colors = state[state.currentTheme];
+
+      // Update theme class
+      preview.className = 'dialog-preview ' + state.currentTheme;
+
+      // Update active tab
+      document.querySelectorAll('.dialog-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.tab === state.activeTab);
+      });
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.toggle('active', content.id === state.activeTab + '-tab');
+      });
+
+      // Apply base colors
+      preview.style.background = colors.dialogBg;
+
+      // Apply spacing
+      document.getElementById('dialogContent').style.padding = state.contentPadding + 'px';
+
+      // Parameters table
+      const paramsContainer = document.getElementById('paramsTableContainer');
+      paramsContainer.style.height = state.paramsTableHeight + 'px';
+      paramsContainer.style.borderRadius = state.radius + 'px';
+      paramsContainer.style.borderWidth = state.borderWidth + 'px';
+      paramsContainer.style.borderColor = colors.borderColor;
+      paramsContainer.style.borderStyle = 'solid';
+
+      // Verbs table
+      const verbsContainer = document.getElementById('verbsTableContainer');
+      verbsContainer.style.height = state.verbsTableHeight + 'px';
+      verbsContainer.style.borderRadius = state.radius + 'px';
+      verbsContainer.style.borderWidth = state.borderWidth + 'px';
+      verbsContainer.style.borderColor = colors.borderColor;
+      verbsContainer.style.borderStyle = 'solid';
+
+      // Detail panels
+      const detailPanels = document.querySelectorAll('.detail-panel');
+      detailPanels.forEach(panel => {
+        panel.style.maxHeight = state.detailHeight + 'px';
+        panel.style.padding = state.detailPadding + 'px';
+        panel.style.borderRadius = state.radius + 'px';
+        panel.style.borderWidth = state.borderWidth + 'px';
+        panel.style.borderColor = colors.borderColor;
+        panel.style.borderStyle = 'solid';
+        panel.style.background = colors.detailBg;
+      });
+
+      // Gap between table and detail
+      document.querySelectorAll('.master-detail').forEach(md => {
+        md.style.gap = state.gap + 'px';
+      });
+
+      // Typography
+      document.querySelectorAll('.master-table').forEach(table => {
+        table.style.fontSize = state.tableFont + 'px';
+      });
+      document.querySelectorAll('.form-input, .form-label, .checkbox-label:not(input)').forEach(el => {
+        el.style.fontSize = state.formFont + 'px';
+      });
+      document.querySelectorAll('.section-header').forEach(header => {
+        header.style.fontSize = state.headerFont + 'px';
+      });
+
+      // Table header colors
+      document.querySelectorAll('.master-table thead').forEach(thead => {
+        thead.style.background = colors.headerBg;
+      });
+
+      // Selected row
+      document.querySelectorAll('.master-table tbody tr.selected').forEach(row => {
+        row.style.background = colors.selectedBg;
+      });
+
+      // Text colors
+      document.querySelectorAll('.master-table th, .master-table td, .form-label, .section-header, .checkbox-label, .dialog-title').forEach(el => {
+        el.style.color = colors.textColor;
+      });
+
+      // Input backgrounds and styles
+      document.querySelectorAll('input.form-input, select.form-input, textarea.form-input').forEach(input => {
+        input.style.borderRadius = state.radius + 'px';
+        input.style.background = colors.inputBg;
+        input.style.color = colors.textColor;
+        input.style.borderColor = colors.borderColor;
+      });
+    }
+
+    function updatePrompt() {
+      const parts = [];
+      const lightVars = [];
+      const darkVars = [];
+
+      // Table heights
+      if (state.paramsTableHeight !== DEFAULTS.paramsTableHeight) {
+        parts.push(`parameters table height of ${state.paramsTableHeight}px`);
+        lightVars.push(`  --params-table-height: ${state.paramsTableHeight}px;`);
+        darkVars.push(`  --params-table-height: ${state.paramsTableHeight}px;`);
+      }
+      if (state.verbsTableHeight !== DEFAULTS.verbsTableHeight) {
+        parts.push(`verbs table height of ${state.verbsTableHeight}px`);
+        lightVars.push(`  --verbs-table-height: ${state.verbsTableHeight}px;`);
+        darkVars.push(`  --verbs-table-height: ${state.verbsTableHeight}px;`);
+      }
+
+      // Detail panel
+      if (state.detailHeight !== DEFAULTS.detailHeight) {
+        parts.push(`detail panel max height of ${state.detailHeight}px`);
+        lightVars.push(`  --detail-panel-height: ${state.detailHeight}px;`);
+        darkVars.push(`  --detail-panel-height: ${state.detailHeight}px;`);
+      }
+      if (state.detailPadding !== DEFAULTS.detailPadding) {
+        parts.push(`detail panel padding of ${state.detailPadding}px`);
+        lightVars.push(`  --detail-panel-padding: ${state.detailPadding}px;`);
+        darkVars.push(`  --detail-panel-padding: ${state.detailPadding}px;`);
+      }
+
+      // Spacing
+      if (state.gap !== DEFAULTS.gap) {
+        parts.push(`${state.gap}px gap between table and detail panel`);
+        lightVars.push(`  --master-detail-gap: ${state.gap}px;`);
+        darkVars.push(`  --master-detail-gap: ${state.gap}px;`);
+      }
+      if (state.contentPadding !== DEFAULTS.contentPadding) {
+        parts.push(`${state.contentPadding}px content padding`);
+        lightVars.push(`  --content-padding: ${state.contentPadding}px;`);
+        darkVars.push(`  --content-padding: ${state.contentPadding}px;`);
+      }
+
+      // Typography
+      if (state.tableFont !== DEFAULTS.tableFont) {
+        parts.push(`${state.tableFont}px table font size`);
+        lightVars.push(`  --table-font-size: ${state.tableFont}px;`);
+        darkVars.push(`  --table-font-size: ${state.tableFont}px;`);
+      }
+      if (state.formFont !== DEFAULTS.formFont) {
+        parts.push(`${state.formFont}px form font size`);
+        lightVars.push(`  --form-font-size: ${state.formFont}px;`);
+        darkVars.push(`  --form-font-size: ${state.formFont}px;`);
+      }
+      if (state.headerFont !== DEFAULTS.headerFont) {
+        parts.push(`${state.headerFont}px section header size`);
+        lightVars.push(`  --header-font-size: ${state.headerFont}px;`);
+        darkVars.push(`  --header-font-size: ${state.headerFont}px;`);
+      }
+
+      // Borders
+      if (state.radius !== DEFAULTS.radius) {
+        parts.push(`${state.radius}px border radius`);
+        lightVars.push(`  --border-radius: ${state.radius}px;`);
+        darkVars.push(`  --border-radius: ${state.radius}px;`);
+      }
+      if (state.borderWidth !== DEFAULTS.borderWidth) {
+        parts.push(`${state.borderWidth}px border width`);
+        lightVars.push(`  --border-width: ${state.borderWidth}px;`);
+        darkVars.push(`  --border-width: ${state.borderWidth}px;`);
+      }
+
+      // Light theme colors
+      const light = state.light;
+      if (light.dialogBg !== DEFAULTS.light.dialogBg) {
+        lightVars.push(`  --dialog-bg: ${light.dialogBg};`);
+      }
+      if (light.borderColor !== DEFAULTS.light.borderColor) {
+        lightVars.push(`  --border-color: ${light.borderColor};`);
+      }
+      if (light.headerBg !== DEFAULTS.light.headerBg) {
+        lightVars.push(`  --table-header-bg: ${light.headerBg};`);
+      }
+      if (light.detailBg !== DEFAULTS.light.detailBg) {
+        lightVars.push(`  --detail-panel-bg: ${light.detailBg};`);
+      }
+      if (light.selectedBg !== DEFAULTS.light.selectedBg) {
+        lightVars.push(`  --selected-row-bg: ${light.selectedBg};`);
+      }
+      if (light.textColor !== DEFAULTS.light.textColor) {
+        lightVars.push(`  --text-color: ${light.textColor};`);
+      }
+      if (light.inputBg !== DEFAULTS.light.inputBg) {
+        lightVars.push(`  --input-bg: ${light.inputBg};`);
+      }
+
+      // Dark theme colors
+      const dark = state.dark;
+      if (dark.dialogBg !== DEFAULTS.dark.dialogBg) {
+        darkVars.push(`  --dialog-bg: ${dark.dialogBg};`);
+      }
+      if (dark.borderColor !== DEFAULTS.dark.borderColor) {
+        darkVars.push(`  --border-color: ${dark.borderColor};`);
+      }
+      if (dark.headerBg !== DEFAULTS.dark.headerBg) {
+        darkVars.push(`  --table-header-bg: ${dark.headerBg};`);
+      }
+      if (dark.detailBg !== DEFAULTS.dark.detailBg) {
+        darkVars.push(`  --detail-panel-bg: ${dark.detailBg};`);
+      }
+      if (dark.selectedBg !== DEFAULTS.dark.selectedBg) {
+        darkVars.push(`  --selected-row-bg: ${dark.selectedBg};`);
+      }
+      if (dark.textColor !== DEFAULTS.dark.textColor) {
+        darkVars.push(`  --text-color: ${dark.textColor};`);
+      }
+      if (dark.inputBg !== DEFAULTS.dark.inputBg) {
+        darkVars.push(`  --input-bg: ${dark.inputBg};`);
+      }
+
+      let prompt = '';
+      if (parts.length === 0 && lightVars.length === 0 && darkVars.length === 0) {
+        prompt = 'Using default layout settings for the verb/parameters dialog.';
+      } else {
+        prompt = `Update the ProjectConfigModal.vue component with the following layout adjustments:\n\n`;
+        if (parts.length > 0) {
+          prompt += `${parts.join(', ')}.\n\n`;
+        }
+
+        if (lightVars.length > 0) {
+          prompt += `Light Theme CSS Variables:\n\n`;
+          lightVars.forEach(v => prompt += `${v}\n`);
+          prompt += `\n`;
+        }
+
+        if (darkVars.length > 0) {
+          prompt += `Dark Theme CSS Variables:\n\n`;
+          darkVars.forEach(v => prompt += `${v}\n`);
+          prompt += `\n`;
+        }
+
+        prompt += `Apply these to the master-detail pattern in both the Parameters and Verbs tabs. `;
+        prompt += `The tables should be fixed-height with scrolling, and the edit panel below should `;
+        prompt += `have a max-height with overflow-y: auto. Use CSS custom properties and define theme-specific `;
+        prompt += `values in your light/dark theme stylesheets.`;
+      }
+
+      document.getElementById('prompt-output').textContent = prompt;
+    }
+
+    function updateAll() {
+      syncState();
+      updateValueDisplays();
+      renderPreview();
+      updatePrompt();
+    }
+
+    function applyPreset(name) {
+      const presets = {
+        default: {
+          paramsTableHeight: 300, verbsTableHeight: 250, detailHeight: 400, detailPadding: 20,
+          gap: 16, contentPadding: 24, tableFont: 13, formFont: 13, headerFont: 14,
+          radius: 4, borderWidth: 1,
+          light: {
+            dialogBg: '#ffffff', borderColor: '#e0e0e0', headerBg: '#f5f5f5',
+            detailBg: '#fafafa', selectedBg: '#e3f2fd', textColor: '#424242', inputBg: '#ffffff'
+          },
+          dark: {
+            dialogBg: '#1e1e1e', borderColor: '#333333', headerBg: '#252525',
+            detailBg: '#2a2a2a', selectedBg: '#1a3a52', textColor: '#cccccc', inputBg: '#2a2a2a'
+          }
+        },
+        compact: {
+          paramsTableHeight: 200, verbsTableHeight: 180, detailHeight: 300, detailPadding: 12,
+          gap: 12, contentPadding: 16, tableFont: 12, formFont: 12, headerFont: 13,
+          radius: 3, borderWidth: 1,
+          light: {
+            dialogBg: '#ffffff', borderColor: '#e0e0e0', headerBg: '#f5f5f5',
+            detailBg: '#fafafa', selectedBg: '#e3f2fd', textColor: '#424242', inputBg: '#ffffff'
+          },
+          dark: {
+            dialogBg: '#1e1e1e', borderColor: '#333333', headerBg: '#252525',
+            detailBg: '#2a2a2a', selectedBg: '#1a3a52', textColor: '#cccccc', inputBg: '#2a2a2a'
+          }
+        },
+        spacious: {
+          paramsTableHeight: 400, verbsTableHeight: 350, detailHeight: 500, detailPadding: 32,
+          gap: 24, contentPadding: 32, tableFont: 14, formFont: 14, headerFont: 16,
+          radius: 6, borderWidth: 1,
+          light: {
+            dialogBg: '#ffffff', borderColor: '#e0e0e0', headerBg: '#f5f5f5',
+            detailBg: '#fafafa', selectedBg: '#e3f2fd', textColor: '#424242', inputBg: '#ffffff'
+          },
+          dark: {
+            dialogBg: '#1e1e1e', borderColor: '#333333', headerBg: '#252525',
+            detailBg: '#2a2a2a', selectedBg: '#1a3a52', textColor: '#cccccc', inputBg: '#2a2a2a'
+          }
+        },
+        minimal: {
+          paramsTableHeight: 300, verbsTableHeight: 250, detailHeight: 400, detailPadding: 20,
+          gap: 16, contentPadding: 24, tableFont: 13, formFont: 13, headerFont: 14,
+          radius: 0, borderWidth: 1,
+          light: {
+            dialogBg: '#ffffff', borderColor: '#dddddd', headerBg: '#ffffff',
+            detailBg: '#ffffff', selectedBg: '#f0f0f0', textColor: '#424242', inputBg: '#ffffff'
+          },
+          dark: {
+            dialogBg: '#1a1a1a', borderColor: '#2a2a2a', headerBg: '#1a1a1a',
+            detailBg: '#1a1a1a', selectedBg: '#252525', textColor: '#cccccc', inputBg: '#1a1a1a'
+          }
+        }
+      };
+
+      const preset = presets[name];
+      Object.keys(preset).forEach(key => {
+        if (key !== 'light' && key !== 'dark') {
+          state[key] = preset[key];
+        }
+      });
+
+      // Copy theme colors
+      state.light = { ...preset.light };
+      state.dark = { ...preset.dark };
+
+      // Update form controls
+      document.getElementById('paramsTableHeight').value = state.paramsTableHeight;
+      document.getElementById('verbsTableHeight').value = state.verbsTableHeight;
+      document.getElementById('detailHeight').value = state.detailHeight;
+      document.getElementById('detailPadding').value = state.detailPadding;
+      document.getElementById('gap').value = state.gap;
+      document.getElementById('contentPadding').value = state.contentPadding;
+      document.getElementById('tableFont').value = state.tableFont;
+      document.getElementById('formFont').value = state.formFont;
+      document.getElementById('headerFont').value = state.headerFont;
+      document.getElementById('radius').value = state.radius;
+      document.getElementById('borderWidth').value = state.borderWidth;
+
+      // Update current theme color controls
+      const colors = state[state.currentTheme];
+      document.getElementById('dialogBg').value = colors.dialogBg;
+      document.getElementById('borderColor').value = colors.borderColor;
+      document.getElementById('headerBg').value = colors.headerBg;
+      document.getElementById('detailBg').value = colors.detailBg;
+      document.getElementById('selectedBg').value = colors.selectedBg;
+      document.getElementById('textColor').value = colors.textColor;
+      document.getElementById('inputBg').value = colors.inputBg;
+
+      updateAll();
+    }
+
+    function copyPrompt() {
+      const text = document.getElementById('prompt-output').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy Prompt';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+
+    // Tab switching in preview
+    document.querySelectorAll('.dialog-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.getElementById('activeTab').value = tab.dataset.tab;
+        updateAll();
+      });
+    });
+
+    // Initialize
+    updateAll();
+  </script>
+</body>
+</html>
