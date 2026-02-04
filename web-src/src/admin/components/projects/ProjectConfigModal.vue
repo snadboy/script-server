@@ -360,8 +360,8 @@ export default {
   overflow-x: hidden;
   padding: 24px;
   min-height: 0;
-  /* Ensure body doesn't exceed available space */
-  max-height: calc(90vh - 180px); /* Account for header ~70px, tabs ~50px, footer ~60px */
+  /* Ensure body doesn't exceed available space - conservative to guarantee footer visibility */
+  max-height: calc(90vh - 220px); /* Account for header ~70px, tabs ~50px, footer ~80px, margin ~20px */
 }
 
 .tab-content {
