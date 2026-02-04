@@ -53,6 +53,12 @@
           </div>
 
           <div v-else class="master-detail">
+            <!-- Add Parameter Button (before table) -->
+            <button class="btn-add-top" @click="addParameter">
+              <i class="material-icons">add</i>
+              Add Parameter
+            </button>
+
             <!-- Parameters Table -->
             <div class="master-table-container">
               <table class="master-table">
@@ -265,12 +271,6 @@
                 />
               </div>
             </div>
-
-            <!-- Add Parameter Button -->
-            <button class="btn-add-bottom" @click="addParameter">
-              <i class="material-icons">add</i>
-              Add Parameter
-            </button>
           </div>
         </div>
 
