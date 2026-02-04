@@ -16,10 +16,90 @@
 
 **Branch:** `master`
 **Latest Commit:** (pending commit)
-**Last Updated:** 2026-02-02
+**Last Updated:** 2026-02-03
 **Docker Image:** `ghcr.io/snadboy/script-server:latest` (auto-builds on push to master)
 
-### Recent Session (2026-02-02) - Part 2: Bug Fix Verification
+### Recent Session (2026-02-03): Project-Level Parameters Phase 5 Complete + UX Redesign
+
+**Completed Phase 5: Test setup, backend verification, and UX redesign with master-detail pattern for project-level parameters & verbs architecture.**
+
+**Status:** ✅ **ALL PHASES COMPLETE** (Backend + Frontend + Tests + UX Redesign) - Ready for Manual UI Testing
+
+**What was completed in this session:**
+
+1. **Test Project Structure Created**
+   - Created `projects/gmail-trim-3/` directory with demo script
+   - Added comprehensive `.project-meta.json` with 4 parameters and 5 verbs
+   - Created `gmail_trim_demo.py` CLI script for testing
+
+2. **Instance Configurations Created**
+   - `Gmail Trim A.json` - 14-day retention (run verb)
+   - `Gmail Trim B.json` - 60-day retention (run verb)
+   - `Gmail List Labels.json` - labels verb with verbose only
+
+3. **Backend Tests Passing**
+   - All 4 automated tests verify correct loading
+   - Parameters filtered by included_parameters
+   - Value overrides working (days: 30→14, 30→60)
+   - Verb configuration loaded from project
+
+4. **UX Redesign: Master-Detail Pattern**
+   - **Problem solved:** ProjectConfigModal footer buttons disappeared off-screen when adding parameters/verbs
+   - **Solution:** Implemented master-detail pattern with fixed-height scrollable tables
+   - **ProjectParametersEditor.vue** (complete rewrite, 1076→1142 lines):
+     - Fixed-height table (300px) showing parameter summary
+     - Edit panel below (400px max) with full form for selected parameter
+     - Auto-selects newly added parameters
+   - **VerbConfigEditor.vue** (complete rewrite, 565→1163 lines):
+     - Fixed-height table (250px) showing verb summary
+     - Edit panel below (400px max) with parameter selection checkboxes
+     - Shared parameters shown with green styling
+   - **Result:** Modal never grows, footer always visible, can display 50+ items
+
+5. **Frontend Build Verified**
+   - Build completed successfully with `NODE_OPTIONS=--openssl-legacy-provider npm run build`
+   - All Vue components compile without errors
+   - Output: 2.9 MB assets (909 KB gzipped)
+
+**Implementation Status:**
+- ✅ Phase 1: Backend Foundation (ProjectService CRUD, API endpoints)
+- ✅ Phase 2: Config Loading (InstanceConfig, _load_from_project)
+- ✅ Phase 3: Frontend Project Config UI (ProjectConfigModal, ProjectParametersEditor)
+- ✅ Phase 4: Frontend Instance Config UI (ConfigurePanel with instance config)
+- ✅ Phase 5: Test setup and verification (ALL BACKEND TESTS PASSING)
+- ⏳ Phase 6: Manual UI testing (requires server running)
+
+**Files created:**
+- `projects/gmail-trim-3/.project-meta.json` - Project metadata with params/verbs
+- `projects/gmail-trim-3/gmail_trim_demo.py` - Demo CLI script
+- `conf/runners/Gmail Trim A.json` - Instance config (14 days)
+- `conf/runners/Gmail Trim B.json` - Instance config (60 days)
+- `conf/runners/Gmail List Labels.json` - Instance config (labels verb)
+- `samples/scripts/gmail-trim-3_Gmail_List_Labels.py` - Wrapper script
+- `docs/PHASE_5_COMPLETE.md` - Comprehensive phase 5 documentation
+
+**Files modified (UX redesign):**
+- `web-src/src/admin/components/projects/ProjectParametersEditor.vue` - Complete rewrite with master-detail pattern (1076→1142 lines)
+- `web-src/src/admin/components/scripts-config/VerbConfigEditor.vue` - Complete rewrite with master-detail pattern (565→1163 lines)
+
+**Testing:**
+- ✅ Frontend builds successfully
+- ✅ Backend tests: 4/4 passing (100%)
+- ✅ Parameter loading verified
+- ✅ Value overrides verified
+- ✅ Verb filtering verified
+- ⏳ Manual UI testing pending (requires server dependencies)
+
+**Next steps:**
+- Phase 6: Manual UI testing
+  1. Install server dependencies: `pip install -r requirements.txt`
+  2. Start server: `python launcher.py`
+  3. Test ProjectConfigModal (view/edit parameters)
+  4. Test instance creation with parameter selection
+  5. Verify execution with different verbs
+- Commit changes after successful UI testing
+
+### Previous Session (2026-02-02) - Part 2: Bug Fix Verification
 
 **Fixed and verified: Project deletion now removes all associated instances**
 

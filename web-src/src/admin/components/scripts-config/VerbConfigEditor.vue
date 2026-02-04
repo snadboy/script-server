@@ -9,45 +9,7 @@
     </div>
 
     <template v-if="verbsEnabled">
-      <div class="verbs-section">
-        <h6>Verb Options</h6>
-        <p class="helper-text">Define the subcommands/verbs for this script (e.g., create, delete, list)</p>
-
-        <ul ref="verbsPanel" class="collapsible popout">
-          <li
-            v-for="(option, index) in verbOptions"
-            :key="verbKeys.get(option)"
-            class="verb-list-item"
-          >
-            <div class="collapsible-header verb-header primary-color-light">
-              <i class="material-icons expand-icon">chevron_right</i>
-              <span>{{ option.name || 'New Verb' }}</span>
-              <div style="flex: 1 1 0"></div>
-              <a class="btn-flat waves-circle" @click.stop="deleteVerb(option)">
-                <i class="material-icons">delete</i>
-              </a>
-              <a class="btn-flat waves-circle" @click.stop="moveVerbUp(index)">
-                <i class="material-icons">arrow_upward</i>
-              </a>
-              <a class="btn-flat waves-circle" @click.stop="moveVerbDown(index)">
-                <i class="material-icons">arrow_downward</i>
-              </a>
-            </div>
-            <div class="collapsible-body">
-              <VerbOptionEditor
-                :option="option"
-              />
-            </div>
-          </li>
-
-          <li class="add-verb-item" @click.stop="addVerb">
-            <div class="collapsible-header">
-              <i class="material-icons">add</i>Add Verb Option
-            </div>
-          </li>
-        </ul>
-      </div>
-
+      <!-- Verb Configuration Section -->
       <div class="verb-config-section">
         <h6>Verb Configuration</h6>
         <div class="row">
@@ -99,6 +61,206 @@
           </div>
         </div>
       </div>
+
+      <!-- Verb Options Section -->
+      <div class="verbs-section">
+        <div class="editor-header">
+          <span class="header-title">Verb Options ({{ verbOptions.length }})</span>
+          <button class="btn btn-primary btn-sm" @click="addVerb">
+            <i class="material-icons">add</i>
+            Add Verb
+          </button>
+        </div>
+
+        <!-- Empty State -->
+        <div v-if="verbOptions.length === 0" class="empty-state">
+          <i class="material-icons">category</i>
+          <p>No verbs defined yet</p>
+          <p class="empty-hint">Click "Add Verb" to create your first verb/subcommand</p>
+        </div>
+
+        <!-- Master-Detail Layout -->
+        <div v-else class="master-detail-container">
+          <!-- Scrollable Table (Master) -->
+          <div class="verbs-table-container">
+            <table class="verbs-table">
+              <thead>
+                <tr>
+                  <th class="col-name">Name</th>
+                  <th class="col-label">Label</th>
+                  <th class="col-description">Description</th>
+                  <th class="col-params">Parameters</th>
+                  <th class="col-actions">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="(verb, index) in verbOptions"
+                  :key="index"
+                  :class="{ selected: selectedIndex === index }"
+                  @click="selectVerb(index)"
+                >
+                  <td class="col-name">
+                    <code>{{ verb.name || '(unnamed)' }}</code>
+                  </td>
+                  <td class="col-label">{{ verb.label || '-' }}</td>
+                  <td class="col-description">{{ truncate(verb.description) }}</td>
+                  <td class="col-params">{{ verb.parameters?.length || 0 }}</td>
+                  <td class="col-actions">
+                    <button
+                      v-if="index > 0"
+                      class="btn-icon"
+                      title="Move Up"
+                      @click.stop="moveVerbUp(index)"
+                    >
+                      <i class="material-icons">arrow_upward</i>
+                    </button>
+                    <button
+                      v-if="index < verbOptions.length - 1"
+                      class="btn-icon"
+                      title="Move Down"
+                      @click.stop="moveVerbDown(index)"
+                    >
+                      <i class="material-icons">arrow_downward</i>
+                    </button>
+                    <button
+                      class="btn-icon btn-delete"
+                      title="Delete"
+                      @click.stop="deleteVerb(index)"
+                    >
+                      <i class="material-icons">delete</i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Edit Panel (Detail) -->
+          <div v-if="selectedIndex !== null" class="verb-edit-panel">
+            <h6 class="edit-panel-title">
+              Edit Verb: <code>{{ selectedVerb.name || '(unnamed)' }}</code>
+            </h6>
+
+            <div class="edit-panel-content">
+              <!-- Basic Fields -->
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Verb Name <span class="required">*</span></label>
+                  <input
+                    v-model="selectedVerb.name"
+                    class="form-input"
+                    placeholder="run, create, delete..."
+                    @input="emitUpdate"
+                  />
+                  <p class="help-text">CLI value (e.g., "create", "delete")</p>
+                </div>
+
+                <div class="form-group">
+                  <label>Label</label>
+                  <input
+                    v-model="selectedVerb.label"
+                    class="form-input"
+                    placeholder="Create Item"
+                    @input="emitUpdate"
+                  />
+                  <p class="help-text">Display text shown in UI</p>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Description</label>
+                <textarea
+                  v-model="selectedVerb.description"
+                  class="form-textarea"
+                  rows="2"
+                  placeholder="Help text shown when verb is selected"
+                  @input="emitUpdate"
+                ></textarea>
+              </div>
+
+              <!-- Parameter Selection -->
+              <div v-if="availableParameters.length > 0" class="form-group">
+                <label class="section-label">Available Parameters</label>
+                <p class="help-text">Select which parameters are visible when this verb is selected</p>
+
+                <div class="parameter-selection">
+                  <div class="parameter-selection-header">
+                    <span class="parameter-selection-label">Select Parameters:</span>
+                    <div class="parameter-selection-actions">
+                      <button
+                        type="button"
+                        class="link-button"
+                        @click="selectAllParameters"
+                      >
+                        Select All
+                      </button>
+                      <span class="separator">|</span>
+                      <button
+                        type="button"
+                        class="link-button"
+                        @click="deselectAllParameters"
+                      >
+                        Deselect All
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="parameter-checkboxes">
+                    <label
+                      v-for="param in availableParameters"
+                      :key="param.name"
+                      class="parameter-checkbox-label"
+                      :class="{ shared: isSharedParameter(param.name) }"
+                    >
+                      <input
+                        type="checkbox"
+                        :checked="isParameterInVerb(param.name)"
+                        :disabled="isSharedParameter(param.name)"
+                        @change="toggleParameter(param.name, $event)"
+                      />
+                      <span>{{ param.name }}</span>
+                      <i v-if="isSharedParameter(param.name)" class="material-icons shared-icon" title="Shared parameter">public</i>
+                    </label>
+                  </div>
+
+                  <p class="info-message">
+                    <i class="material-icons">info</i>
+                    Shared parameters (marked with <i class="material-icons tiny">public</i>) are automatically available to all verbs
+                  </p>
+                </div>
+              </div>
+
+              <!-- Required Parameters -->
+              <div v-if="selectedVerbParameters.length > 0" class="form-group">
+                <label class="section-label">Required Parameters</label>
+                <p class="help-text">Which parameters must have a value for this verb</p>
+
+                <div class="parameter-checkboxes">
+                  <label
+                    v-for="param in selectedVerbParameters"
+                    :key="param"
+                    class="parameter-checkbox-label required-param"
+                  >
+                    <input
+                      type="checkbox"
+                      :checked="isRequiredParameter(param)"
+                      @change="toggleRequiredParameter(param, $event)"
+                    />
+                    <span>{{ param }}</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- No Selection Message -->
+          <div v-else class="no-selection-message">
+            <i class="material-icons">arrow_upward</i>
+            <p>Select a verb from the table above to edit its details</p>
+          </div>
+        </div>
+      </div>
     </template>
 
     <div v-else class="disabled-message">
@@ -111,20 +273,16 @@
 </template>
 
 <script>
-import '@/common/materializecss/imports/collapsible';
 import '@/common/materializecss/imports/toast';
-import {guid} from '@/common/utils/common';
 import TextField from '@/common/components/textfield';
 import CheckBox from '@/common/components/checkbox';
-import VerbOptionEditor from './VerbOptionEditor';
 
 export default {
   name: 'VerbConfigEditor',
 
   components: {
     TextField,
-    CheckBox,
-    VerbOptionEditor
+    CheckBox
   },
 
   props: {
@@ -135,14 +293,17 @@ export default {
     availableParameters: {
       type: Array,
       default: () => []
+    },
+    sharedParameters: {
+      type: Array,
+      default: () => []
     }
   },
 
   data() {
     return {
       config: this.initConfig(),
-      verbKeys: new Map(),
-      openingNewVerb: false,
+      selectedIndex: null,
       enabledField: {
         name: 'Enable Verb/Subcommand Support',
         description: 'Allow this script to have multiple subcommands like git or docker'
@@ -151,10 +312,6 @@ export default {
         name: 'Parameter Name',
         required: true,
         description: 'Internal name for the verb parameter (default: "verb")'
-      },
-      defaultField: {
-        name: 'Default Verb',
-        description: 'Which verb to pre-select (must match a verb name below)'
       },
       requiredField: {
         name: 'Verb Required',
@@ -181,6 +338,14 @@ export default {
 
     verbOptions() {
       return this.config?.options || [];
+    },
+
+    selectedVerb() {
+      return this.selectedIndex !== null ? this.verbOptions[this.selectedIndex] : null;
+    },
+
+    selectedVerbParameters() {
+      return this.selectedVerb?.parameters || [];
     },
 
     passAsModes() {
@@ -258,31 +423,7 @@ export default {
     }
   },
 
-  mounted() {
-    this.initCollapsible();
-  },
-
   methods: {
-    initCollapsible() {
-      this.$nextTick(() => {
-        if (this.$refs.verbsPanel) {
-          // Destroy existing instance if it exists
-          const existing = M.Collapsible.getInstance(this.$refs.verbsPanel);
-          if (existing) {
-            existing.destroy();
-          }
-
-          // Initialize new instance
-          M.Collapsible.init(this.$refs.verbsPanel, {
-            accordion: false,
-            onOpenEnd: () => {
-              this.openingNewVerb = false;
-            }
-          });
-        }
-      });
-    },
-
     initConfig() {
       if (this.value) {
         // Ensure options array exists
@@ -306,6 +447,10 @@ export default {
       };
     },
 
+    selectVerb(index) {
+      this.selectedIndex = index;
+    },
+
     addVerb() {
       if (!this.config.options) {
         this.$set(this.config, 'options', []);
@@ -320,41 +465,29 @@ export default {
       };
 
       this.config.options.push(newVerb);
-      this.setVerbKey(newVerb);
-
-      this.$nextTick(() => {
-        this.openingNewVerb = true;
-        this.initCollapsible();
-
-        // Open the newly added verb after collapsible is initialized
-        this.$nextTick(() => {
-          const collapsible = M.Collapsible.getInstance(this.$refs.verbsPanel);
-          if (collapsible) {
-            const lastIndex = this.config.options.length - 1;
-            collapsible.open(lastIndex);
-          }
-        });
-      });
+      this.selectedIndex = this.config.options.length - 1; // Auto-select new verb
+      this.emitUpdate();
     },
 
-    deleteVerb(verb) {
-      const index = this.config.options.indexOf(verb);
-      if (index < 0) return;
+    deleteVerb(index) {
+      if (!confirm('Are you sure you want to delete this verb?')) return;
 
+      const verb = this.config.options[index];
       this.config.options.splice(index, 1);
 
-      const toast = M.toast({
-        html: `<span>Deleted ${verb.name || 'verb'}</span>` +
-            '<button class="btn-flat toast-action">Undo</button>',
-        displayLength: 8000
+      // Clear selection if we deleted the selected verb
+      if (this.selectedIndex === index) {
+        this.selectedIndex = null;
+      } else if (this.selectedIndex > index) {
+        this.selectedIndex--;
+      }
+
+      M.toast({
+        html: `<span>Deleted ${verb.name || 'verb'}</span>`,
+        displayLength: 3000
       });
 
-      const undoButton = toast.el.getElementsByTagName('BUTTON')[0];
-      undoButton.onclick = () => {
-        toast.dismiss();
-        const insertPosition = Math.min(index, this.config.options.length);
-        this.config.options.splice(insertPosition, 0, verb);
-      };
+      this.emitUpdate();
     },
 
     moveVerbUp(index) {
@@ -363,6 +496,15 @@ export default {
       const temp = options[index - 1];
       this.$set(options, index - 1, options[index]);
       this.$set(options, index, temp);
+
+      // Update selection to follow the moved verb
+      if (this.selectedIndex === index) {
+        this.selectedIndex = index - 1;
+      } else if (this.selectedIndex === index - 1) {
+        this.selectedIndex = index;
+      }
+
+      this.emitUpdate();
     },
 
     moveVerbDown(index) {
@@ -371,11 +513,110 @@ export default {
       const temp = options[index + 1];
       this.$set(options, index + 1, options[index]);
       this.$set(options, index, temp);
+
+      // Update selection to follow the moved verb
+      if (this.selectedIndex === index) {
+        this.selectedIndex = index + 1;
+      } else if (this.selectedIndex === index + 1) {
+        this.selectedIndex = index;
+      }
+
+      this.emitUpdate();
     },
 
-    setVerbKey(verb) {
-      if (this.verbKeys.has(verb)) return;
-      this.verbKeys.set(verb, guid(32));
+    truncate(text) {
+      if (!text) return '-';
+      return text.length > 50 ? text.substring(0, 47) + '...' : text;
+    },
+
+    emitUpdate() {
+      this.$emit('input', this.config);
+    },
+
+    isSharedParameter(paramName) {
+      return this.sharedParameters && this.sharedParameters.includes(paramName);
+    },
+
+    isParameterInVerb(paramName) {
+      if (!this.selectedVerb) return false;
+      return this.selectedVerb.parameters && this.selectedVerb.parameters.includes(paramName);
+    },
+
+    toggleParameter(paramName, event) {
+      if (!this.selectedVerb) return;
+
+      const isChecked = event.target.checked;
+
+      if (!this.selectedVerb.parameters) {
+        this.$set(this.selectedVerb, 'parameters', []);
+      }
+
+      if (isChecked) {
+        // Add parameter to verb
+        if (!this.selectedVerb.parameters.includes(paramName)) {
+          this.selectedVerb.parameters.push(paramName);
+        }
+      } else {
+        // Remove parameter from verb and required list
+        this.selectedVerb.parameters = this.selectedVerb.parameters.filter(p => p !== paramName);
+        if (this.selectedVerb.required_parameters) {
+          this.selectedVerb.required_parameters = this.selectedVerb.required_parameters.filter(p => p !== paramName);
+        }
+      }
+
+      this.emitUpdate();
+    },
+
+    selectAllParameters() {
+      if (!this.selectedVerb) return;
+
+      if (!this.selectedVerb.parameters) {
+        this.$set(this.selectedVerb, 'parameters', []);
+      }
+
+      this.availableParameters.forEach(param => {
+        if (!this.isSharedParameter(param.name) && !this.selectedVerb.parameters.includes(param.name)) {
+          this.selectedVerb.parameters.push(param.name);
+        }
+      });
+
+      this.emitUpdate();
+    },
+
+    deselectAllParameters() {
+      if (!this.selectedVerb) return;
+
+      this.$set(this.selectedVerb, 'parameters', []);
+      this.$set(this.selectedVerb, 'required_parameters', []);
+
+      this.emitUpdate();
+    },
+
+    isRequiredParameter(paramName) {
+      if (!this.selectedVerb) return false;
+      return this.selectedVerb.required_parameters && this.selectedVerb.required_parameters.includes(paramName);
+    },
+
+    toggleRequiredParameter(paramName, event) {
+      if (!this.selectedVerb) return;
+
+      const isChecked = event.target.checked;
+
+      if (!this.selectedVerb.required_parameters) {
+        this.$set(this.selectedVerb, 'required_parameters', []);
+      }
+
+      if (isChecked) {
+        // Add to required list
+        if (!this.selectedVerb.required_parameters.includes(paramName)) {
+          this.selectedVerb.required_parameters.push(paramName);
+        }
+      } else {
+        // Remove from required list
+        this.selectedVerb.required_parameters = this.selectedVerb.required_parameters.filter(p => p !== paramName);
+      }
+
+      this.emitUpdate();
     }
   },
 
@@ -392,36 +633,6 @@ export default {
       handler(newValue) {
         this.$emit('input', newValue);
       }
-    },
-
-    verbOptions: {
-      immediate: true,
-      handler(options) {
-        if (options) {
-          options.forEach(verb => this.setVerbKey(verb));
-          // Reinitialize collapsible when verbs change
-          this.initCollapsible();
-        }
-      }
-    },
-
-    openingNewVerb(opening) {
-      if (!opening) return;
-
-      let interval = null;
-      interval = setInterval(() => {
-        try {
-          const verbElements = this.$refs.verbsPanel?.getElementsByTagName('li');
-          if (verbElements && verbElements.length > 1) {
-            const newVerbElement = verbElements[verbElements.length - 2];
-            newVerbElement.scrollIntoView({behavior: 'smooth'});
-          }
-        } finally {
-          if (!this.openingNewVerb) {
-            clearInterval(interval);
-          }
-        }
-      }, 40);
     }
   }
 };
@@ -435,35 +646,25 @@ export default {
 .section-label {
   font-size: 14px;
   font-weight: 500;
-  color: var(--font-color-main, #fff);
+  color: var(--text-primary, #333);
   margin-bottom: 4px;
   display: block;
 }
 
 .helper-text {
   font-size: 12px;
-  color: var(--font-color-medium, rgba(255, 255, 255, 0.7));
+  color: var(--text-secondary, #666);
   margin-top: 0;
   margin-bottom: 12px;
 }
 
-.verbs-section {
+.verb-config-section {
   margin-top: 0;
   margin-bottom: 24px;
-}
-
-.verbs-section h6 {
-  margin-top: 0;
-  margin-bottom: 8px;
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--font-color-main, #fff);
-}
-
-.verb-config-section {
-  margin-top: 24px;
-  padding-top: 24px;
-  border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  padding: 16px;
+  background: #f9f9f9;
+  border-radius: 6px;
+  border: 1px solid var(--border-color, #e0e0e0);
 }
 
 .verb-config-section h6 {
@@ -471,16 +672,16 @@ export default {
   margin-bottom: 16px;
   font-size: 16px;
   font-weight: 500;
-  color: var(--font-color-main, #fff);
+  color: var(--text-primary, #333);
 }
 
 .default-verb-select {
   width: 100%;
   padding: 8px 12px;
-  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2));
+  border: 1px solid var(--border-color, #ddd);
   border-radius: 4px;
-  background: var(--background-color, rgba(255, 255, 255, 0.05));
-  color: var(--font-color-main, #fff);
+  background: #fff;
+  color: #333;
   font-size: 14px;
   opacity: 1 !important;
   appearance: menulist;
@@ -493,8 +694,8 @@ export default {
 }
 
 .default-verb-select option {
-  background: var(--background-color, #424242);
-  color: var(--font-color-main, #fff);
+  background: #fff;
+  color: #333;
 }
 
 .select-helper {
@@ -502,27 +703,425 @@ export default {
   margin-bottom: 0;
 }
 
-.collapsible-header.verb-header {
-  padding-top: 8px;
-  padding-bottom: 8px;
+.verbs-section {
+  margin-top: 24px;
+}
+
+.editor-header {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
+  margin-bottom: 16px;
 }
 
-.expand-icon {
-  transition: transform 0.3s ease;
+.header-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary, #333);
 }
 
-/* Rotate chevron when expanded */
-.verb-list-item.active .expand-icon {
-  transform: rotate(90deg);
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-secondary, #999);
+  border: 2px dashed #e0e0e0;
+  border-radius: 6px;
 }
 
-.btn-flat {
+.empty-state .material-icons {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state p {
+  margin: 8px 0;
+  font-size: 16px;
+}
+
+.empty-hint {
+  font-size: 14px !important;
+  opacity: 0.7;
+}
+
+/* Master-Detail Container */
+.master-detail-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Scrollable Table (fixed height) */
+.verbs-table-container {
+  max-height: 250px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.verbs-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.verbs-table thead {
+  position: sticky;
+  top: 0;
+  background: #f5f5f5;
+  z-index: 1;
+}
+
+.verbs-table th {
+  padding: 12px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #666);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid var(--border-color, #e0e0e0);
+}
+
+.verbs-table tbody tr {
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.verbs-table tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+.verbs-table tbody tr.selected {
+  background-color: #e3f2fd;
+  font-weight: 500;
+}
+
+.verbs-table td {
+  padding: 10px 12px;
+  font-size: 14px;
+  color: var(--text-primary, #333);
+}
+
+.col-name code {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  background: #f0f0f0;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 500;
+}
+
+.col-description {
+  max-width: 300px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.col-actions {
+  text-align: right;
+}
+
+.col-actions .btn-icon {
+  padding: 4px;
+  margin-left: 2px;
+}
+
+/* Edit Panel */
+.verb-edit-panel {
+  border-top: 2px solid var(--border-color, #e0e0e0);
+  padding-top: 16px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.edit-panel-title {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-primary, #333);
+}
+
+.edit-panel-title code {
+  font-family: 'Courier New', monospace;
+  background: #f0f0f0;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+  color: var(--primary-color, #2196F3);
+}
+
+.edit-panel-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.no-selection-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary, #999);
+  border: 2px dashed #e0e0e0;
+  border-radius: 6px;
+}
+
+.no-selection-message .material-icons {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.no-selection-message p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Form Controls */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary, #333);
+}
+
+.required {
+  color: #d32f2f;
+  margin-left: 2px;
+}
+
+.form-input,
+.form-textarea {
+  padding: 8px 10px;
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 4px;
+  font-size: 14px;
+  background: #fff;
+  color: #333;
+  font-family: inherit;
+}
+
+.form-input:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--primary-color, #2196F3);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.help-text {
+  margin: 4px 0 0 0;
+  font-size: 12px;
+  color: var(--text-secondary, #666);
+  font-style: italic;
+}
+
+/* Parameter Selection */
+.parameter-selection {
+  padding: 12px;
+  background: #f9f9f9;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+}
+
+.parameter-selection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.parameter-selection-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.parameter-selection-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: #2196f3;
+  font-size: 12px;
+  cursor: pointer;
   padding: 0;
+  text-decoration: underline;
 }
 
-.btn-flat i {
-  margin-right: 0;
+.link-button:hover {
+  color: #1976d2;
+}
+
+.separator {
+  color: #ccc;
+  font-size: 12px;
+}
+
+.parameter-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+.parameter-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.parameter-checkbox-label:hover:not(.shared) {
+  background: #f5f5f5;
+  border-color: #2196f3;
+}
+
+.parameter-checkbox-label.shared {
+  background: #e8f5e9;
+  border-color: #4caf50;
+  cursor: not-allowed;
+}
+
+.parameter-checkbox-label.required-param {
+  background: #fff3e0;
+  border-color: #ff9800;
+}
+
+.parameter-checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.parameter-checkbox-label input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+}
+
+.parameter-checkbox-label span {
+  font-size: 13px;
+  color: #333;
+  font-weight: 400;
+}
+
+.shared-icon {
+  font-size: 16px !important;
+  color: #4caf50;
+  margin-left: auto;
+}
+
+.info-message {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: #e3f2fd;
+  border-left: 3px solid #2196f3;
+  border-radius: 4px;
+  color: #1565c0;
+  font-size: 12px;
+}
+
+.info-message .material-icons {
+  font-size: 18px;
+}
+
+.info-message .tiny {
+  font-size: 14px !important;
+  vertical-align: middle;
+}
+
+/* Buttons */
+.btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: var(--primary-color, #2196F3);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--primary-color-dark, #1976D2);
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.btn .material-icons {
+  font-size: 18px;
+}
+
+.btn-sm .material-icons {
+  font-size: 16px;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon:hover {
+  background-color: var(--hover-color, #f0f0f0);
+}
+
+.btn-icon .material-icons {
+  font-size: 18px;
+  color: var(--text-secondary, #666);
+}
+
+.btn-icon.btn-delete:hover {
+  background-color: #ffebee;
+}
+
+.btn-icon.btn-delete:hover .material-icons {
+  color: #c62828;
 }
 
 .disabled-message {

@@ -1,13 +1,8 @@
 <template>
   <div class="parameters-editor">
+    <!-- Header with Add Button -->
     <div class="editor-header">
-      <div class="header-title">
-        <h6>Parameter Definitions</h6>
-        <p class="header-subtitle">
-          Define parameters once at the project level. Script instances can then select which
-          parameters to include and override default values.
-        </p>
-      </div>
+      <span class="header-title">Parameters ({{ parameters.length }})</span>
       <button class="btn btn-primary btn-sm" @click="addParameter">
         <i class="material-icons">add</i>
         Add Parameter
@@ -21,28 +16,95 @@
       <p class="empty-hint">Click "Add Parameter" to create your first parameter</p>
     </div>
 
-    <!-- Parameters List -->
-    <div v-else class="parameters-list">
-      <div
-        v-for="(param, index) in parameters"
-        :key="index"
-        class="parameter-card"
-      >
-        <div class="parameter-header">
-          <div class="parameter-title">
-            <div class="field-with-label">
-              <label class="inline-label">Name</label>
+    <!-- Master-Detail Layout -->
+    <div v-else class="master-detail-container">
+      <!-- Scrollable Table (Master) -->
+      <div class="parameters-table-container">
+        <table class="parameters-table">
+          <thead>
+            <tr>
+              <th class="col-name">Name</th>
+              <th class="col-type">Type</th>
+              <th class="col-required">Required</th>
+              <th class="col-default">Default</th>
+              <th class="col-cli">CLI Flag</th>
+              <th class="col-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="(param, index) in parameters"
+              :key="index"
+              :class="{ selected: selectedIndex === index }"
+              @click="selectParameter(index)"
+            >
+              <td class="col-name">
+                <code>{{ param.name || '(unnamed)' }}</code>
+              </td>
+              <td class="col-type">{{ param.type }}</td>
+              <td class="col-required">{{ param.required ? 'Yes' : 'No' }}</td>
+              <td class="col-default">{{ formatDefault(param) }}</td>
+              <td class="col-cli">
+                <code v-if="param.param">{{ param.param }}</code>
+                <span v-else class="text-muted">(positional)</span>
+              </td>
+              <td class="col-actions">
+                <button
+                  v-if="index > 0"
+                  class="btn-icon"
+                  title="Move Up"
+                  @click.stop="moveParameter(index, -1)"
+                >
+                  <i class="material-icons">arrow_upward</i>
+                </button>
+                <button
+                  v-if="index < parameters.length - 1"
+                  class="btn-icon"
+                  title="Move Down"
+                  @click.stop="moveParameter(index, 1)"
+                >
+                  <i class="material-icons">arrow_downward</i>
+                </button>
+                <button
+                  class="btn-icon btn-delete"
+                  title="Delete"
+                  @click.stop="deleteParameter(index)"
+                >
+                  <i class="material-icons">delete</i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Edit Panel (Detail) -->
+      <div v-if="selectedIndex !== null" class="parameter-edit-panel">
+        <h6 class="edit-panel-title">
+          Edit Parameter: <code>{{ selectedParameter.name || '(unnamed)' }}</code>
+        </h6>
+
+        <div class="edit-panel-content">
+          <!-- Basic Fields -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>Name <span class="required">*</span></label>
               <input
-                v-model="param.name"
-                class="parameter-name-input"
+                v-model="selectedParameter.name"
+                class="form-input"
                 placeholder="parameter_name"
                 @input="emitUpdate"
               />
-              <span class="field-hint">Internal identifier (e.g., days, verbose)</span>
+              <p class="help-text">Internal identifier (e.g., days, verbose)</p>
             </div>
-            <div class="field-with-label">
-              <label class="inline-label">Type</label>
-              <select v-model="param.type" class="parameter-type-select" @change="onTypeChange(param, index)">
+
+            <div class="form-group">
+              <label>Type <span class="required">*</span></label>
+              <select
+                v-model="selectedParameter.type"
+                class="form-input"
+                @change="onTypeChange(selectedParameter)"
+              >
                 <option value="text">Text</option>
                 <option value="int">Integer</option>
                 <option value="bool">Boolean</option>
@@ -50,39 +112,11 @@
               </select>
             </div>
           </div>
-          <div class="parameter-actions">
-            <button
-              v-if="index > 0"
-              class="btn-icon"
-              title="Move Up"
-              @click="moveParameter(index, -1)"
-            >
-              <i class="material-icons">arrow_upward</i>
-            </button>
-            <button
-              v-if="index < parameters.length - 1"
-              class="btn-icon"
-              title="Move Down"
-              @click="moveParameter(index, 1)"
-            >
-              <i class="material-icons">arrow_downward</i>
-            </button>
-            <button
-              class="btn-icon btn-delete"
-              title="Delete"
-              @click="deleteParameter(index)"
-            >
-              <i class="material-icons">delete</i>
-            </button>
-          </div>
-        </div>
 
-        <div class="parameter-body">
-          <!-- Description -->
           <div class="form-group">
             <label>Description</label>
             <input
-              v-model="param.description"
+              v-model="selectedParameter.description"
               class="form-input"
               placeholder="Parameter description"
               @input="emitUpdate"
@@ -97,8 +131,8 @@
             <label class="checkbox-label">
               <input
                 type="checkbox"
-                :checked="isSharedParameter(param.name)"
-                @change="toggleSharedParameter(param.name, $event)"
+                :checked="isSharedParameter(selectedParameter.name)"
+                @change="toggleSharedParameter(selectedParameter.name, $event)"
               />
               <span>
                 <i class="material-icons">public</i>
@@ -107,14 +141,14 @@
             </label>
 
             <!-- Individual Verb Selection (only if not shared) -->
-            <div v-if="!isSharedParameter(param.name)" class="verb-selection">
+            <div v-if="!isSharedParameter(selectedParameter.name)" class="verb-selection">
               <div class="verb-selection-header">
                 <span class="verb-selection-label">Select Verbs:</span>
                 <div class="verb-selection-actions">
                   <button
                     type="button"
                     class="link-button"
-                    @click="selectAllVerbs(param.name)"
+                    @click="selectAllVerbs(selectedParameter.name)"
                   >
                     Select All
                   </button>
@@ -122,7 +156,7 @@
                   <button
                     type="button"
                     class="link-button"
-                    @click="deselectAllVerbs(param.name)"
+                    @click="deselectAllVerbs(selectedParameter.name)"
                   >
                     Deselect All
                   </button>
@@ -137,26 +171,26 @@
                 >
                   <input
                     type="checkbox"
-                    :checked="isParameterInVerb(param.name, verb)"
-                    @change="toggleParameterInVerb(param.name, verb, $event)"
+                    :checked="isParameterInVerb(selectedParameter.name, verb)"
+                    @change="toggleParameterInVerb(selectedParameter.name, verb, $event)"
                   />
                   <span>{{ verb.label }}</span>
                 </label>
               </div>
 
-              <p v-if="getVerbsUsingParameter(param.name).length === 0" class="warning-message">
+              <p v-if="getVerbsUsingParameter(selectedParameter.name).length === 0" class="warning-message">
                 <i class="material-icons">warning</i>
                 This parameter is not used by any verb
               </p>
             </div>
           </div>
 
-          <!-- CLI Flag -->
+          <!-- CLI Flag and Required -->
           <div class="form-row">
             <div class="form-group">
               <label>CLI Flag</label>
               <input
-                v-model="param.param"
+                v-model="selectedParameter.param"
                 class="form-input"
                 placeholder="--flag-name or -f"
                 @input="emitUpdate"
@@ -167,11 +201,10 @@
               </p>
             </div>
 
-            <!-- Required Checkbox -->
             <div class="form-group">
               <label class="checkbox-label">
                 <input
-                  v-model="param.required"
+                  v-model="selectedParameter.required"
                   type="checkbox"
                   @change="emitUpdate"
                 />
@@ -181,13 +214,15 @@
           </div>
 
           <!-- Type-Specific Fields -->
-          <div class="type-specific-fields">
+          <div v-if="selectedParameter.type" class="type-specific-section">
+            <h6 class="section-title">Type-Specific Settings</h6>
+
             <!-- Text Type -->
-            <div v-if="param.type === 'text'" class="form-row">
+            <div v-if="selectedParameter.type === 'text'" class="form-row">
               <div class="form-group">
                 <label>Min Length</label>
                 <input
-                  v-model.number="param.min_length"
+                  v-model.number="selectedParameter.min_length"
                   type="number"
                   class="form-input"
                   min="0"
@@ -197,7 +232,7 @@
               <div class="form-group">
                 <label>Max Length</label>
                 <input
-                  v-model.number="param.max_length"
+                  v-model.number="selectedParameter.max_length"
                   type="number"
                   class="form-input"
                   min="0"
@@ -207,11 +242,11 @@
             </div>
 
             <!-- Integer Type -->
-            <div v-if="param.type === 'int'" class="form-row">
+            <div v-if="selectedParameter.type === 'int'" class="form-row">
               <div class="form-group">
                 <label>Min Value</label>
                 <input
-                  v-model.number="param.min"
+                  v-model.number="selectedParameter.min"
                   type="number"
                   class="form-input"
                   @input="emitUpdate"
@@ -220,7 +255,7 @@
               <div class="form-group">
                 <label>Max Value</label>
                 <input
-                  v-model.number="param.max"
+                  v-model.number="selectedParameter.max"
                   type="number"
                   class="form-input"
                   @input="emitUpdate"
@@ -229,11 +264,11 @@
             </div>
 
             <!-- Boolean Type -->
-            <div v-if="param.type === 'bool'">
+            <div v-if="selectedParameter.type === 'bool'">
               <div class="form-group">
                 <label class="checkbox-label">
                   <input
-                    v-model="param.no_value"
+                    v-model="selectedParameter.no_value"
                     type="checkbox"
                     @change="emitUpdate"
                   />
@@ -248,7 +283,7 @@
                 <label>Default Value</label>
                 <label class="checkbox-label">
                   <input
-                    v-model="param.default"
+                    v-model="selectedParameter.default"
                     type="checkbox"
                     @change="emitUpdate"
                   />
@@ -258,7 +293,7 @@
             </div>
 
             <!-- List Type -->
-            <div v-if="param.type === 'list'" class="list-values-section">
+            <div v-if="selectedParameter.type === 'list'" class="list-values-section">
               <label>List Options</label>
               <p class="help-text">
                 Define the available options for this list parameter.
@@ -272,7 +307,7 @@
                 </div>
 
                 <div
-                  v-for="(option, optIndex) in getListValues(param)"
+                  v-for="(option, optIndex) in getListValues(selectedParameter)"
                   :key="optIndex"
                   class="table-row"
                 >
@@ -280,25 +315,25 @@
                     v-model="option.value"
                     class="form-input"
                     placeholder="value"
-                    @input="updateListValues(param, index)"
+                    @input="updateListValues()"
                   />
                   <input
                     v-model="option.label"
                     class="form-input"
                     placeholder="Display label"
-                    @input="updateListValues(param, index)"
+                    @input="updateListValues()"
                   />
                   <button
                     class="btn-icon btn-delete"
                     title="Remove option"
-                    @click="removeListValue(param, optIndex, index)"
+                    @click="removeListValue(selectedParameter, optIndex)"
                   >
                     <i class="material-icons">close</i>
                   </button>
                 </div>
               </div>
 
-              <button class="btn btn-sm" @click="addListValue(param, index)">
+              <button class="btn btn-sm" @click="addListValue(selectedParameter)">
                 <i class="material-icons">add</i>
                 Add Option
               </button>
@@ -306,31 +341,31 @@
           </div>
 
           <!-- Default Value (for non-bool, non-list types) -->
-          <div v-if="param.type !== 'bool' && param.type !== 'list'" class="form-group">
+          <div v-if="selectedParameter.type !== 'bool' && selectedParameter.type !== 'list'" class="form-group">
             <label>Default Value</label>
             <input
-              v-if="param.type === 'int'"
-              v-model.number="param.default"
+              v-if="selectedParameter.type === 'int'"
+              v-model.number="selectedParameter.default"
               type="number"
               class="form-input"
               @input="emitUpdate"
             />
             <input
               v-else
-              v-model="param.default"
+              v-model="selectedParameter.default"
               class="form-input"
-              :placeholder="getDefaultPlaceholder(param.type)"
+              :placeholder="getDefaultPlaceholder(selectedParameter.type)"
               @input="emitUpdate"
             />
           </div>
 
           <!-- Default Value for List Type -->
-          <div v-if="param.type === 'list' && getListValues(param).length > 0" class="form-group">
+          <div v-if="selectedParameter.type === 'list' && getListValues(selectedParameter).length > 0" class="form-group">
             <label>Default Selection</label>
-            <select v-model="param.default" class="form-input" @change="emitUpdate">
+            <select v-model="selectedParameter.default" class="form-input" @change="emitUpdate">
               <option :value="null">-- None --</option>
               <option
-                v-for="option in getListValues(param)"
+                v-for="option in getListValues(selectedParameter)"
                 :key="option.value"
                 :value="option.value"
               >
@@ -339,6 +374,12 @@
             </select>
           </div>
         </div>
+      </div>
+
+      <!-- No Selection Message -->
+      <div v-else class="no-selection-message">
+        <i class="material-icons">arrow_upward</i>
+        <p>Select a parameter from the table above to edit its details</p>
       </div>
     </div>
   </div>
@@ -365,6 +406,12 @@ export default {
 
   emits: ['update:modelValue', 'update:verbs', 'update:sharedParameters'],
 
+  data() {
+    return {
+      selectedIndex: null
+    };
+  },
+
   computed: {
     parameters: {
       get() {
@@ -373,10 +420,18 @@ export default {
       set(value) {
         this.$emit('update:modelValue', value);
       }
+    },
+
+    selectedParameter() {
+      return this.selectedIndex !== null ? this.parameters[this.selectedIndex] : null;
     }
   },
 
   methods: {
+    selectParameter(index) {
+      this.selectedIndex = index;
+    },
+
     addParameter() {
       const newParam = {
         name: '',
@@ -387,12 +442,20 @@ export default {
         default: null
       };
       this.parameters.push(newParam);
+      this.selectedIndex = this.parameters.length - 1; // Auto-select new parameter
       this.emitUpdate();
     },
 
     deleteParameter(index) {
       if (confirm('Are you sure you want to delete this parameter?')) {
         this.parameters.splice(index, 1);
+        // Clear selection if we deleted the selected parameter
+        if (this.selectedIndex === index) {
+          this.selectedIndex = null;
+        } else if (this.selectedIndex > index) {
+          // Adjust selection index if necessary
+          this.selectedIndex--;
+        }
         this.emitUpdate();
       }
     },
@@ -403,8 +466,24 @@ export default {
         const params = [...this.parameters];
         [params[index], params[newIndex]] = [params[newIndex], params[index]];
         this.parameters = params;
+        // Update selection to follow the moved parameter
+        if (this.selectedIndex === index) {
+          this.selectedIndex = newIndex;
+        } else if (this.selectedIndex === newIndex) {
+          this.selectedIndex = index;
+        }
         this.emitUpdate();
       }
+    },
+
+    formatDefault(param) {
+      if (param.default === null || param.default === undefined) {
+        return '-';
+      }
+      if (param.type === 'bool') {
+        return param.default ? 'true' : 'false';
+      }
+      return String(param.default);
     },
 
     emitUpdate() {
@@ -424,12 +503,12 @@ export default {
       }
     },
 
-    onTypeChange(param, index) {
+    onTypeChange(param) {
       // Initialize type-specific fields when type changes
       if (param.type === 'list' && !param.values) {
         param.values = [];
         // Add one empty option to start
-        this.addListValue(param, index);
+        this.addListValue(param);
       }
       this.emitUpdate();
     },
@@ -441,7 +520,7 @@ export default {
       return param.values;
     },
 
-    addListValue(param, paramIndex) {
+    addListValue(param) {
       if (!param.values) {
         param.values = [];
       }
@@ -449,14 +528,14 @@ export default {
       this.emitUpdate();
     },
 
-    removeListValue(param, optionIndex, paramIndex) {
+    removeListValue(param, optionIndex) {
       if (param.values && param.values.length > optionIndex) {
         param.values.splice(optionIndex, 1);
         this.emitUpdate();
       }
     },
 
-    updateListValues(param, paramIndex) {
+    updateListValues() {
       // Just emit update when list values change
       this.emitUpdate();
     },
@@ -562,29 +641,20 @@ export default {
 .parameters-editor {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  height: 100%;
 }
 
 .editor-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 8px;
+  align-items: center;
+  margin-bottom: 16px;
 }
 
-.header-title h6 {
-  margin: 0 0 8px 0;
+.header-title {
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary, #333);
-}
-
-.header-subtitle {
-  margin: 0;
-  font-size: 14px;
-  color: var(--text-secondary, #666);
-  line-height: 1.4;
-  max-width: 600px;
 }
 
 .empty-state {
@@ -609,110 +679,150 @@ export default {
   opacity: 0.7;
 }
 
-.parameters-list {
+/* Master-Detail Container */
+.master-detail-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Scrollable Table (fixed height) */
+.parameters-table-container {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.parameters-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.parameters-table thead {
+  position: sticky;
+  top: 0;
+  background: #f5f5f5;
+  z-index: 1;
+}
+
+.parameters-table th {
+  padding: 12px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #666);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid var(--border-color, #e0e0e0);
+}
+
+.parameters-table tbody tr {
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.parameters-table tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+.parameters-table tbody tr.selected {
+  background-color: #e3f2fd;
+  font-weight: 500;
+}
+
+.parameters-table td {
+  padding: 10px 12px;
+  font-size: 14px;
+  color: var(--text-primary, #333);
+}
+
+.col-name code {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  background: #f0f0f0;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 500;
+}
+
+.col-cli code {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  background: #e0f7fa;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.text-muted {
+  color: var(--text-secondary, #999);
+  font-style: italic;
+  font-size: 12px;
+}
+
+.col-actions {
+  text-align: right;
+}
+
+.col-actions .btn-icon {
+  padding: 4px;
+  margin-left: 2px;
+}
+
+/* Edit Panel (scrollable if needed) */
+.parameter-edit-panel {
+  border-top: 2px solid var(--border-color, #e0e0e0);
+  padding-top: 16px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.edit-panel-title {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-primary, #333);
+}
+
+.edit-panel-title code {
+  font-family: 'Courier New', monospace;
+  background: #f0f0f0;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+  color: var(--primary-color, #2196F3);
+}
+
+.edit-panel-content {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.parameter-card {
-  border: 1px solid var(--border-color, #e0e0e0);
+.no-selection-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary, #999);
+  border: 2px dashed #e0e0e0;
   border-radius: 6px;
-  overflow: hidden;
-  background: #fff;
-  transition: box-shadow 0.2s;
 }
 
-.parameter-card:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.no-selection-message .material-icons {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.5;
 }
 
-.parameter-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  background: #f9f9f9;
-  border-bottom: 1px solid var(--border-color, #e0e0e0);
-}
-
-.parameter-title {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  flex: 1;
-}
-
-.parameter-name-input {
-  font-family: 'Courier New', monospace;
-  font-size: 16px;
-  font-weight: 500;
-  padding: 6px 10px;
-  border: 1px solid var(--border-color, #ddd);
-  border-radius: 4px;
-  min-width: 200px;
-  background: #fff;
-  color: #333;
-}
-
-.parameter-name-input:focus {
-  outline: none;
-  border-color: var(--primary-color, #2196F3);
-}
-
-.parameter-type-select {
-  padding: 6px 10px;
-  border: 1px solid var(--border-color, #ddd);
-  border-radius: 4px;
-  background: #fff;
-  color: #333;
+.no-selection-message p {
+  margin: 0;
   font-size: 14px;
-  cursor: pointer;
-  opacity: 1 !important;
-  appearance: menulist;
 }
 
-.parameter-actions {
-  display: flex;
-  gap: 4px;
-}
-
-.btn-icon {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-icon:hover {
-  background-color: var(--hover-color, #f0f0f0);
-}
-
-.btn-icon .material-icons {
-  font-size: 20px;
-  color: var(--text-secondary, #666);
-}
-
-.btn-icon.btn-delete:hover {
-  background-color: #ffebee;
-}
-
-.btn-icon.btn-delete:hover .material-icons {
-  color: #c62828;
-}
-
-.parameter-body {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
+/* Form Controls */
 .form-group {
   display: flex;
   flex-direction: column;
@@ -731,8 +841,12 @@ export default {
   color: var(--text-primary, #333);
 }
 
-.form-input,
-.form-select {
+.required {
+  color: #d32f2f;
+  margin-left: 2px;
+}
+
+.form-input {
   padding: 8px 10px;
   border: 1px solid var(--border-color, #ddd);
   border-radius: 4px;
@@ -741,8 +855,7 @@ export default {
   color: #333;
 }
 
-.form-input:focus,
-.form-select:focus {
+.form-input:focus {
   outline: none;
   border-color: var(--primary-color, #2196F3);
 }
@@ -766,10 +879,10 @@ export default {
   cursor: pointer;
 }
 
-.form-checkbox {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
+.checkbox-label .material-icons {
+  font-size: 18px;
+  vertical-align: middle;
+  margin-right: 4px;
 }
 
 .help-text {
@@ -777,62 +890,6 @@ export default {
   font-size: 12px;
   color: var(--text-secondary, #666);
   font-style: italic;
-}
-
-.type-specific-fields {
-  padding: 12px;
-  background: #f5f5f5;
-  border-radius: 4px;
-  margin-top: 4px;
-}
-
-.btn {
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  border: none;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.2s;
-}
-
-.btn-primary {
-  background: var(--primary-color, #2196F3);
-  color: white;
-}
-
-.btn-primary:hover {
-  background: var(--primary-color-dark, #1976D2);
-}
-
-.btn .material-icons {
-  font-size: 18px;
-}
-
-/* New styles for improved labels and list values */
-.field-with-label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.inline-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-secondary, #666);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin: 0;
-}
-
-.field-hint {
-  font-size: 11px;
-  color: var(--text-secondary, #999);
-  font-style: italic;
-  margin-top: -2px;
 }
 
 .help-text code {
@@ -844,6 +901,22 @@ export default {
   color: #d32f2f;
 }
 
+/* Type-Specific Section */
+.type-specific-section {
+  padding: 16px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+}
+
+.section-title {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #333);
+}
+
+/* List Values Table */
 .list-values-section {
   padding: 16px;
   background: #fafafa;
@@ -898,13 +971,27 @@ export default {
   background: #fafafa;
 }
 
-.col-value,
-.col-display {
-  font-size: 13px;
+/* Buttons */
+.btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
 }
 
-.col-actions {
-  text-align: center;
+.btn-primary {
+  background: var(--primary-color, #2196F3);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--primary-color-dark, #1976D2);
 }
 
 .btn-sm {
@@ -912,57 +999,44 @@ export default {
   font-size: 13px;
 }
 
+.btn .material-icons {
+  font-size: 18px;
+}
+
 .btn-sm .material-icons {
   font-size: 16px;
 }
 
-/* Where Used display */
-.where-used-display {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-}
-
-.usage-badge {
+.btn-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
+  justify-content: center;
 }
 
-.usage-badge .material-icons {
-  font-size: 16px;
+.btn-icon:hover {
+  background-color: var(--hover-color, #f0f0f0);
 }
 
-.usage-global {
-  background: #4caf50;
-  color: white;
+.btn-icon .material-icons {
+  font-size: 18px;
+  color: var(--text-secondary, #666);
 }
 
-.usage-verb {
-  background: #2196f3;
-  color: white;
+.btn-icon.btn-delete:hover {
+  background-color: #ffebee;
 }
 
-.usage-none {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: #ff9800;
-  font-size: 12px;
-  font-style: italic;
+.btn-icon.btn-delete:hover .material-icons {
+  color: #c62828;
 }
 
-.usage-none .material-icons {
-  font-size: 16px;
-}
-
-/* Verb Selection Controls */
+/* Verb Selection */
 .verb-selection {
   margin-top: 12px;
   padding: 12px;
@@ -1064,12 +1138,5 @@ export default {
 
 .warning-message .material-icons {
   font-size: 18px;
-}
-
-/* Shared parameter checkbox with icon */
-.checkbox-label .material-icons {
-  font-size: 18px;
-  vertical-align: middle;
-  margin-right: 4px;
 }
 </style>

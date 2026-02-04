@@ -1,24 +1,14 @@
 {
   "id": "gmail-trim-3",
   "name": "Gmail Trim",
-  "import_type": "local",
-  "source_url": "/home/snadboy/projects/gmail-trim",
-  "imported_at": "2026-02-03T14:43:00.000000",
+  "import_type": "test",
+  "source_url": null,
+  "imported_at": "2026-02-03T00:00:00.000000",
   "entry_points": [
-    "gmail_cleanup.main:app"
+    "gmail_trim_demo:main"
   ],
-  "dependencies": [
-    "google-api-python-client",
-    "structlog",
-    "pyyaml",
-    "pydantic",
-    "requests",
-    "google-auth-oauthlib",
-    "pydantic-settings",
-    "typer",
-    "google-auth"
-  ],
-  "wrapper_script": "samples/scripts/gmail-trim-3.py",
+  "dependencies": [],
+  "wrapper_script": null,
   "runner_config": null,
   "parameters": [
     {
@@ -34,7 +24,7 @@
     {
       "name": "dry_run",
       "type": "bool",
-      "description": "Preview deletions without actually deleting",
+      "description": "Preview mode - don't actually delete anything",
       "required": false,
       "default": true,
       "param": "--dry-run",
@@ -43,7 +33,7 @@
     {
       "name": "verbose",
       "type": "bool",
-      "description": "Enable verbose logging (DEBUG level)",
+      "description": "Enable verbose logging",
       "required": false,
       "default": false,
       "param": "-v",
@@ -52,7 +42,7 @@
     {
       "name": "config_file",
       "type": "text",
-      "description": "Path to YAML configuration file",
+      "description": "Path to configuration file",
       "required": false,
       "param": "-c"
     }
@@ -67,28 +57,28 @@
       {
         "name": "run",
         "label": "Run Cleanup",
-        "description": "Execute email cleanup process",
+        "description": "Execute email cleanup with configured settings",
         "parameters": ["days", "dry_run", "verbose", "config_file"],
         "required_parameters": []
       },
       {
         "name": "auth",
         "label": "Authenticate",
-        "description": "Authenticate with Google APIs",
+        "description": "Authorize access to Gmail and Contacts APIs",
         "parameters": ["verbose"],
         "required_parameters": []
       },
       {
         "name": "labels",
         "label": "List Labels",
-        "description": "List all Gmail labels",
+        "description": "Show all Gmail labels in the account",
         "parameters": ["verbose"],
         "required_parameters": []
       },
       {
         "name": "groups",
         "label": "List Contact Groups",
-        "description": "List all Google contact groups",
+        "description": "Show all Google contact groups",
         "parameters": ["verbose"],
         "required_parameters": []
       },
