@@ -15,15 +15,16 @@
 ## Current State
 
 **Branch:** `master`
-**Latest Commit:** `acb4bf2` - Phase 5 complete with master-detail UX
-**Last Updated:** 2026-02-03
-**Docker Image:** `ghcr.io/snadboy/script-server:latest` (auto-builds on push to master)
+**Latest Commit:** `4cf99d0` - Updated session notes (4 commits pushed)
+**Last Updated:** 2026-02-03 22:15
+**Docker Image:** `ghcr.io/snadboy/script-server:latest` (building via GitHub Actions)
+**Local Server:** ✅ Running on http://localhost:5000 (PID 2703032)
 
-### Recent Session (2026-02-03): Project-Level Parameters Phase 5 Complete + UX Redesign
+### Recent Session (2026-02-03): Project-Level Parameters Complete - All Phases + Documentation
 
-**Completed Phase 5: Test setup, backend verification, and UX redesign with master-detail pattern for project-level parameters & verbs architecture.**
+**Completed Phases 1-5: Full implementation of project-level parameters & verbs architecture, comprehensive documentation, and UX redesign with master-detail pattern.**
 
-**Status:** ✅ **ALL PHASES COMPLETE** (Backend + Frontend + Tests + UX Redesign) - Ready for Manual UI Testing
+**Status:** ✅ **ALL PHASES COMMITTED & PUSHED** - Ready for Phase 6 Manual UI Testing
 
 **What was completed in this session:**
 
@@ -62,12 +63,12 @@
    - Output: 2.9 MB assets (909 KB gzipped)
 
 **Implementation Status:**
-- ✅ Phase 1: Backend Foundation (ProjectService CRUD, API endpoints)
-- ✅ Phase 2: Config Loading (InstanceConfig, _load_from_project)
-- ✅ Phase 3: Frontend Project Config UI (ProjectConfigModal, ProjectParametersEditor)
-- ✅ Phase 4: Frontend Instance Config UI (ConfigurePanel with instance config)
-- ✅ Phase 5: Test setup and verification (ALL BACKEND TESTS PASSING)
-- ⏳ Phase 6: Manual UI testing (requires server running)
+- ✅ Phase 1: Backend Foundation (ProjectService CRUD, API endpoints) - COMMITTED
+- ✅ Phase 2: Config Loading (InstanceConfig, _load_from_project) - COMMITTED
+- ✅ Phase 3: Frontend Project Config UI (ProjectConfigModal, ProjectParametersEditor) - COMMITTED
+- ✅ Phase 4: Frontend Instance Config UI (ConfigurePanel with instance config) - COMMITTED
+- ✅ Phase 5: Test setup, UX redesign, documentation (ALL TESTS PASSING) - COMMITTED
+- ⏳ Phase 6: Manual UI testing (server running and ready)
 
 **Files created:**
 - `projects/gmail-trim-3/.project-meta.json` - Project metadata with params/verbs
@@ -88,16 +89,33 @@
 - ✅ Parameter loading verified
 - ✅ Value overrides verified
 - ✅ Verb filtering verified
-- ⏳ Manual UI testing pending (requires server dependencies)
+- ✅ Local server restarted with latest build
+
+**Commits Created (4 total):**
+1. `419c899` - feat: Implement Phases 1-4 - Project-Level Parameters & Verbs
+2. `5c31122` - docs: Add comprehensive documentation for Phases 1-4
+3. `acb4bf2` - feat: Complete Phase 5 - Project-Level Parameters with Master-Detail UX
+4. `4cf99d0` - docs: Update CLAUDE.md with latest commit info
+
+**Deployment:**
+- ✅ All commits pushed to GitHub (origin/master)
+- ✅ GitHub Actions Docker build triggered automatically
+- ✅ Image will be available at: `ghcr.io/snadboy/script-server:latest`
+- ✅ Local server running with latest build: http://localhost:5000
 
 **Next steps:**
-- Phase 6: Manual UI testing
-  1. Install server dependencies: `pip install -r requirements.txt`
-  2. Start server: `python launcher.py`
-  3. Test ProjectConfigModal (view/edit parameters)
-  4. Test instance creation with parameter selection
-  5. Verify execution with different verbs
-- Commit changes after successful UI testing
+- Phase 6: Manual UI testing (server ready)
+  1. Open http://localhost:5000
+  2. Click "Script Manager" → Projects tab
+  3. Find "Gmail Trim" (gmail-trim-3) → Configure tab
+  4. Click "Configure Parameters & Verbs" button
+  5. **Verify master-detail UX:**
+     - Parameters tab: fixed-height table (300px) + edit panel
+     - Verbs tab: fixed-height table (250px) + edit panel
+     - Footer buttons always visible
+  6. Test adding/editing parameters and verbs
+  7. Test instance creation with parameter selection
+  8. Verify execution with different verbs
 
 ### Previous Session (2026-02-02) - Part 2: Bug Fix Verification
 
