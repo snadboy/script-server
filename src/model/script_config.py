@@ -37,6 +37,21 @@ class ShortConfig:
     shared_parameters: List[str] = field(default_factory=list)
 
 
+class InstanceConfig:
+    """Configuration for a script instance (project-based)."""
+
+    def __init__(self, config_dict: dict):
+        """
+        Initialize instance configuration.
+
+        Args:
+            config_dict: Dictionary with included_parameters, parameter_values, selected_verb
+        """
+        self.included_parameters = config_dict.get('included_parameters', [])
+        self.parameter_values = config_dict.get('parameter_values', {})
+        self.selected_verb = config_dict.get('selected_verb')
+
+
 def create_failed_short_config(path, has_admin_rights):
     name = _build_name_from_path(path)
     if not has_admin_rights:
@@ -97,7 +112,13 @@ class ConfigModel:
 
         self.parameters.subscribe(self)
 
-        self._init_parameters(username, audit_name)
+        # Check if this is a project-based instance
+        project_id = config_object.get('project_id')
+        if project_id:
+            self._load_from_project(project_id, config_object, username, audit_name)
+        else:
+            # Legacy standalone script
+            self._init_parameters(username, audit_name)
 
         for parameter in self.parameters:
             self.parameter_values[parameter.name] = parameter.create_value_wrapper_for_default()
@@ -196,6 +217,79 @@ class ConfigModel:
             raise ParameterNotFoundException(parameter_name)
 
         return parameter.list_files(path)
+
+    def _load_from_project(self, project_id: str, config_object: dict, username: str, audit_name: str):
+        """
+        Load parameters and verbs from project metadata.
+
+        Args:
+            project_id: Project identifier
+            config_object: Script instance configuration
+            username: Current username
+            audit_name: Audit name for logging
+        """
+        import os
+        from project_manager.project_service import ProjectService
+
+        # ProjectService needs the root directory, not the config folder
+        # config_folder is typically 'conf/runners', we need the parent directory
+        project_root = os.path.dirname(os.path.dirname(self._config_folder))
+        if not project_root:
+            project_root = '.'
+
+        project_service = ProjectService(project_root)
+        project_meta = project_service.get_project(project_id)
+
+        if not project_meta:
+            raise Exception(f'Project {project_id} not found')
+
+        # Parse instance config
+        instance_config_data = config_object.get('instance_config', {})
+        self.instance_config = InstanceConfig(instance_config_data)
+
+        # Load parameter DEFINITIONS from project
+        project_parameters = project_meta.get('parameters', [])
+
+        # Filter to included parameters only
+        included_names = set(self.instance_config.included_parameters)
+        for param_config in project_parameters:
+            if param_config['name'] in included_names:
+                parameter = ParameterModel(
+                    param_config, username, audit_name,
+                    lambda: self.parameters,
+                    self._process_invoker,
+                    self.parameter_values,
+                    self.working_directory
+                )
+                self.parameters.append(parameter)
+
+        # Override defaults with instance values
+        for param_name, value in self.instance_config.parameter_values.items():
+            param = self.find_parameter(param_name)
+            if param:
+                # Set the default value from instance config
+                param._default = value
+
+        # Load verb config from project
+        project_verbs = project_meta.get('verbs')
+        if project_verbs:
+            self.verbs_config = VerbsConfiguration(project_verbs)
+            self.shared_parameters = project_meta.get('shared_parameters', [])
+
+            # Set selected verb if specified
+            if self.instance_config.selected_verb:
+                verb_param_name = self.verbs_config.parameter_name
+                # Create a pseudo-parameter wrapper for the verb value
+                from model.value_wrapper import ScriptValueWrapper
+                verb_value = self.instance_config.selected_verb
+                self.parameter_values[verb_param_name] = ScriptValueWrapper(
+                    user_value=verb_value,
+                    mapped_script_value=verb_value,
+                    script_arg=verb_value
+                )
+
+        self._reload_parameters({})
+        self._validate_parameter_configs()
 
     def _init_parameters(self, username, audit_name):
         original_parameter_configs = self._original_config.get('parameters', [])

@@ -341,15 +341,24 @@ export default {
 
       try {
         // Import-only workflow: generate wrapper + config via backend
+        const payload = {
+          entry_point: this.configData.entryPoint,
+          config_path: this.configData.configPath || undefined,
+          config_cmd: this.configData.configCmd || undefined,
+          script_name: this.scriptConfig.name,
+          description: this.scriptConfig.description || undefined
+        };
+
+        // Add instance config if present (project-based parameters)
+        if (this.configData.includedParameters) {
+          payload.included_parameters = this.configData.includedParameters;
+          payload.parameter_values = this.configData.parameterValues || {};
+          payload.selected_verb = this.configData.selectedVerb || undefined;
+        }
+
         const response = await axiosInstance.post(
           `admin/projects/${encodeURIComponent(this.importedProject.id)}/wrapper`,
-          {
-            entry_point: this.configData.entryPoint,
-            config_path: this.configData.configPath || undefined,
-            config_cmd: this.configData.configCmd || undefined,
-            script_name: this.scriptConfig.name,
-            description: this.scriptConfig.description || undefined
-          }
+          payload
         );
 
         this.success = `Wrapper and config generated! Script "${this.scriptConfig.name}" is now available.`;

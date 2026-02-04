@@ -83,6 +83,134 @@
       />
     </div>
 
+    <!-- Instance Configuration (Project-based) -->
+    <div v-if="hasProjectParameters || hasProjectVerbs" class="config-group instance-config-group">
+      <div class="config-group-header">
+        <span class="config-label">
+          <i class="material-icons">tune</i>
+          Instance Configuration
+        </span>
+      </div>
+
+      <div class="instance-config-info">
+        <p>Select which parameters to include and optionally override their default values.</p>
+      </div>
+
+      <!-- Verb Selection (if project has verbs) -->
+      <div v-if="hasProjectVerbs" class="verb-selection">
+        <label class="config-label">
+          Command/Verb
+          <span v-if="project.verbs?.required" class="required-indicator">*</span>
+        </label>
+        <select v-model="selectedVerb" class="form-select">
+          <option value="">{{ project.verbs?.required ? 'Select a command...' : 'None (use all parameters)' }}</option>
+          <option
+            v-for="verb in project.verbs?.options"
+            :key="verb.name"
+            :value="verb.name"
+          >
+            {{ verb.label || verb.name }}
+          </option>
+        </select>
+        <div v-if="selectedVerbOption" class="verb-description">
+          {{ selectedVerbOption.description }}
+        </div>
+      </div>
+
+      <!-- Parameter Selection -->
+      <div v-if="availableParameters.length > 0" class="parameter-selection">
+        <div class="params-header">
+          <label class="config-label">Parameters</label>
+          <div class="select-actions">
+            <button
+              type="button"
+              class="btn-link"
+              @click="selectAllParameters"
+            >
+              Select All
+            </button>
+            <button
+              type="button"
+              class="btn-link"
+              @click="deselectAllParameters"
+            >
+              Deselect All
+            </button>
+          </div>
+        </div>
+
+        <div class="parameters-list">
+          <div
+            v-for="param in availableParameters"
+            :key="param.name"
+            class="parameter-row"
+          >
+            <div class="parameter-select">
+              <label class="checkbox-label">
+                <input
+                  v-model="selectedParameters"
+                  type="checkbox"
+                  :value="param.name"
+                />
+                <div class="param-info">
+                  <span class="param-name">{{ param.name }}</span>
+                  <span class="param-type">({{ param.type }})</span>
+                  <span v-if="param.required" class="param-required">required</span>
+                </div>
+              </label>
+              <div v-if="param.description" class="param-description">
+                {{ param.description }}
+              </div>
+            </div>
+
+            <!-- Value Override (shown if parameter is selected) -->
+            <div v-if="selectedParameters.includes(param.name)" class="parameter-value">
+              <label class="value-label">
+                Override Default
+                <span v-if="param.default !== null && param.default !== undefined" class="default-hint">
+                  (default: {{ formatDefaultValue(param) }})
+                </span>
+              </label>
+
+              <!-- Boolean -->
+              <label v-if="param.type === 'bool'" class="checkbox-label">
+                <input
+                  v-model="parameterValues[param.name]"
+                  type="checkbox"
+                />
+                <span>Enabled</span>
+              </label>
+
+              <!-- Integer -->
+              <input
+                v-else-if="param.type === 'int'"
+                v-model.number="parameterValues[param.name]"
+                type="number"
+                :min="param.min"
+                :max="param.max"
+                class="form-input"
+                :placeholder="`Default: ${param.default !== null ? param.default : 'none'}`"
+              />
+
+              <!-- Text/Other -->
+              <input
+                v-else
+                v-model="parameterValues[param.name]"
+                type="text"
+                class="form-input"
+                :placeholder="`Default: ${param.default || 'none'}`"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="no-parameters-message">
+        <i class="material-icons">info</i>
+        <span>No parameters defined for this project. Configure parameters in the Project Configuration.</span>
+      </div>
+    </div>
+
     <!-- Config Path (optional) -->
     <div class="config-group">
       <label class="config-label">Config Path (optional)</label>
@@ -154,7 +282,12 @@ export default {
       configCmd: '',
       wrapperPreview: '',
       installingDeps: false,
-      loadingPackages: false
+      loadingPackages: false,
+
+      // Instance configuration
+      selectedVerb: '',
+      selectedParameters: [],
+      parameterValues: {}
     };
   },
 
@@ -176,14 +309,54 @@ export default {
              this.missingDependencies.length === 0;
     },
 
+    hasProjectParameters() {
+      return this.project?.parameters && this.project.parameters.length > 0;
+    },
+
+    hasProjectVerbs() {
+      return this.project?.verbs && this.project.verbs.options && this.project.verbs.options.length > 0;
+    },
+
+    selectedVerbOption() {
+      if (!this.selectedVerb || !this.hasProjectVerbs) return null;
+      return this.project.verbs.options.find(v => v.name === this.selectedVerb);
+    },
+
+    availableParameters() {
+      if (!this.hasProjectParameters) return [];
+
+      const allParams = this.project.parameters;
+
+      // If a verb is selected, filter to verb-specific + shared parameters
+      if (this.selectedVerbOption) {
+        const verbParams = this.selectedVerbOption.parameters || [];
+        const sharedParams = this.project.shared_parameters || [];
+        const allowedParams = new Set([...verbParams, ...sharedParams]);
+
+        return allParams.filter(p => allowedParams.has(p.name));
+      }
+
+      // No verb selected - show all parameters
+      return allParams;
+    },
+
     configData() {
-      return {
+      const data = {
         entryPoint: this.effectiveEntryPoint,
         scriptName: this.scriptName,
         description: this.description,
         configPath: this.configPath,
         configCmd: this.configCmd
       };
+
+      // Add instance config if using project-based parameters
+      if (this.hasProjectParameters || this.hasProjectVerbs) {
+        data.includedParameters = this.selectedParameters;
+        data.parameterValues = this.getEffectiveParameterValues();
+        data.selectedVerb = this.selectedVerb || null;
+      }
+
+      return data;
     }
   },
 
@@ -271,6 +444,70 @@ export default {
       } catch (e) {
         this.$emit('error', e.response?.data || 'Failed to generate preview');
       }
+    },
+
+    selectAllParameters() {
+      this.selectedParameters = this.availableParameters.map(p => p.name);
+      this.initializeParameterValues();
+    },
+
+    deselectAllParameters() {
+      this.selectedParameters = [];
+      this.parameterValues = {};
+    },
+
+    initializeParameterValues() {
+      // Initialize values for newly selected parameters with their defaults
+      this.selectedParameters.forEach(paramName => {
+        if (this.parameterValues[paramName] === undefined) {
+          const param = this.availableParameters.find(p => p.name === paramName);
+          if (param && param.default !== null && param.default !== undefined) {
+            this.$set(this.parameterValues, paramName, param.default);
+          }
+        }
+      });
+    },
+
+    formatDefaultValue(param) {
+      if (param.default === null || param.default === undefined) {
+        return 'none';
+      }
+      if (param.type === 'bool') {
+        return param.default ? 'true' : 'false';
+      }
+      return String(param.default);
+    },
+
+    getEffectiveParameterValues() {
+      // Only return values that differ from the project defaults
+      const overrides = {};
+      this.selectedParameters.forEach(paramName => {
+        const param = this.availableParameters.find(p => p.name === paramName);
+        const value = this.parameterValues[paramName];
+
+        // Check if value is different from default
+        if (value !== undefined && value !== param?.default) {
+          overrides[paramName] = value;
+        }
+      });
+      return overrides;
+    }
+  },
+
+  watch: {
+    selectedVerb(newVal, oldVal) {
+      if (newVal !== oldVal) {
+        // Verb changed - reset parameter selection
+        this.selectedParameters = [];
+        this.parameterValues = {};
+      }
+    },
+
+    selectedParameters: {
+      handler() {
+        this.initializeParameterValues();
+      },
+      deep: true
     }
   }
 }
@@ -429,5 +666,190 @@ export default {
   font-size: 18px !important;
   vertical-align: middle;
   margin-right: 0.25rem;
+}
+
+/* Instance Configuration Styles */
+.instance-config-group {
+  background: var(--instance-config-bg, #f8f9fa);
+  border: 2px solid var(--primary-color, #2196F3);
+  border-radius: 6px;
+  padding: 16px;
+  margin: 20px 0;
+}
+
+.instance-config-group .config-group-header .material-icons {
+  vertical-align: middle;
+  margin-right: 6px;
+  color: var(--primary-color, #2196F3);
+}
+
+.instance-config-info {
+  margin: 12px 0;
+  padding: 12px;
+  background: var(--info-bg, #e3f2fd);
+  border-left: 3px solid var(--primary-color, #2196F3);
+  border-radius: 4px;
+}
+
+.instance-config-info p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary, #666);
+}
+
+.verb-selection {
+  margin: 16px 0;
+}
+
+.verb-description {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--desc-bg, #f5f5f5);
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-secondary, #666);
+  font-style: italic;
+}
+
+.required-indicator {
+  color: #d32f2f;
+  font-weight: bold;
+  margin-left: 4px;
+}
+
+.parameter-selection {
+  margin-top: 16px;
+}
+
+.params-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.select-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--primary-color, #2196F3);
+  cursor: pointer;
+  font-size: 13px;
+  text-decoration: underline;
+  padding: 4px 8px;
+}
+
+.btn-link:hover {
+  color: var(--primary-color-dark, #1976D2);
+}
+
+.parameters-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.parameter-row {
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 4px;
+  padding: 12px;
+  background: var(--card-bg, #fff);
+}
+
+.parameter-select {
+  margin-bottom: 8px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.param-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.param-name {
+  font-family: 'Courier New', monospace;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.param-type {
+  font-size: 12px;
+  color: var(--text-secondary, #666);
+  font-style: italic;
+}
+
+.param-required {
+  background: #d32f2f;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.param-description {
+  margin-left: 28px;
+  font-size: 13px;
+  color: var(--text-secondary, #666);
+  margin-top: 4px;
+}
+
+.parameter-value {
+  margin-left: 28px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border-color, #ddd);
+}
+
+.value-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary, #333);
+  margin-bottom: 6px;
+  display: block;
+}
+
+.default-hint {
+  font-size: 12px;
+  color: var(--text-secondary, #999);
+  font-weight: normal;
+  font-style: italic;
+}
+
+.no-parameters-message {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--warning-bg, #fff3cd);
+  border: 1px solid var(--warning-border, #ffc107);
+  border-radius: 4px;
+  color: var(--warning-text, #856404);
+  margin-top: 12px;
+}
+
+.no-parameters-message .material-icons {
+  font-size: 24px;
 }
 </style>

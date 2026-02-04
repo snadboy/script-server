@@ -408,23 +408,60 @@ class ProjectService:
         # Load metadata to find generated files
         meta = self._load_meta(project_path)
 
-        # Delete wrapper script if exists
+        # Delete legacy wrapper script if exists (backward compatibility)
         if meta.get('wrapper_script'):
             wrapper_path = Path(meta['wrapper_script'])
             if wrapper_path.exists():
                 wrapper_path.unlink()
-                LOGGER.info(f"Deleted wrapper: {wrapper_path}")
+                LOGGER.info(f"Deleted legacy wrapper: {wrapper_path}")
 
-        # Delete runner config if exists
+        # Delete legacy runner config if exists (backward compatibility)
         if meta.get('runner_config'):
             config_path = Path(meta['runner_config'])
             if config_path.exists():
                 config_path.unlink()
-                LOGGER.info(f"Deleted config: {config_path}")
+                LOGGER.info(f"Deleted legacy config: {config_path}")
+
+        # Find and delete ALL runner configs that reference this project
+        deleted_configs = 0
+        deleted_wrappers = set()
+
+        if self.runners_dir.exists():
+            for config_file in self.runners_dir.glob('*.json'):
+                try:
+                    with open(config_file, 'r') as f:
+                        config_data = json.load(f)
+
+                    # Check if this config references the project being deleted
+                    if config_data.get('project_id') == project_id:
+                        # Extract wrapper script path before deleting config
+                        script_path = config_data.get('script_path', '')
+                        # Extract the actual wrapper path from script_path
+                        # Format: "/path/to/python /path/to/wrapper.py"
+                        if script_path:
+                            parts = script_path.split()
+                            if len(parts) >= 2:
+                                wrapper_file = Path(parts[-1])
+                                deleted_wrappers.add(wrapper_file)
+
+                        # Delete the config file
+                        config_file.unlink()
+                        deleted_configs += 1
+                        LOGGER.info(f"Deleted instance config: {config_file.name}")
+
+                except (OSError, json.JSONDecodeError, KeyError) as e:
+                    LOGGER.warning(f"Failed to process config {config_file}: {e}")
+                    continue
+
+        # Delete all wrapper scripts for this project
+        for wrapper_path in deleted_wrappers:
+            if wrapper_path.exists():
+                wrapper_path.unlink()
+                LOGGER.info(f"Deleted wrapper script: {wrapper_path}")
 
         # Delete project directory
         shutil.rmtree(project_path)
-        LOGGER.info(f"Deleted project: {project_path}")
+        LOGGER.info(f"Deleted project {project_id}: {deleted_configs} instance(s) removed")
 
         return True
 
@@ -673,13 +710,119 @@ if len(sys.argv) >= 2 and sys.argv[1] == '{config_cmd}' and '--config' not in sy
         LOGGER.info(f"Generated wrapper: {wrapper_path}")
         return str(wrapper_path)
 
+    def update_project_parameters(self, project_id: str, parameters: list[dict]) -> dict:
+        """
+        Update parameter definitions for a project.
+
+        Args:
+            project_id: The project identifier
+            parameters: List of parameter definition dictionaries
+
+        Returns:
+            Updated project metadata
+
+        Raises:
+            ValueError: If parameter validation fails
+        """
+        from model.parameter_config import ParameterModel
+
+        project_path = self.projects_dir / project_id
+        if not project_path.exists():
+            raise FileNotFoundError(f"Project {project_id} not found")
+
+        meta = self._load_meta(project_path)
+
+        # Validate each parameter (static validation only)
+        for param in parameters:
+            if not param.get('name'):
+                raise ValueError("Parameter must have a 'name' field")
+            # Additional validation can be added here
+
+        meta['parameters'] = parameters
+        self._save_meta(project_path, meta)
+
+        LOGGER.info(f"Updated parameters for project {project_id}")
+        return meta
+
+    def update_project_verbs(
+        self,
+        project_id: str,
+        verbs_config: Optional[dict],
+        shared_params: Optional[list[str]] = None
+    ) -> dict:
+        """
+        Update verb configuration for a project.
+
+        Args:
+            project_id: The project identifier
+            verbs_config: Verb configuration dictionary (or None to remove verbs)
+            shared_params: List of shared parameter names (optional)
+
+        Returns:
+            Updated project metadata
+
+        Raises:
+            ValueError: If verb validation fails
+        """
+        from model.verb_config import VerbsConfiguration
+
+        project_path = self.projects_dir / project_id
+        if not project_path.exists():
+            raise FileNotFoundError(f"Project {project_id} not found")
+
+        meta = self._load_meta(project_path)
+
+        # Validate verb config if provided
+        if verbs_config:
+            VerbsConfiguration(verbs_config)  # Will raise if invalid
+
+        meta['verbs'] = verbs_config
+        meta['shared_parameters'] = shared_params or []
+        self._save_meta(project_path, meta)
+
+        LOGGER.info(f"Updated verbs for project {project_id}")
+        return meta
+
+    def get_project_parameters(self, project_id: str) -> list[dict]:
+        """
+        Get parameter definitions from project.
+
+        Args:
+            project_id: The project identifier
+
+        Returns:
+            List of parameter definition dictionaries
+        """
+        meta = self.get_project(project_id)
+        if not meta:
+            raise FileNotFoundError(f"Project {project_id} not found")
+        return meta.get('parameters', [])
+
+    def get_project_verbs(self, project_id: str) -> Optional[dict]:
+        """
+        Get verb configuration from project.
+
+        Args:
+            project_id: The project identifier
+
+        Returns:
+            Verb configuration dictionary or None
+        """
+        meta = self.get_project(project_id)
+        if not meta:
+            raise FileNotFoundError(f"Project {project_id} not found")
+        return meta.get('verbs')
+
     def generate_runner_config(
         self,
         project_id: str,
         script_name: str,
         description: Optional[str] = None,
         group: str = 'Imported Projects',
-        parameters: Optional[list[dict]] = None
+        parameters: Optional[list[dict]] = None,
+        included_parameters: Optional[list[str]] = None,
+        parameter_values: Optional[dict] = None,
+        selected_verb: Optional[str] = None
     ) -> str:
         """
         Generate a script-server runner configuration.
@@ -689,7 +832,10 @@ if len(sys.argv) >= 2 and sys.argv[1] == '{config_cmd}' and '--config' not in sy
             script_name: Display name for the script
             description: Optional description
             group: Script group (default: 'Imported Projects')
-            parameters: Optional list of parameter definitions
+            parameters: Optional list of parameter definitions (LEGACY - will be ignored if included_parameters is provided)
+            included_parameters: List of parameter names to include from project (NEW)
+            parameter_values: Dictionary of parameter value overrides (NEW)
+            selected_verb: Selected verb name if project has verbs (NEW)
 
         Returns:
             Path to the generated config file
@@ -709,7 +855,7 @@ if len(sys.argv) >= 2 and sys.argv[1] == '{config_cmd}' and '--config' not in sy
         working_directory = f"projects/{project_id}"
 
         # Build config
-        config = {
+        config: dict[str, Any] = {
             'name': script_name,
             'script_path': script_path,
             'working_directory': working_directory,
@@ -718,7 +864,16 @@ if len(sys.argv) >= 2 and sys.argv[1] == '{config_cmd}' and '--config' not in sy
             'scheduling': {'enabled': True}
         }
 
-        if parameters:
+        # NEW FORMAT: Use project_id and instance_config
+        if included_parameters is not None:
+            config['project_id'] = project_id
+            config['instance_config'] = {
+                'included_parameters': included_parameters,
+                'parameter_values': parameter_values or {},
+                'selected_verb': selected_verb
+            }
+        # LEGACY FORMAT: Direct parameter definitions
+        elif parameters:
             config['parameters'] = parameters
 
         # Write config file

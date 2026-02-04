@@ -231,6 +231,36 @@
           <div class="configure-section">
             <h6>{{ selectedProject.name }}</h6>
 
+            <!-- Project Configuration -->
+            <div class="config-group">
+              <div class="config-group-header">
+                <span class="config-label">Project Configuration</span>
+                <button
+                  class="btn btn-sm btn-primary"
+                  @click="openProjectConfig"
+                >
+                  <i class="material-icons btn-icon-sm">tune</i>
+                  Configure Parameters & Verbs
+                </button>
+              </div>
+              <div class="config-info">
+                <p>
+                  Define parameters and verbs at the project level. Script instances can then
+                  select which parameters to include and override default values.
+                </p>
+                <div class="config-stats">
+                  <span class="stat-badge">
+                    <i class="material-icons">list</i>
+                    {{ selectedProject.parameters?.length || 0 }} Parameters
+                  </span>
+                  <span class="stat-badge">
+                    <i class="material-icons">code</i>
+                    {{ selectedProject.verbs?.options?.length || 0 }} Verbs
+                  </span>
+                </div>
+              </div>
+            </div>
+
             <!-- Dependencies -->
             <div class="config-group">
               <div class="config-group-header">
@@ -339,18 +369,28 @@
       </div>
     </div>
 
+    <!-- Project Configuration Modal -->
+    <ProjectConfigModal
+      :visible="showProjectConfig"
+      :project="selectedProject"
+      @close="closeProjectConfig"
+      @saved="onProjectConfigSaved"
+    />
+
   </div>
 </template>
 
 <script>
 import {axiosInstance} from '@/common/utils/axios_utils';
 import DirectoryBrowserModal from './common/DirectoryBrowserModal.vue';
+import ProjectConfigModal from '@/admin/components/projects/ProjectConfigModal.vue';
 
 export default {
   name: 'ProjectsModal',
 
   components: {
-    DirectoryBrowserModal
+    DirectoryBrowserModal,
+    ProjectConfigModal
   },
 
   props: {
@@ -388,7 +428,10 @@ export default {
       configScriptName: '',
       configDescription: '',
       installedPackages: [],
-      loadingPackages: false
+      loadingPackages: false,
+
+      // Project configuration modal
+      showProjectConfig: false
     };
   },
 
@@ -537,6 +580,23 @@ export default {
     configureProject(project) {
       this.selectedProject = project;
       this.activeTab = 'configure';
+    },
+
+    openProjectConfig() {
+      this.showProjectConfig = true;
+    },
+
+    closeProjectConfig() {
+      this.showProjectConfig = false;
+    },
+
+    onProjectConfigSaved() {
+      this.success = 'Project configuration saved successfully!';
+      setTimeout(() => {
+        this.success = null;
+      }, 3000);
+      // Reload projects to get updated parameter/verb counts
+      this.loadProjects();
     },
 
     truncateUrl(url) {
@@ -1420,6 +1480,48 @@ export default {
 
 .btn-icon-sm {
   font-size: 14px;
+}
+
+.config-info {
+  padding: 12px;
+  background: var(--info-background, #f5f5f5);
+  border-radius: 4px;
+}
+
+.config-info p {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: var(--text-secondary, #666);
+  line-height: 1.5;
+}
+
+.config-stats {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.stat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--background-color, #fff);
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary, #333);
+}
+
+.stat-badge .material-icons {
+  font-size: 16px;
+  color: var(--primary-color, #2196F3);
+}
+
+.btn-icon-sm {
+  font-size: 16px;
+  margin-right: 4px;
 }
 
 @media screen and (max-width: 768px) {

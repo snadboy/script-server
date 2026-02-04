@@ -1537,6 +1537,13 @@ class GenerateWrapperHandler(BaseRequestHandler):
             script_name = body.get('script_name')
             description = body.get('description')
             group = body.get('group', 'Imported Projects')
+
+            # NEW: Instance config parameters
+            included_parameters = body.get('included_parameters')
+            parameter_values = body.get('parameter_values')
+            selected_verb = body.get('selected_verb')
+
+            # LEGACY: Direct parameter definitions
             parameters = body.get('parameters')
 
             if not entry_point:
@@ -1549,9 +1556,16 @@ class GenerateWrapperHandler(BaseRequestHandler):
                 project_id, entry_point, config_path, config_cmd, script_name
             )
 
-            # Generate runner config
+            # Generate runner config (supports both new and legacy formats)
             config_path = project_service.generate_runner_config(
-                project_id, script_name, description, group, parameters
+                project_id,
+                script_name,
+                description,
+                group,
+                parameters,
+                included_parameters,
+                parameter_values,
+                selected_verb
             )
 
             self.write(json.dumps({
@@ -1583,6 +1597,80 @@ class GetWrapperPreviewHandler(BaseRequestHandler):
             )
 
             self.write(json.dumps({'wrapper_content': preview}))
+        except Exception as e:
+            raise tornado.web.HTTPError(500, reason=str(e))
+
+
+class GetProjectConfigHandler(BaseRequestHandler):
+    """Get project-level configuration (parameters and verbs)."""
+
+    @requires_admin_rights
+    def get(self, project_id):
+        project_service = self.application.project_service
+        if project_service is None:
+            raise tornado.web.HTTPError(503, 'Project service not available')
+
+        project = project_service.get_project(project_id)
+        if not project:
+            raise tornado.web.HTTPError(404, reason='Project not found')
+
+        self.write(json.dumps({
+            'parameters': project.get('parameters', []),
+            'verbs': project.get('verbs'),
+            'sharedParameters': project.get('shared_parameters', [])
+        }))
+
+
+class UpdateProjectParametersHandler(BaseRequestHandler):
+    """Update parameter definitions for a project."""
+
+    @requires_admin_rights
+    def put(self, project_id):
+        project_service = self.application.project_service
+        if project_service is None:
+            raise tornado.web.HTTPError(503, 'Project service not available')
+
+        try:
+            body = json.loads(self.request.body.decode('utf-8'))
+            parameters = body.get('parameters', [])
+
+            updated = project_service.update_project_parameters(
+                project_id,
+                parameters
+            )
+            self.write(json.dumps({'success': True, 'project': updated}))
+        except FileNotFoundError as e:
+            raise tornado.web.HTTPError(404, reason=str(e))
+        except ValueError as e:
+            raise tornado.web.HTTPError(400, reason=str(e))
+        except Exception as e:
+            raise tornado.web.HTTPError(500, reason=str(e))
+
+
+class UpdateProjectVerbsHandler(BaseRequestHandler):
+    """Update verb configuration for a project."""
+
+    @requires_admin_rights
+    def put(self, project_id):
+        project_service = self.application.project_service
+        if project_service is None:
+            raise tornado.web.HTTPError(503, 'Project service not available')
+
+        try:
+            body = json.loads(self.request.body.decode('utf-8'))
+            verbs_config = body.get('verbs')
+            shared_parameters = body.get('sharedParameters', [])
+
+            updated = project_service.update_project_verbs(
+                project_id,
+                verbs_config,
+                shared_parameters
+            )
+            self.write(json.dumps({'success': True, 'project': updated}))
+        except FileNotFoundError as e:
+            raise tornado.web.HTTPError(404, reason=str(e))
+        except ValueError as e:
+            raise tornado.web.HTTPError(400, reason=str(e))
         except Exception as e:
             raise tornado.web.HTTPError(500, reason=str(e))
 
@@ -1723,6 +1811,9 @@ def init(server_config: ServerConfig,
                 (r'/admin/projects/([^/]+)/entry-points', GetProjectEntryPointsHandler),
                 (r'/admin/projects/([^/]+)/wrapper', GenerateWrapperHandler),
                 (r'/admin/projects/([^/]+)/wrapper-preview', GetWrapperPreviewHandler),
+                (r'/admin/projects/([^/]+)/config', GetProjectConfigHandler),
+                (r'/admin/projects/([^/]+)/parameters', UpdateProjectParametersHandler),
+                (r'/admin/projects/([^/]+)/verbs', UpdateProjectVerbsHandler),
                 (r"/", ProxiedRedirectHandler, {"url": "/index.html"})]
 
     if auth.is_enabled():
