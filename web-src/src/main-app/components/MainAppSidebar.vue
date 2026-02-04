@@ -30,7 +30,7 @@
     </div>
 
     <SettingsModal :visible="showSettings" @close="showSettings = false" />
-    <ProjectsModal v-if="adminUser" :visible="showScripts" @close="showScripts = false" />
+    <ProjectsModalPlayground v-if="adminUser" :visible="showScripts" @close="showScripts = false" />
     <PythonPackagesModal v-if="adminUser" :visible="showPythonPackages" @update:visible="showPythonPackages = $event" />
     <RequirementsModal v-if="adminUser" :visible="showRequirements" @update:visible="showRequirements = $event" />
     <ServerLogsModal v-if="adminUser" :visible="showLogs" @update:visible="showLogs = $event" />
@@ -59,7 +59,7 @@ import ScriptsList from './scripts/ScriptsList'
 import SearchPanel from './SearchPanel';
 import SidebarBottomNav from './SidebarBottomNav';
 import SettingsModal from './SettingsModal';
-import ProjectsModal from './ProjectsModal';
+import ProjectsModalPlayground from './ProjectsModalPlayground';
 import PythonPackagesModal from './PythonPackagesModal';
 import RequirementsModal from './RequirementsModal';
 import ServerLogsModal from './ServerLogsModal';
@@ -72,7 +72,7 @@ export default {
     ScriptsList,
     SidebarBottomNav,
     SettingsModal,
-    ProjectsModal,
+    ProjectsModalPlayground,
     PythonPackagesModal,
     RequirementsModal,
     ServerLogsModal,

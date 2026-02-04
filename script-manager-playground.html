@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Script Manager - Design Playground</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0a0a;
+      color: #e0e0e0;
+      padding: 20px;
+    }
+
+    .playground {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 20px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .controls {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 20px;
+      height: fit-content;
+      position: sticky;
+      top: 20px;
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+    }
+
+    .controls h2 {
+      font-size: 18px;
+      margin-bottom: 20px;
+      color: #fff;
+    }
+
+    .control-group {
+      margin-bottom: 24px;
+    }
+
+    .control-group h3 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .control {
+      margin-bottom: 16px;
+    }
+
+    .control label {
+      display: block;
+      font-size: 13px;
+      color: #aaa;
+      margin-bottom: 6px;
+    }
+
+    .control input[type="range"] {
+      width: 100%;
+      accent-color: #4a90e2;
+    }
+
+    .control input[type="color"] {
+      width: 100%;
+      height: 32px;
+      border: 1px solid #444;
+      border-radius: 4px;
+      background: #2a2a2a;
+      cursor: pointer;
+    }
+
+    .control select {
+      width: 100%;
+      padding: 8px;
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 4px;
+      color: #e0e0e0;
+      font-size: 13px;
+    }
+
+    .value-display {
+      font-size: 12px;
+      color: #666;
+      font-family: 'Courier New', monospace;
+    }
+
+    .preset-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .preset-btn {
+      padding: 8px;
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 4px;
+      color: #aaa;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .preset-btn:hover {
+      background: #333;
+      border-color: #4a90e2;
+      color: #fff;
+    }
+
+    .preview-area {
+      background: #0f0f0f;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 40px;
+      min-height: 700px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    .prompt-output {
+      margin-top: 20px;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    .prompt-output h3 {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 12px;
+    }
+
+    .prompt-text {
+      background: #0f0f0f;
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 16px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #e0e0e0;
+      white-space: pre-wrap;
+      margin-bottom: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .copy-btn {
+      padding: 10px 20px;
+      background: #4a90e2;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .copy-btn:hover {
+      background: #357abd;
+    }
+
+    .copy-btn.copied {
+      background: #2ecc71;
+    }
+
+    /* Dialog Styles */
+    .dialog {
+      background: var(--dialog-bg);
+      border-radius: var(--dialog-radius);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+      width: var(--dialog-width);
+      max-width: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .dialog-header {
+      padding: var(--header-padding);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--header-bg);
+    }
+
+    .dialog-header h2 {
+      font-size: var(--header-font-size);
+      color: var(--text-color);
+      font-weight: 400;
+    }
+
+    .close-btn {
+      width: 32px;
+      height: 32px;
+      background: transparent;
+      border: none;
+      color: var(--text-color);
+      font-size: 28px;
+      cursor: pointer;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    .close-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .dialog-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--tabs-bg);
+    }
+
+    .tab {
+      padding: var(--tab-padding);
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      font-size: var(--tab-font-size);
+      color: var(--tab-inactive-color);
+      background: transparent;
+      border-left: none;
+      border-right: none;
+      border-top: none;
+      transition: all 0.2s;
+      font-weight: 400;
+      user-select: none;
+    }
+
+    .tab:hover {
+      color: var(--text-color);
+    }
+
+    .tab.active {
+      border-bottom-color: var(--accent-color);
+      color: var(--accent-color);
+    }
+
+    .dialog-content {
+      padding: var(--content-padding);
+      overflow-y: auto;
+      max-height: var(--content-height);
+      background: var(--content-bg);
+    }
+
+    .validate-btn {
+      width: 100%;
+      padding: var(--button-padding);
+      background: var(--accent-color);
+      border: none;
+      border-radius: var(--button-radius);
+      color: white;
+      font-size: var(--button-font-size);
+      font-weight: 500;
+      cursor: pointer;
+      margin-bottom: var(--content-padding);
+      transition: all 0.15s;
+    }
+
+    .validate-btn:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
+    }
+
+    .projects-grid {
+      display: grid;
+      grid-template-columns: var(--grid-columns);
+      gap: var(--card-gap);
+    }
+
+    .project-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--card-radius);
+      padding: var(--card-padding);
+      transition: all 0.2s;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .project-card:hover {
+      border-color: var(--accent-color);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: var(--card-title-size);
+      font-weight: 400;
+      color: var(--text-color);
+      margin-bottom: 6px;
+    }
+
+    .card-badge {
+      font-size: var(--badge-font-size);
+      padding: var(--badge-padding);
+      background: var(--badge-bg);
+      color: var(--badge-text);
+      border-radius: var(--badge-radius);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .card-date {
+      font-size: var(--date-font-size);
+      color: var(--muted-text);
+      margin-bottom: 12px;
+    }
+
+    .card-description {
+      font-size: var(--desc-font-size);
+      color: var(--muted-text);
+      line-height: 1.5;
+      margin-bottom: 16px;
+      min-height: 3em;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .card-icon-btn {
+      width: var(--icon-btn-size);
+      height: var(--icon-btn-size);
+      background: transparent;
+      border: 1px solid var(--icon-btn-border);
+      border-radius: var(--icon-btn-radius);
+      color: var(--icon-btn-color);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--icon-size);
+      transition: all 0.15s;
+    }
+
+    .card-icon-btn:hover {
+      background: var(--icon-btn-hover-bg);
+      border-color: var(--icon-btn-hover-border);
+      color: var(--icon-btn-hover-color);
+    }
+
+    .dialog-footer {
+      padding: var(--footer-padding);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      background: var(--footer-bg);
+    }
+
+    .btn {
+      padding: var(--button-padding);
+      border-radius: var(--button-radius);
+      font-size: var(--button-font-size);
+      border: none;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: var(--text-color);
+    }
+
+    .btn-primary {
+      background: var(--accent-color);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+    }
+
+    /* Import Tab Styles */
+    .import-section {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: var(--card-radius);
+      padding: var(--card-padding);
+      margin-bottom: var(--card-gap);
+    }
+
+    .import-section h3 {
+      font-size: var(--section-title-size);
+      color: var(--text-color);
+      margin-bottom: 16px;
+      font-weight: 500;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-label {
+      display: block;
+      font-size: var(--label-font-size);
+      color: var(--text-color);
+      margin-bottom: 8px;
+      font-weight: 400;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px;
+      background: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: var(--input-radius);
+      color: var(--text-color);
+      font-size: var(--input-font-size);
+      font-family: inherit;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent-color);
+    }
+
+    .form-input::placeholder {
+      color: var(--placeholder-color);
+    }
+
+    /* Configure Tab Styles */
+    .config-section {
+      margin-bottom: var(--card-gap);
+    }
+
+    .section-title {
+      font-size: var(--section-title-size);
+      color: var(--text-color);
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+      font-weight: 500;
+    }
+
+    .info-row {
+      display: flex;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .info-row:last-child {
+      border-bottom: none;
+    }
+
+    .info-label {
+      width: 150px;
+      font-size: var(--label-font-size);
+      color: var(--muted-text);
+      flex-shrink: 0;
+    }
+
+    .info-value {
+      flex: 1;
+      font-size: var(--label-font-size);
+      color: var(--text-color);
+      font-family: 'Courier New', monospace;
+    }
+
+    .config-btn {
+      margin-top: 16px;
+      width: 100%;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted-text);
+    }
+
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      opacity: 0.3;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="playground">
+    <div class="controls">
+      <h2>Script Manager Design</h2>
+
+      <div class="control-group">
+        <h3>Presets</h3>
+        <div class="preset-buttons">
+          <button class="preset-btn" onclick="applyPreset('current')">Current</button>
+          <button class="preset-btn" onclick="applyPreset('compact')">Compact</button>
+          <button class="preset-btn" onclick="applyPreset('spacious')">Spacious</button>
+          <button class="preset-btn" onclick="applyPreset('minimal')">Minimal</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>Dialog</h3>
+        <div class="control">
+          <label>Width: <span id="width-val" class="value-display"></span></label>
+          <input type="range" id="dialog-width" min="600" max="1200" step="50" value="900">
+        </div>
+        <div class="control">
+          <label>Content Height: <span id="height-val" class="value-display"></span></label>
+          <input type="range" id="content-height" min="400" max="700" step="50" value="600">
+        </div>
+        <div class="control">
+          <label>Border Radius: <span id="radius-val" class="value-display"></span></label>
+          <input type="range" id="dialog-radius" min="0" max="16" step="2" value="8">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>Preview</h3>
+        <div class="control">
+          <label>Active Tab</label>
+          <select id="active-tab">
+            <option value="projects" selected>Projects</option>
+            <option value="import">Import</option>
+            <option value="configure">Configure</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>Grid Layout</h3>
+        <div class="control">
+          <label>Columns</label>
+          <select id="grid-columns">
+            <option value="1fr">1 Column</option>
+            <option value="repeat(2, 1fr)" selected>2 Columns</option>
+            <option value="repeat(3, 1fr)">3 Columns</option>
+          </select>
+        </div>
+        <div class="control">
+          <label>Card Gap: <span id="gap-val" class="value-display"></span></label>
+          <input type="range" id="card-gap" min="8" max="32" step="4" value="16">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>Colors</h3>
+        <div class="control">
+          <label>Dialog Background</label>
+          <input type="color" id="dialog-bg" value="#2a2a2a">
+        </div>
+        <div class="control">
+          <label>Card Background</label>
+          <input type="color" id="card-bg" value="#3a3a3a">
+        </div>
+        <div class="control">
+          <label>Accent Color</label>
+          <input type="color" id="accent-color" value="#5dade2">
+        </div>
+        <div class="control">
+          <label>Border Color</label>
+          <input type="color" id="border-color" value="#4a4a4a">
+        </div>
+        <div class="control">
+          <label>Text Color</label>
+          <input type="color" id="text-color" value="#e0e0e0">
+        </div>
+        <div class="control">
+          <label>Muted Text</label>
+          <input type="color" id="muted-text" value="#999999">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>Card Styling</h3>
+        <div class="control">
+          <label>Card Padding: <span id="card-pad-val" class="value-display"></span></label>
+          <input type="range" id="card-padding" min="12" max="32" step="4" value="20">
+        </div>
+        <div class="control">
+          <label>Card Radius: <span id="card-radius-val" class="value-display"></span></label>
+          <input type="range" id="card-radius" min="0" max="16" step="2" value="8">
+        </div>
+        <div class="control">
+          <label>Badge Background</label>
+          <input type="color" id="badge-bg" value="#5dade2">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>Typography</h3>
+        <div class="control">
+          <label>Header Size: <span id="header-size-val" class="value-display"></span></label>
+          <input type="range" id="header-font-size" min="18" max="28" step="1" value="24">
+        </div>
+        <div class="control">
+          <label>Tab Size: <span id="tab-size-val" class="value-display"></span></label>
+          <input type="range" id="tab-font-size" min="12" max="18" step="1" value="14">
+        </div>
+        <div class="control">
+          <label>Card Title: <span id="title-size-val" class="value-display"></span></label>
+          <input type="range" id="card-title-size" min="14" max="22" step="1" value="18">
+        </div>
+        <div class="control">
+          <label>Card Description: <span id="desc-size-val" class="value-display"></span></label>
+          <input type="range" id="desc-font-size" min="12" max="16" step="1" value="14">
+        </div>
+        <div class="control">
+          <label>Button Size: <span id="btn-size-val" class="value-display"></span></label>
+          <input type="range" id="button-font-size" min="12" max="16" step="1" value="14">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>Spacing</h3>
+        <div class="control">
+          <label>Header Padding: <span id="header-pad-val" class="value-display"></span></label>
+          <input type="range" id="header-padding" min="12" max="32" step="4" value="20">
+        </div>
+        <div class="control">
+          <label>Content Padding: <span id="content-pad-val" class="value-display"></span></label>
+          <input type="range" id="content-padding" min="16" max="40" step="4" value="24">
+        </div>
+        <div class="control">
+          <label>Tab Padding: <span id="tab-pad-val" class="value-display"></span></label>
+          <input type="range" id="tab-padding" min="8" max="20" step="2" value="12">
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="preview-area">
+        <div class="dialog" id="dialog-preview">
+          <div class="dialog-header">
+            <h2>Script Manager</h2>
+            <button class="close-btn">×</button>
+          </div>
+
+          <div class="dialog-tabs">
+            <div class="tab active" onclick="switchTab('projects')">Projects</div>
+            <div class="tab" onclick="switchTab('import')">Import</div>
+            <div class="tab" onclick="switchTab('configure')">Configure</div>
+          </div>
+
+          <div class="dialog-content">
+            <!-- Projects Tab -->
+            <div class="tab-content active" id="projects-tab">
+              <button class="validate-btn">✓ Validate Scripts</button>
+
+              <div class="projects-grid">
+              <div class="project-card">
+                <div class="card-header">
+                  <div>
+                    <div class="card-title">Gmail Trim</div>
+                    <div class="card-badge">TEST</div>
+                  </div>
+                </div>
+                <div class="card-date">2/3/2026</div>
+                <div class="card-description">Clean up old emails from Gmail using configurable retention policies</div>
+                <div class="card-actions">
+                  <button class="card-icon-btn" title="Configure">⚙</button>
+                  <button class="card-icon-btn" title="Delete">🗑</button>
+                </div>
+              </div>
+
+              <div class="project-card">
+                <div class="card-header">
+                  <div>
+                    <div class="card-title">Long Running Test</div>
+                    <div class="card-badge">PROD</div>
+                  </div>
+                </div>
+                <div class="card-date">1/15/2026</div>
+                <div class="card-description">A 30-second test script for testing execute/stop button behavior</div>
+                <div class="card-actions">
+                  <button class="card-icon-btn" title="Configure">⚙</button>
+                  <button class="card-icon-btn" title="Delete">🗑</button>
+                </div>
+              </div>
+
+              <div class="project-card">
+                <div class="card-header">
+                  <div>
+                    <div class="card-title">Episodes Sync</div>
+                    <div class="card-badge">BETA</div>
+                  </div>
+                </div>
+                <div class="card-date">12/20/2025</div>
+                <div class="card-description">Sync upcoming TV episodes from Sonarr calendar to notification service</div>
+                <div class="card-actions">
+                  <button class="card-icon-btn" title="Configure">⚙</button>
+                  <button class="card-icon-btn" title="Delete">🗑</button>
+                </div>
+              </div>
+            </div>
+            </div>
+
+            <!-- Import Tab -->
+            <div class="tab-content" id="import-tab">
+              <div class="import-section">
+                <h3>📦 Import from Git</h3>
+                <div class="form-group">
+                  <label class="form-label">Repository URL</label>
+                  <input type="text" class="form-input" placeholder="https://github.com/user/repo.git">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Branch (optional)</label>
+                  <input type="text" class="form-input" placeholder="main">
+                </div>
+                <button class="btn btn-primary" style="width: 100%; margin-top: 8px;">Import from Git</button>
+              </div>
+
+              <div class="import-section">
+                <h3>📁 Upload ZIP Archive</h3>
+                <div class="form-group">
+                  <label class="form-label">Choose ZIP file</label>
+                  <input type="file" class="form-input" accept=".zip">
+                </div>
+                <button class="btn btn-primary" style="width: 100%; margin-top: 8px;">Upload & Import</button>
+              </div>
+
+              <div class="import-section">
+                <h3>💾 Import from Local Directory</h3>
+                <div class="form-group">
+                  <label class="form-label">Directory Path</label>
+                  <input type="text" class="form-input" placeholder="/path/to/project">
+                </div>
+                <button class="btn btn-primary" style="width: 100%; margin-top: 8px;">Import Directory</button>
+              </div>
+            </div>
+
+            <!-- Configure Tab -->
+            <div class="tab-content" id="configure-tab">
+              <div class="config-section">
+                <div class="section-title">Project Information</div>
+                <div class="info-row">
+                  <div class="info-label">Project Name</div>
+                  <div class="info-value">Gmail Trim</div>
+                </div>
+                <div class="info-row">
+                  <div class="info-label">Description</div>
+                  <div class="info-value">Clean up old emails from Gmail</div>
+                </div>
+                <div class="info-row">
+                  <div class="info-label">Entry Point</div>
+                  <div class="info-value">gmail_trim_demo:main</div>
+                </div>
+                <div class="info-row">
+                  <div class="info-label">Script Name</div>
+                  <div class="info-value">Gmail Trim</div>
+                </div>
+                <button class="btn btn-primary config-btn">⚙ Configure Parameters & Verbs</button>
+              </div>
+
+              <div class="config-section">
+                <div class="section-title">Dependencies (0)</div>
+                <div class="empty-state">
+                  <div class="empty-icon">📦</div>
+                  <p>No dependencies detected</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dialog-footer">
+            <button class="btn btn-secondary">Close</button>
+            <button class="btn btn-primary">Refresh</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="prompt-output">
+        <h3>CSS Variables</h3>
+        <pre class="prompt-text" id="prompt"></pre>
+        <button class="copy-btn" onclick="copyPrompt()">Copy CSS</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      dialogWidth: 900,
+      contentHeight: 600,
+      dialogRadius: 8,
+      dialogBg: '#2a2a2a',
+      cardBg: '#3a3a3a',
+      accentColor: '#5dade2',
+      borderColor: '#4a4a4a',
+      textColor: '#e0e0e0',
+      mutedText: '#999999',
+      badgeBg: '#5dade2',
+      headerPadding: 20,
+      contentPadding: 24,
+      tabPadding: 12,
+      cardPadding: 20,
+      cardRadius: 8,
+      cardGap: 16,
+      headerFontSize: 24,
+      tabFontSize: 14,
+      cardTitleSize: 18,
+      descFontSize: 14,
+      buttonFontSize: 14,
+      gridColumns: 'repeat(2, 1fr)',
+      activeTab: 'projects'
+    };
+
+    const DEFAULTS = {...state};
+
+    const PRESETS = {
+      current: {
+        dialogBg: '#2a2a2a',
+        cardBg: '#3a3a3a',
+        accentColor: '#5dade2',
+        borderColor: '#4a4a4a',
+        textColor: '#e0e0e0',
+        mutedText: '#999999',
+        headerPadding: 20,
+        contentPadding: 24,
+        cardPadding: 20,
+        cardRadius: 8,
+        dialogRadius: 8,
+        cardGap: 16
+      },
+      compact: {
+        headerPadding: 16,
+        contentPadding: 20,
+        cardPadding: 16,
+        cardGap: 12,
+        cardRadius: 6,
+        dialogRadius: 6,
+        headerFontSize: 20,
+        cardTitleSize: 16,
+        descFontSize: 13
+      },
+      spacious: {
+        headerPadding: 28,
+        contentPadding: 32,
+        cardPadding: 28,
+        cardGap: 24,
+        cardRadius: 12,
+        dialogRadius: 12,
+        headerFontSize: 26,
+        cardTitleSize: 20,
+        descFontSize: 15
+      },
+      minimal: {
+        dialogBg: '#1a1a1a',
+        cardBg: '#222222',
+        borderColor: '#333333',
+        cardRadius: 4,
+        dialogRadius: 4,
+        cardPadding: 16,
+        contentPadding: 20,
+        cardGap: 12
+      }
+    };
+
+    function applyPreset(name) {
+      const preset = PRESETS[name];
+      Object.assign(state, preset);
+      syncControlsToState();
+      updateAll();
+    }
+
+    function syncControlsToState() {
+      document.getElementById('dialog-width').value = state.dialogWidth;
+      document.getElementById('content-height').value = state.contentHeight;
+      document.getElementById('dialog-radius').value = state.dialogRadius;
+      document.getElementById('dialog-bg').value = state.dialogBg;
+      document.getElementById('card-bg').value = state.cardBg;
+      document.getElementById('accent-color').value = state.accentColor;
+      document.getElementById('border-color').value = state.borderColor;
+      document.getElementById('text-color').value = state.textColor;
+      document.getElementById('muted-text').value = state.mutedText;
+      document.getElementById('badge-bg').value = state.badgeBg;
+      document.getElementById('header-padding').value = state.headerPadding;
+      document.getElementById('content-padding').value = state.contentPadding;
+      document.getElementById('tab-padding').value = state.tabPadding;
+      document.getElementById('card-padding').value = state.cardPadding;
+      document.getElementById('card-radius').value = state.cardRadius;
+      document.getElementById('card-gap').value = state.cardGap;
+      document.getElementById('header-font-size').value = state.headerFontSize;
+      document.getElementById('tab-font-size').value = state.tabFontSize;
+      document.getElementById('card-title-size').value = state.cardTitleSize;
+      document.getElementById('desc-font-size').value = state.descFontSize;
+      document.getElementById('button-font-size').value = state.buttonFontSize;
+      document.getElementById('grid-columns').value = state.gridColumns;
+      document.getElementById('active-tab').value = state.activeTab;
+    }
+
+    function updateAll() {
+      renderPreview();
+      updatePrompt();
+      updateValueDisplays();
+    }
+
+    function renderPreview() {
+      const dialog = document.getElementById('dialog-preview');
+
+      dialog.style.setProperty('--dialog-bg', state.dialogBg);
+      dialog.style.setProperty('--header-bg', state.dialogBg);
+      dialog.style.setProperty('--tabs-bg', state.dialogBg);
+      dialog.style.setProperty('--content-bg', state.dialogBg);
+      dialog.style.setProperty('--footer-bg', state.dialogBg);
+      dialog.style.setProperty('--card-bg', state.cardBg);
+      dialog.style.setProperty('--accent-color', state.accentColor);
+      dialog.style.setProperty('--border-color', state.borderColor);
+      dialog.style.setProperty('--card-border', state.borderColor);
+      dialog.style.setProperty('--text-color', state.textColor);
+      dialog.style.setProperty('--muted-text', state.mutedText);
+      dialog.style.setProperty('--tab-inactive-color', state.mutedText);
+      dialog.style.setProperty('--badge-bg', state.badgeBg);
+      dialog.style.setProperty('--badge-text', 'white');
+      dialog.style.setProperty('--dialog-width', state.dialogWidth + 'px');
+      dialog.style.setProperty('--content-height', state.contentHeight + 'px');
+      dialog.style.setProperty('--dialog-radius', state.dialogRadius + 'px');
+      dialog.style.setProperty('--header-padding', state.headerPadding + 'px');
+      dialog.style.setProperty('--content-padding', state.contentPadding + 'px');
+      dialog.style.setProperty('--footer-padding', state.headerPadding + 'px');
+      dialog.style.setProperty('--tab-padding', state.tabPadding + 'px ' + (state.tabPadding * 1.5) + 'px');
+      dialog.style.setProperty('--card-padding', state.cardPadding + 'px');
+      dialog.style.setProperty('--card-radius', state.cardRadius + 'px');
+      dialog.style.setProperty('--card-gap', state.cardGap + 'px');
+      dialog.style.setProperty('--header-font-size', state.headerFontSize + 'px');
+      dialog.style.setProperty('--tab-font-size', state.tabFontSize + 'px');
+      dialog.style.setProperty('--card-title-size', state.cardTitleSize + 'px');
+      dialog.style.setProperty('--desc-font-size', state.descFontSize + 'px');
+      dialog.style.setProperty('--date-font-size', (state.descFontSize - 2) + 'px');
+      dialog.style.setProperty('--button-font-size', state.buttonFontSize + 'px');
+      dialog.style.setProperty('--button-padding', '12px 24px');
+      dialog.style.setProperty('--button-radius', (state.cardRadius / 2) + 'px');
+      dialog.style.setProperty('--badge-font-size', (state.descFontSize - 3) + 'px');
+      dialog.style.setProperty('--badge-padding', '4px 10px');
+      dialog.style.setProperty('--badge-radius', (state.cardRadius / 2) + 'px');
+      dialog.style.setProperty('--grid-columns', state.gridColumns);
+      dialog.style.setProperty('--icon-btn-size', '40px');
+      dialog.style.setProperty('--icon-btn-radius', (state.cardRadius / 2) + 'px');
+      dialog.style.setProperty('--icon-btn-border', state.borderColor);
+      dialog.style.setProperty('--icon-btn-color', state.mutedText);
+      dialog.style.setProperty('--icon-btn-hover-bg', state.accentColor);
+      dialog.style.setProperty('--icon-btn-hover-border', state.accentColor);
+      dialog.style.setProperty('--icon-btn-hover-color', 'white');
+      dialog.style.setProperty('--icon-size', '18px');
+      dialog.style.setProperty('--section-title-size', (state.cardTitleSize - 2) + 'px');
+      dialog.style.setProperty('--label-font-size', state.descFontSize + 'px');
+      dialog.style.setProperty('--input-font-size', state.descFontSize + 'px');
+      dialog.style.setProperty('--input-bg', state.cardBg);
+      dialog.style.setProperty('--input-radius', (state.cardRadius / 2) + 'px');
+      dialog.style.setProperty('--placeholder-color', state.mutedText);
+
+      // Handle tab switching
+      const tabs = document.querySelectorAll('.dialog-tabs .tab');
+      const tabContents = document.querySelectorAll('.tab-content');
+
+      tabs.forEach((tab, index) => {
+        if (index === 0 && state.activeTab === 'projects') {
+          tab.classList.add('active');
+        } else if (index === 1 && state.activeTab === 'import') {
+          tab.classList.add('active');
+        } else if (index === 2 && state.activeTab === 'configure') {
+          tab.classList.add('active');
+        } else {
+          tab.classList.remove('active');
+        }
+      });
+
+      document.getElementById('projects-tab').classList.toggle('active', state.activeTab === 'projects');
+      document.getElementById('import-tab').classList.toggle('active', state.activeTab === 'import');
+      document.getElementById('configure-tab').classList.toggle('active', state.activeTab === 'configure');
+    }
+
+    function updatePrompt() {
+      const parts = [];
+      parts.push(`/* Dialog */`);
+      parts.push(`--dialog-bg: ${state.dialogBg};`);
+      parts.push(`--dialog-width: ${state.dialogWidth}px;`);
+      parts.push(`--content-height: ${state.contentHeight}px;`);
+      parts.push(`--dialog-radius: ${state.dialogRadius}px;`);
+      parts.push(``);
+      parts.push(`/* Colors */`);
+      parts.push(`--card-bg: ${state.cardBg};`);
+      parts.push(`--accent-color: ${state.accentColor};`);
+      parts.push(`--border-color: ${state.borderColor};`);
+      parts.push(`--text-color: ${state.textColor};`);
+      parts.push(`--muted-text: ${state.mutedText};`);
+      parts.push(`--badge-bg: ${state.badgeBg};`);
+      parts.push(``);
+      parts.push(`/* Layout */`);
+      parts.push(`--grid-columns: ${state.gridColumns};`);
+      parts.push(`--card-gap: ${state.cardGap}px;`);
+      parts.push(``);
+      parts.push(`/* Spacing */`);
+      parts.push(`--header-padding: ${state.headerPadding}px;`);
+      parts.push(`--content-padding: ${state.contentPadding}px;`);
+      parts.push(`--tab-padding: ${state.tabPadding}px ${state.tabPadding * 1.5}px;`);
+      parts.push(`--card-padding: ${state.cardPadding}px;`);
+      parts.push(`--card-radius: ${state.cardRadius}px;`);
+      parts.push(``);
+      parts.push(`/* Typography */`);
+      parts.push(`--header-font-size: ${state.headerFontSize}px;`);
+      parts.push(`--tab-font-size: ${state.tabFontSize}px;`);
+      parts.push(`--card-title-size: ${state.cardTitleSize}px;`);
+      parts.push(`--desc-font-size: ${state.descFontSize}px;`);
+      parts.push(`--button-font-size: ${state.buttonFontSize}px;`);
+
+      document.getElementById('prompt').textContent = parts.join('\n');
+    }
+
+    function updateValueDisplays() {
+      document.getElementById('width-val').textContent = state.dialogWidth + 'px';
+      document.getElementById('height-val').textContent = state.contentHeight + 'px';
+      document.getElementById('radius-val').textContent = state.dialogRadius + 'px';
+      document.getElementById('gap-val').textContent = state.cardGap + 'px';
+      document.getElementById('header-pad-val').textContent = state.headerPadding + 'px';
+      document.getElementById('content-pad-val').textContent = state.contentPadding + 'px';
+      document.getElementById('tab-pad-val').textContent = state.tabPadding + 'px';
+      document.getElementById('card-pad-val').textContent = state.cardPadding + 'px';
+      document.getElementById('card-radius-val').textContent = state.cardRadius + 'px';
+      document.getElementById('header-size-val').textContent = state.headerFontSize + 'px';
+      document.getElementById('tab-size-val').textContent = state.tabFontSize + 'px';
+      document.getElementById('title-size-val').textContent = state.cardTitleSize + 'px';
+      document.getElementById('desc-size-val').textContent = state.descFontSize + 'px';
+      document.getElementById('btn-size-val').textContent = state.buttonFontSize + 'px';
+    }
+
+    function switchTab(tabName) {
+      state.activeTab = tabName;
+      document.getElementById('active-tab').value = tabName;
+      updateAll();
+    }
+
+    function copyPrompt() {
+      const text = document.getElementById('prompt').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        btn.textContent = '✓ Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy CSS';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+
+    // Event listeners
+    ['dialog-width', 'content-height', 'dialog-radius', 'card-gap', 'header-padding',
+     'content-padding', 'tab-padding', 'card-padding', 'card-radius', 'header-font-size',
+     'tab-font-size', 'card-title-size', 'desc-font-size', 'button-font-size'].forEach(id => {
+      document.getElementById(id).addEventListener('input', e => {
+        const key = id.replace(/-([a-z])/g, (g) => g[1].toUpperCase()).replace(/-/g, '');
+        state[key] = parseInt(e.target.value);
+        updateAll();
+      });
+    });
+
+    ['dialog-bg', 'card-bg', 'accent-color', 'border-color', 'text-color', 'muted-text', 'badge-bg'].forEach(id => {
+      document.getElementById(id).addEventListener('input', e => {
+        const key = id.replace(/-([a-z])/g, (g) => g[1].toUpperCase()).replace(/-/g, '');
+        state[key] = e.target.value;
+        updateAll();
+      });
+    });
+
+    document.getElementById('grid-columns').addEventListener('change', e => {
+      state.gridColumns = e.target.value;
+      updateAll();
+    });
+
+    document.getElementById('active-tab').addEventListener('change', e => {
+      state.activeTab = e.target.value;
+      updateAll();
+    });
+
+    // Initialize
+    updateAll();
+  </script>
+</body>
+</html>
