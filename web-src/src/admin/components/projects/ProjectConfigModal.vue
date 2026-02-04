@@ -355,17 +355,17 @@ export default {
 }
 
 .modal-body {
-  flex: 1;
+  flex: 1 1 auto;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 24px;
   min-height: 0;
-  /* Allow scrolling but ensure footer stays visible */
-  overflow-x: hidden;
+  /* Ensure body doesn't exceed available space */
+  max-height: calc(90vh - 180px); /* Account for header ~70px, tabs ~50px, footer ~60px */
 }
 
 .tab-content {
-  /* Removed min-height to prevent pushing footer off screen */
-  min-height: 0;
+  /* No min-height to prevent pushing footer off screen */
 }
 
 .loading-state {
