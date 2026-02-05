@@ -562,6 +562,16 @@ export default {
       // Try both stores (scripts for main app, adminScripts for admin view)
       const scripts = allScripts.length > 0 ? allScripts : adminScripts;
 
+      // Debug logging
+      if (scripts.length > 0 && projectId === 'gmail-trim-3') {
+        console.log('Debug - Project ID:', projectId);
+        console.log('Debug - Total scripts:', scripts.length);
+        console.log('Debug - First script:', scripts[0]);
+        console.log('Debug - Script fields:', Object.keys(scripts[0]));
+        const matchingScripts = scripts.filter(s => s.project_id === projectId);
+        console.log('Debug - Matching scripts:', matchingScripts.length, matchingScripts.map(s => s.name));
+      }
+
       return scripts
         .filter(script => {
           // Check if script has project_id field matching this project
