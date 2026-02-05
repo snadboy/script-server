@@ -272,6 +272,23 @@ export default {
   display: flex;
   flex-direction: column;
   overflow: hidden; /* Prevent entire modal from scrolling */
+
+  /* Master-detail layout variables */
+  --params-table-height: 200px;
+  --verbs-table-height: 200px;
+  --detail-panel-height: 448px;
+  --master-detail-gap: 10px;
+
+  /* Color variables for light theme (default) */
+  --table-header-bg: #f5f5f5;
+  --detail-panel-bg: #fafafa;
+  --selected-row-bg: #e3f2fd;
+  --hover-color: #fafafa;
+  --border-color: #e0e0e0;
+  --border-color-light: #f0f0f0;
+  --text-primary: #424242;
+  --text-secondary: #666;
+  --input-bg: #ffffff;
 }
 
 .modal-header {

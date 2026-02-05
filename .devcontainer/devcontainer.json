@@ -1,0 +1,37 @@
+{
+  "name": "Script Server Dev",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "18"
+    },
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "Vue.volar",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "editor.formatOnSave": true
+      }
+    }
+  },
+  "forwardPorts": [5000, 8080],
+  "postCreateCommand": "cd web-src && npm install",
+  "remoteEnv": {
+    "NODE_OPTIONS": "--openssl-legacy-provider"
+  },
+  "mounts": [
+    "source=${localWorkspaceFolder}/conf,target=/app/conf,type=bind"
+  ],
+  "workspaceFolder": "/workspace"
+}

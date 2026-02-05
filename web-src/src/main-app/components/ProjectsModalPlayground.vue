@@ -236,16 +236,9 @@
             <h6>{{ selectedProject.name }}</h6>
 
             <!-- Project Configuration -->
-            <div class="config-group">
+            <div class="config-group highlighted-section">
               <div class="config-group-header">
                 <span class="config-label">Project Configuration</span>
-                <button
-                  class="btn btn-sm btn-primary"
-                  @click="openProjectConfig"
-                >
-                  <i class="material-icons btn-icon-sm">tune</i>
-                  Configure Parameters & Verbs
-                </button>
               </div>
               <div class="config-info">
                 <p>
@@ -262,6 +255,13 @@
                     {{ selectedProject.verbs?.options?.length || 0 }} Verbs
                   </span>
                 </div>
+                <button
+                  class="btn btn-sm btn-primary config-btn-inline"
+                  @click="openProjectConfig"
+                >
+                  <i class="material-icons btn-icon-sm">tune</i>
+                  Configure Parameters & Verbs
+                </button>
               </div>
             </div>
 
@@ -324,40 +324,15 @@
               </div>
             </div>
 
-            <!-- Script Name -->
-            <div class="config-group">
-              <label class="config-label">Script Name</label>
-              <input
-                v-model="configScriptName"
-                type="text"
-                :placeholder="selectedProject.name"
-                class="form-input"
-                :class="{ 'input-error': scriptNameError }"
-              />
-              <div v-if="scriptNameError" class="validation-error">
-                {{ scriptNameError }}
-              </div>
-            </div>
-
-            <!-- Description -->
-            <div class="config-group">
-              <label class="config-label">Description</label>
-              <input
-                v-model="configDescription"
-                type="text"
-                placeholder="What this script does"
-                class="form-input"
-              />
-            </div>
-
-            <!-- Create Script Button -->
+            <!-- Create Script Instance Button -->
             <div class="config-actions">
               <button
                 class="btn btn-primary"
-                :disabled="!effectiveEntryPoint || !configScriptName || scriptNameError || generating"
-                @click="generateWrapper"
+                :disabled="!effectiveEntryPoint"
+                @click="openCreateScriptInstance"
               >
-                {{ generating ? 'Creating Script...' : 'Create Script' }}
+                <i class="material-icons btn-icon">add</i>
+                Create Script Instance
               </button>
             </div>
           </div>
@@ -381,6 +356,15 @@
       @saved="onProjectConfigSaved"
     />
 
+    <!-- Create Script Instance Modal -->
+    <CreateScriptInstanceModal
+      :visible="showCreateScriptInstance"
+      :project="selectedProject"
+      :entryPoint="effectiveEntryPoint"
+      @close="closeCreateScriptInstance"
+      @created="onScriptInstanceCreated"
+    />
+
   </div>
 </template>
 
@@ -388,13 +372,15 @@
 import {axiosInstance} from '@/common/utils/axios_utils';
 import DirectoryBrowserModal from './common/DirectoryBrowserModal.vue';
 import ProjectConfigPlaygroundModal from '@/admin/components/projects/ProjectConfigPlaygroundModal.vue';
+import CreateScriptInstanceModal from './CreateScriptInstanceModal.vue';
 
 export default {
   name: 'ProjectsModalPlayground',
 
   components: {
     DirectoryBrowserModal,
-    ProjectConfigPlaygroundModal
+    ProjectConfigPlaygroundModal,
+    CreateScriptInstanceModal
   },
 
   props: {
@@ -434,8 +420,9 @@ export default {
       installedPackages: [],
       loadingPackages: false,
 
-      // Project configuration modal
-      showProjectConfig: false
+      // Modals
+      showProjectConfig: false,
+      showCreateScriptInstance: false
     };
   },
 
@@ -601,6 +588,23 @@ export default {
       }, 3000);
       // Reload projects to get updated parameter/verb counts
       this.loadProjects();
+    },
+
+    openCreateScriptInstance() {
+      this.showCreateScriptInstance = true;
+    },
+
+    closeCreateScriptInstance() {
+      this.showCreateScriptInstance = false;
+    },
+
+    onScriptInstanceCreated() {
+      this.success = 'Script instance created successfully!';
+      setTimeout(() => {
+        this.success = null;
+      }, 3000);
+      this.showCreateScriptInstance = false;
+      this.close(); // Close the main modal after creating instance
     },
 
     truncateUrl(url) {
@@ -1351,6 +1355,13 @@ export default {
   margin-bottom: 20px;
 }
 
+.config-group.highlighted-section {
+  background: rgba(93, 173, 226, 0.08);
+  border: 1px solid rgba(93, 173, 226, 0.3);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
 .config-group-header {
   display: flex;
   align-items: center;
@@ -1529,6 +1540,11 @@ export default {
 .stat-badge .material-icons {
   font-size: 16px;
   color: var(--accent);
+}
+
+.config-btn-inline {
+  margin-top: 12px;
+  width: 100%;
 }
 
 @media screen and (max-width: 768px) {

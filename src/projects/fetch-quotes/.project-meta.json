@@ -1,0 +1,15 @@
+{
+  "id": "fetch-quotes",
+  "name": "Fetch Quotes",
+  "import_type": "local",
+  "source_url": "/tmp/fetch-quotes",
+  "imported_at": "2026-01-17T13:41:23.487642",
+  "entry_points": [
+    "main:main"
+  ],
+  "dependencies": [
+    "requests"
+  ],
+  "wrapper_script": "/home/snadboy/projects/script-server/src/samples/scripts/fetch-quotes.py",
+  "runner_config": "/home/snadboy/projects/script-server/src/conf/runners/fetch-quotes.json"
+}

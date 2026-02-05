@@ -1,0 +1,358 @@
+<template>
+  <div v-if="visible" class="modal-overlay" @click.self="close">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h5 class="modal-title">Create Script Instance</h5>
+        <button class="modal-close" @click="close">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div v-if="error" class="error-message">
+          {{ error }}
+        </div>
+
+        <div class="form-group">
+          <label>Project</label>
+          <div class="form-value">{{ project?.name || 'No project selected' }}</div>
+        </div>
+
+        <div class="form-group">
+          <label>Entry Point</label>
+          <div class="form-value">{{ entryPoint || 'No entry point selected' }}</div>
+        </div>
+
+        <div class="form-group">
+          <label class="required">Script Name</label>
+          <input
+            v-model="scriptName"
+            type="text"
+            :placeholder="project?.name || 'Enter script name'"
+            class="form-input"
+            :class="{ 'input-error': scriptNameError }"
+            @input="validateScriptName"
+          />
+          <div v-if="scriptNameError" class="validation-error">
+            {{ scriptNameError }}
+          </div>
+          <div class="form-help">
+            Name for this script instance (must be unique)
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <input
+            v-model="description"
+            type="text"
+            placeholder="What this script does"
+            class="form-input"
+          />
+          <div class="form-help">
+            Optional description for this script instance
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn waves-effect" @click="close">Cancel</button>
+        <button
+          class="btn btn-primary waves-effect"
+          :disabled="!canCreate"
+          @click="createInstance"
+        >
+          {{ creating ? 'Creating...' : 'Create Instance' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import {axiosInstance} from '@/common/utils/axios_utils';
+
+export default {
+  name: 'CreateScriptInstanceModal',
+
+  props: {
+    visible: {
+      type: Boolean,
+      default: false
+    },
+    project: {
+      type: Object,
+      default: null
+    },
+    entryPoint: {
+      type: String,
+      default: ''
+    }
+  },
+
+  data() {
+    return {
+      scriptName: '',
+      description: '',
+      scriptNameError: null,
+      error: null,
+      creating: false
+    };
+  },
+
+  computed: {
+    canCreate() {
+      return (
+        this.scriptName &&
+        !this.scriptNameError &&
+        this.entryPoint &&
+        !this.creating
+      );
+    }
+  },
+
+  watch: {
+    visible(newVal) {
+      if (newVal) {
+        // Reset form when modal opens
+        this.scriptName = '';
+        this.description = '';
+        this.scriptNameError = null;
+        this.error = null;
+      }
+    }
+  },
+
+  methods: {
+    validateScriptName() {
+      this.scriptNameError = null;
+
+      if (!this.scriptName) {
+        this.scriptNameError = 'Script name is required';
+        return;
+      }
+
+      // Check for invalid characters
+      if (!/^[a-zA-Z0-9_\- ]+$/.test(this.scriptName)) {
+        this.scriptNameError = 'Only letters, numbers, spaces, hyphens, and underscores allowed';
+        return;
+      }
+
+      // Check if name already exists
+      this.checkNameExists();
+    },
+
+    async checkNameExists() {
+      try {
+        const response = await axiosInstance.get('/scripts');
+        const existingNames = response.data.scripts.map(s => s.name.toLowerCase());
+
+        if (existingNames.includes(this.scriptName.toLowerCase())) {
+          this.scriptNameError = 'A script with this name already exists';
+        }
+      } catch (err) {
+        console.error('Error checking script names:', err);
+      }
+    },
+
+    async createInstance() {
+      if (!this.canCreate) return;
+
+      this.creating = true;
+      this.error = null;
+
+      try {
+        const response = await axiosInstance.post('/projects/generate-wrapper', {
+          project_id: this.project.id,
+          entry_point: this.entryPoint,
+          script_name: this.scriptName,
+          description: this.description
+        });
+
+        if (response.data.success) {
+          this.$emit('created', {
+            scriptName: this.scriptName,
+            description: this.description
+          });
+        } else {
+          this.error = response.data.error || 'Failed to create script instance';
+        }
+      } catch (err) {
+        this.error = err.response?.data?.error || err.message || 'Failed to create script instance';
+      } finally {
+        this.creating = false;
+      }
+    },
+
+    close() {
+      if (this.creating) return; // Prevent closing while creating
+      this.$emit('close');
+    }
+  }
+};
+</script>
+
+<style scoped>
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.modal-dialog {
+  background: var(--background-color);
+  border-radius: 4px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--separator-color);
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 500;
+  margin: 0;
+  color: var(--font-color-main);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  line-height: 1;
+  color: var(--font-color-medium);
+  cursor: pointer;
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close:hover {
+  color: var(--font-color-main);
+}
+
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--separator-color);
+}
+
+.error-message {
+  background: var(--error-background-color);
+  color: var(--error-color);
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--font-color-main);
+  margin-bottom: 6px;
+}
+
+.form-group label.required::after {
+  content: ' *';
+  color: var(--error-color);
+}
+
+.form-value {
+  padding: 8px 12px;
+  background: var(--background-color-high-emphasis);
+  border-radius: 4px;
+  font-size: 14px;
+  color: var(--font-color-medium);
+}
+
+.form-input {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 14px;
+  background: var(--background-color);
+  border: 1px solid var(--separator-color);
+  border-radius: 4px;
+  color: var(--font-color-main);
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.form-input.input-error {
+  border-color: var(--error-color);
+}
+
+.validation-error {
+  color: var(--error-color);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.form-help {
+  font-size: 12px;
+  color: var(--font-color-medium);
+  margin-top: 4px;
+}
+
+.btn {
+  padding: 8px 16px;
+  font-size: 14px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background: var(--background-color-high-emphasis);
+  color: var(--font-color-main);
+}
+
+.btn:hover {
+  background: var(--background-color-medium-emphasis);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--primary-color);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-color-light);
+}
+</style>

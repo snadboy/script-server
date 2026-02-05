@@ -683,62 +683,60 @@ export default {
 .master-detail-container {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--master-detail-gap, 10px);
   flex: 1;
   min-height: 0;
 }
 
 /* Scrollable Table (fixed height) */
 .parameters-table-container {
-  max-height: 300px;
+  max-height: var(--params-table-height, 200px);
   overflow-y: auto;
   border: 1px solid var(--border-color, #e0e0e0);
-  border-radius: 6px;
-  background: #fff;
+  border-radius: 4px;
+  background: var(--background-color, #fff);
 }
 
 .parameters-table {
   width: 100%;
   border-collapse: collapse;
+  font-size: 13px;
 }
 
 .parameters-table thead {
   position: sticky;
   top: 0;
-  background: #f5f5f5;
+  background: var(--table-header-bg, #f5f5f5);
   z-index: 1;
 }
 
 .parameters-table th {
   padding: 12px;
   text-align: left;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
-  color: var(--text-secondary, #666);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  color: var(--text-primary, #424242);
   border-bottom: 2px solid var(--border-color, #e0e0e0);
 }
 
 .parameters-table tbody tr {
   cursor: pointer;
-  transition: background-color 0.2s;
-  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.15s;
+  border-bottom: 1px solid var(--border-color-light, #f0f0f0);
 }
 
 .parameters-table tbody tr:hover {
-  background-color: #f9f9f9;
+  background-color: var(--hover-color, #fafafa);
 }
 
 .parameters-table tbody tr.selected {
-  background-color: #e3f2fd;
-  font-weight: 500;
+  background-color: var(--selected-row-bg, #e3f2fd);
 }
 
 .parameters-table td {
   padding: 10px 12px;
-  font-size: 14px;
-  color: var(--text-primary, #333);
+  font-size: 13px;
+  color: var(--text-primary, #424242);
 }
 
 .col-name code {
@@ -775,17 +773,21 @@ export default {
 
 /* Edit Panel (scrollable if needed) */
 .parameter-edit-panel {
-  border-top: 2px solid var(--border-color, #e0e0e0);
-  padding-top: 16px;
-  max-height: 400px;
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 4px;
+  padding: 20px;
+  max-height: var(--detail-panel-height, 448px);
   overflow-y: auto;
+  background: var(--detail-panel-bg, #fafafa);
 }
 
 .edit-panel-title {
   margin: 0 0 16px 0;
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--text-primary, #333);
+  padding-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #212121);
+  border-bottom: 2px solid var(--border-color, #e0e0e0);
 }
 
 .edit-panel-title code {

@@ -11,12 +11,13 @@
   "schedule": {
     "repeatable": true,
     "start_datetime": "2026-01-11T19:56:00.000000Z",
-    "executions_count": 2683,
-    "last_execution_time": "2026-01-13T17:54:00.001761Z",
+    "executions_count": 13185,
+    "last_execution_time": "2026-02-05T00:05:00.002251Z",
     "repeat_unit": "minutes",
     "repeat_period": 1
   },
   "script_name": "Long Running Test",
   "parameter_values": {},
-  "enabled": true
+  "enabled": true,
+  "description": "Schedule description"
 }

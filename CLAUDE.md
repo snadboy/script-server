@@ -22,7 +22,7 @@
 
 ### Current Focus
 
-**Status:** ✅ **Playground Modal DEPLOYED** - Ready for testing
+**Status:** ✅ **Playground Modal IMPROVED** - UX refinements complete
 
 **Latest work (2026-02-04):**
 - ✅ Created brand new `ProjectConfigPlaygroundModal.vue` from playground prototype
@@ -32,8 +32,16 @@
 - ✅ Clean architecture: single ~850 LOC file, easy to maintain
 - ✅ Frontend builds successfully with no errors
 - ✅ Wired up in `ProjectsModal.vue` (replaced old modal)
+- ✅ **UX Improvements applied** (7 refinements based on user feedback):
+  - Traditional checkbox styling (not rotated rectangles)
+  - Add Verb button moved before table
+  - Improved "Verb Required" label text
+  - Verb Configuration moved immediately after table
+  - Tightened table layout (reduced padding 10px→6px)
+  - Disabled click-outside-to-close behavior
+  - Added Esc key to close
 - ✅ Server running at http://localhost:5000
-- ⏳ **Next:** Manual UI testing (see `TESTING_NEW_MODAL.md`)
+- ⏳ **Next:** User verification and testing
 - 📝 Old components kept for easy rollback if needed
 
 **Files Modified:**
@@ -45,6 +53,7 @@
 - `PLAYGROUND_MODAL_SUMMARY.md` - Complete implementation summary
 - `PLAYGROUND_MODAL_IMPLEMENTATION.md` - Architecture details
 - `TESTING_NEW_MODAL.md` - Comprehensive testing checklist
+- `MODAL_UX_IMPROVEMENTS.md` - UX refinements changelog (NEW)
 
 ---
 

@@ -1,0 +1,9 @@
+{
+  "name": "Fetch Quotes",
+  "script_path": "/home/snadboy/projects/script-server/src/venv/bin/python /home/snadboy/projects/script-server/src/samples/scripts/fetch-quotes.py",
+  "description": "Imported from /tmp/fetch-quotes",
+  "group": "Imported Projects",
+  "scheduling": {
+    "enabled": true
+  }
+}
