@@ -1551,6 +1551,13 @@ class GenerateWrapperHandler(BaseRequestHandler):
             if not script_name:
                 raise tornado.web.HTTPError(400, reason='Script name is required')
 
+            # Check for duplicate script name
+            config_service = self.application.config_service
+            existing_configs = config_service.load_config_list()
+            existing_names = [config.name for config in existing_configs]
+            if script_name in existing_names:
+                raise tornado.web.HTTPError(400, reason=f'A script named "{script_name}" already exists')
+
             # Generate wrapper script (pass script_name for unique filename)
             wrapper_path = project_service.generate_wrapper(
                 project_id, entry_point, config_path, config_cmd, script_name
