@@ -146,20 +146,21 @@ export default {
       this.error = null;
 
       try {
-        const response = await axiosInstance.post('/projects/generate-wrapper', {
-          project_id: this.project.id,
+        const response = await axiosInstance.post(`/admin/projects/${this.project.id}/wrapper`, {
           entry_point: this.entryPoint,
           script_name: this.scriptName,
           description: this.description
         });
 
-        if (response.data.success) {
+        if (response.data.wrapper_path && response.data.config_path) {
           this.$emit('created', {
             scriptName: this.scriptName,
-            description: this.description
+            description: this.description,
+            wrapperPath: response.data.wrapper_path,
+            configPath: response.data.config_path
           });
         } else {
-          this.error = response.data.error || 'Failed to create script instance';
+          this.error = 'Failed to create script instance';
         }
       } catch (err) {
         this.error = err.response?.data?.error || err.message || 'Failed to create script instance';
