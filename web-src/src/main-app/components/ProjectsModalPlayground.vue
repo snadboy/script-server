@@ -93,39 +93,64 @@
                   {{ truncateUrl(project.source_url) }}
                 </div>
 
-                <!-- Configuration details -->
-                <div v-if="project.parameters || project.verbs" class="config-details">
-                  <!-- Parameters -->
-                  <div v-if="project.parameters && project.parameters.length > 0" class="config-section">
+                <!-- Configuration details (always shown) -->
+                <div class="config-details">
+                  <!-- Instances -->
+                  <div class="config-section">
                     <div class="config-section-label">
-                      Parameters ({{ project.parameters.length }}):
+                      Instances ({{ getProjectInstances(project.id).length }}):
                     </div>
-                    <div class="config-tags">
-                      <span
+                    <div class="config-list">
+                      <div
+                        v-for="instance in getProjectInstances(project.id)"
+                        :key="instance"
+                        class="config-list-item"
+                      >
+                        {{ instance }}
+                      </div>
+                      <div v-if="getProjectInstances(project.id).length === 0" class="config-list-empty">
+                        None
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Parameters -->
+                  <div class="config-section">
+                    <div class="config-section-label">
+                      Parameters ({{ project.parameters?.length || 0 }}):
+                    </div>
+                    <div class="config-list">
+                      <div
                         v-for="param in project.parameters"
                         :key="param.name"
-                        class="config-tag"
+                        class="config-list-item"
                         :title="param.description"
                       >
                         {{ param.name }}
-                      </span>
+                      </div>
+                      <div v-if="!project.parameters || project.parameters.length === 0" class="config-list-empty">
+                        None
+                      </div>
                     </div>
                   </div>
 
                   <!-- Verbs -->
-                  <div v-if="project.verbs && project.verbs.options && project.verbs.options.length > 0" class="config-section">
+                  <div class="config-section">
                     <div class="config-section-label">
-                      Verbs ({{ project.verbs.options.length }}):
+                      Verbs ({{ project.verbs?.options?.length || 0 }}):
                     </div>
-                    <div class="config-tags">
-                      <span
-                        v-for="verb in project.verbs.options"
+                    <div class="config-list">
+                      <div
+                        v-for="verb in project.verbs?.options"
                         :key="verb.name"
-                        class="config-tag"
+                        class="config-list-item"
                         :title="verb.description"
                       >
                         {{ verb.name }}
-                      </span>
+                      </div>
+                      <div v-if="!project.verbs || !project.verbs.options || project.verbs.options.length === 0" class="config-list-empty">
+                        None
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -530,6 +555,19 @@ export default {
       this.$emit('close');
     },
 
+    getProjectInstances(projectId) {
+      // Get all scripts and filter for instances created from this project
+      const allScripts = this.$store.state.scripts?.scripts || [];
+      return allScripts
+        .filter(script => {
+          // Check if script config path contains project ID (e.g., "gmail-trim-3_ScriptName.json")
+          if (script.filename) {
+            return script.filename.startsWith(`${projectId}_`);
+          }
+          return false;
+        })
+        .map(script => script.name);
+    },
 
     async loadInstalledPackages() {
       this.loadingPackages = true;
@@ -997,6 +1035,8 @@ export default {
 
 .validate-btn .btn-icon-sm {
   font-size: 18px;
+  margin: 0;
+  line-height: 1;
 }
 
 .error-message {
@@ -1154,7 +1194,7 @@ export default {
 .config-section {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .config-section-label {
@@ -1164,25 +1204,51 @@ export default {
   text-transform: uppercase;
 }
 
-.config-tags {
+.config-list {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+  flex-direction: column;
+  max-height: calc(3 * 20px);
+  overflow-y: auto;
+  gap: 2px;
+  padding: 2px 0;
 }
 
-.config-tag {
-  background: rgba(93, 173, 226, 0.15);
+.config-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.config-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.config-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+}
+
+.config-list-item {
+  font-size: 12px;
   color: var(--accent);
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-size: 11px;
   font-family: monospace;
+  padding: 2px 4px;
   cursor: help;
-  transition: background 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 16px;
 }
 
-.config-tag:hover {
-  background: rgba(93, 173, 226, 0.25);
+.config-list-item:hover {
+  background: rgba(93, 173, 226, 0.15);
+  border-radius: 2px;
+}
+
+.config-list-empty {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 2px 4px;
+  line-height: 16px;
 }
 
 /* Old card-footer and btn-icon-action styles removed - now using card-actions with btn-icon-small */
