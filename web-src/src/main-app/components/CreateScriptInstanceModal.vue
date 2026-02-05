@@ -136,21 +136,7 @@ export default {
         return;
       }
 
-      // Check if name already exists
-      this.checkNameExists();
-    },
-
-    async checkNameExists() {
-      try {
-        const response = await axiosInstance.get('/scripts');
-        const existingNames = response.data.scripts.map(s => s.name.toLowerCase());
-
-        if (existingNames.includes(this.scriptName.toLowerCase())) {
-          this.scriptNameError = 'A script with this name already exists';
-        }
-      } catch (err) {
-        console.error('Error checking script names:', err);
-      }
+      // Backend will validate uniqueness when creating
     },
 
     async createInstance() {
@@ -210,9 +196,10 @@ export default {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   width: 90%;
   max-width: 600px;
-  max-height: 90vh;
+  max-height: 85vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .modal-header {
@@ -253,6 +240,7 @@ export default {
   padding: 20px;
   overflow-y: auto;
   flex: 1;
+  min-height: 0;
 }
 
 .modal-footer {
@@ -261,6 +249,8 @@ export default {
   gap: 12px;
   padding: 16px 20px;
   border-top: 1px solid var(--separator-color);
+  flex-shrink: 0;
+  background: var(--background-color);
 }
 
 .error-message {
