@@ -16,37 +16,47 @@
 ## Current State
 
 **Branch:** `master`
-**Latest Commit:** `45327ad` - Implement playground-based ProjectConfigModal with dark theme
+**Latest Commit:** `aef9a3d` - Proper error handling for duplicates and compact modal layout
 **Docker Image:** `ghcr.io/snadboy/script-server:latest` (auto-builds via GitHub Actions)
 **Local Server:** Running on http://localhost:5000
 
 ### Current Focus
 
-**Status:** ✅ **Playground Modal IMPROVED** - UX refinements complete
+**Status:** ✅ **Script Manager Rebuilt** - Complete playground-based redesign
 
 **Latest work (2026-02-04):**
-- ✅ Created brand new `ProjectConfigPlaygroundModal.vue` from playground prototype
-- ✅ 100% pixel-perfect match to playground dark theme (#1e1e1e, #2a2a2a, #4a90e2)
-- ✅ Inline master-detail layout (no child components)
-- ✅ All functionality ported: parameters, verbs, save/load, validation
-- ✅ Clean architecture: single ~850 LOC file, easy to maintain
-- ✅ Frontend builds successfully with no errors
-- ✅ Wired up in `ProjectsModal.vue` (replaced old modal)
-- ✅ **UX Improvements applied** (7 refinements based on user feedback):
-  - Traditional checkbox styling (not rotated rectangles)
-  - Add Verb button moved before table
-  - Improved "Verb Required" label text
-  - Verb Configuration moved immediately after table
-  - Tightened table layout (reduced padding 10px→6px)
-  - Disabled click-outside-to-close behavior
-  - Added Esc key to close
-- ✅ Server running at http://localhost:5000
-- ⏳ **Next:** User verification and testing
-- 📝 Old components kept for easy rollback if needed
+- ✅ Created `script-manager-playground.html` interactive design tool
+- ✅ Built brand new `ProjectsModalPlayground.vue` from scratch
+- ✅ Card-based 2-column grid layout (not table-based rows)
+- ✅ Exact match to playground dark theme (#1a1a1a, #222222, #5dade2, #333333)
+- ✅ Three tabs: Projects, Import, Configure
+- ✅ Created separate `CreateScriptInstanceModal.vue` for instance creation
+- ✅ Group selection dropdown with existing groups and new group confirmation
+- ✅ Fixed CSS variable scoping (moved from `:root` to component class)
+- ✅ Duplicate script name validation in backend (returns 400 with clear error)
+- ✅ Compact modal layout to prevent button clipping (70vh, reduced padding)
+- ✅ Script Manager stays open after creating instance
+- ✅ All changes committed and pushed to GitHub
+- ⏳ **Next:** Manual testing and user verification
+
+**Commits (8 total):**
+1. `03951e2` - Complete rebuild with card-based grid layout
+2. `29bdfd0` - Fix CSS variables (moved from :root to .projects-modal-overlay)
+3. `9e135b0` - Reorganize Configure tab, extract Create Script Instance modal
+4. `b758f9d` - Remove 405 error, fix cutoff buttons
+5. `c55ccb9` - Use correct endpoint (/admin/projects/{id}/wrapper)
+6. `c438c58` - Add group selection, improve modal UX
+7. `21af915` - Prevent duplicate script names in backend
+8. `aef9a3d` - Proper error handling (preserve 400 status), compact layout
+
+**Files Created:**
+- `script-manager-playground.html` - Interactive design playground
+- `web-src/src/main-app/components/ProjectsModalPlayground.vue` - New Script Manager (795 lines)
+- `web-src/src/main-app/components/CreateScriptInstanceModal.vue` - Instance creation modal (411 lines)
 
 **Files Modified:**
-- `web-src/src/main-app/components/ProjectsModal.vue` - Updated import and usage
-- Import changed: `ProjectConfigModal` → `ProjectConfigPlaygroundModal`
+- `web-src/src/main-app/components/MainAppSidebar.vue` - Import ProjectsModalPlayground
+- `src/web/server.py` - Duplicate validation in GenerateWrapperHandler
 
 **Documentation:**
 - `QUICK_START_NEW_MODAL.md` - 3-step integration guide (✅ COMPLETE)
