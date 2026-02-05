@@ -92,9 +92,42 @@
                 <div v-if="project.source_url" class="card-description">
                   {{ truncateUrl(project.source_url) }}
                 </div>
-                <div v-if="project.wrapper_script" class="card-status">
-                  <i class="material-icons status-icon">check_circle</i>
-                  <span>Configured</span>
+
+                <!-- Configuration details -->
+                <div v-if="project.parameters || project.verbs" class="config-details">
+                  <!-- Parameters -->
+                  <div v-if="project.parameters && project.parameters.length > 0" class="config-section">
+                    <div class="config-section-label">
+                      Parameters ({{ project.parameters.length }}):
+                    </div>
+                    <div class="config-tags">
+                      <span
+                        v-for="param in project.parameters"
+                        :key="param.name"
+                        class="config-tag"
+                        :title="param.description"
+                      >
+                        {{ param.name }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Verbs -->
+                  <div v-if="project.verbs && project.verbs.options && project.verbs.options.length > 0" class="config-section">
+                    <div class="config-section-label">
+                      Verbs ({{ project.verbs.options.length }}):
+                    </div>
+                    <div class="config-tags">
+                      <span
+                        v-for="verb in project.verbs.options"
+                        :key="verb.name"
+                        class="config-tag"
+                        :title="verb.description"
+                      >
+                        {{ verb.name }}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -934,15 +967,15 @@ export default {
 
 .projects-header {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   margin-bottom: 16px;
 }
 
 .validate-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
+  gap: 4px;
+  padding: 6px 10px;
   font-size: 13px;
   background: var(--card-bg);
   border: 1px solid var(--border);
@@ -1112,16 +1145,44 @@ export default {
   white-space: nowrap;
 }
 
-.card-status {
+.config-details {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: #4caf50;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.status-icon {
-  font-size: 16px;
+.config-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.config-section-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.config-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.config-tag {
+  background: rgba(93, 173, 226, 0.15);
+  color: var(--accent);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-family: monospace;
+  cursor: help;
+  transition: background 0.2s;
+}
+
+.config-tag:hover {
+  background: rgba(93, 173, 226, 0.25);
 }
 
 /* Old card-footer and btn-icon-action styles removed - now using card-actions with btn-icon-small */
