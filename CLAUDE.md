@@ -16,15 +16,24 @@
 ## Current State
 
 **Branch:** `master`
-**Latest Commit:** `aef9a3d` - Proper error handling for duplicates and compact modal layout
+**Latest Commit:** `bc8307f` - Improve script instance creation error handling
 **Docker Image:** `ghcr.io/snadboy/script-server:latest` (auto-builds via GitHub Actions)
 **Local Server:** Running on http://localhost:5000
 
 ### Current Focus
 
-**Status:** ✅ **Script Manager Rebuilt** - Complete playground-based redesign
+**Status:** ✅ **CreateScriptInstanceModal Complete** - All error handling and validation working
 
-**Latest work (2026-02-04):**
+**Latest work (2026-02-05):**
+- ✅ Fixed 500 error by adding `@inject_user` decorator to GenerateWrapperHandler
+- ✅ Made duplicate script name check case-insensitive
+- ✅ Fixed error message display (Tornado sends plain text, not JSON)
+- ✅ Fixed button text centering with flexbox (inline-flex, align-items, justify-content)
+- ✅ Ultra-compact modal layout (50vh max-height) to prevent button clipping
+- ✅ All validation and error messages working correctly
+- ⏳ **Next:** Ready for production use, consider Docker image push
+
+**Previous work (2026-02-04):**
 - ✅ Created `script-manager-playground.html` interactive design tool
 - ✅ Built brand new `ProjectsModalPlayground.vue` from scratch
 - ✅ Card-based 2-column grid layout (not table-based rows)
@@ -32,14 +41,8 @@
 - ✅ Three tabs: Projects, Import, Configure
 - ✅ Created separate `CreateScriptInstanceModal.vue` for instance creation
 - ✅ Group selection dropdown with existing groups and new group confirmation
-- ✅ Fixed CSS variable scoping (moved from `:root` to component class)
-- ✅ Duplicate script name validation in backend (returns 400 with clear error)
-- ✅ Compact modal layout to prevent button clipping (70vh, reduced padding)
-- ✅ Script Manager stays open after creating instance
-- ✅ All changes committed and pushed to GitHub
-- ⏳ **Next:** Manual testing and user verification
 
-**Commits (8 total):**
+**Commits (9 total):**
 1. `03951e2` - Complete rebuild with card-based grid layout
 2. `29bdfd0` - Fix CSS variables (moved from :root to .projects-modal-overlay)
 3. `9e135b0` - Reorganize Configure tab, extract Create Script Instance modal
@@ -48,6 +51,7 @@
 6. `c438c58` - Add group selection, improve modal UX
 7. `21af915` - Prevent duplicate script names in backend
 8. `aef9a3d` - Proper error handling (preserve 400 status), compact layout
+9. `bc8307f` - Improve error handling and case-insensitive duplicate check
 
 **Files Created:**
 - `script-manager-playground.html` - Interactive design playground
