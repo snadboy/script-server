@@ -218,7 +218,22 @@ export default {
           this.error = 'Failed to create script instance';
         }
       } catch (err) {
-        this.error = err.response?.data?.error || err.message || 'Failed to create script instance';
+        // Tornado sends error message as plain text in response body
+        if (err.response?.data) {
+          // If data is a string, use it directly
+          if (typeof err.response.data === 'string') {
+            this.error = err.response.data;
+          } else {
+            // Otherwise try JSON fields
+            this.error = err.response.data.reason ||
+                         err.response.data.error ||
+                         err.response.data.message ||
+                         err.message ||
+                         'Failed to create script instance';
+          }
+        } else {
+          this.error = err.message || 'Failed to create script instance';
+        }
       } finally {
         this.creating = false;
       }
@@ -381,9 +396,13 @@ export default {
 }
 
 .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 6px 14px;
   font-size: 13px;
-  border: none;
+  line-height: 1;
+  border: 1px solid var(--separator-color);
   border-radius: 4px;
   cursor: pointer;
   background: var(--background-color-high-emphasis);

@@ -1524,7 +1524,8 @@ class GetProjectEntryPointsHandler(BaseRequestHandler):
 
 class GenerateWrapperHandler(BaseRequestHandler):
     @requires_admin_rights
-    def post(self, project_id):
+    @inject_user
+    def post(self, user, project_id):
         project_service = self.application.project_service
         if project_service is None:
             raise tornado.web.HTTPError(503, 'Project service not available')
@@ -1551,18 +1552,12 @@ class GenerateWrapperHandler(BaseRequestHandler):
             if not script_name:
                 raise tornado.web.HTTPError(400, reason='Script name is required')
 
-            # Check for duplicate script name
+            # Check for duplicate script name (case-insensitive)
             config_service = self.application.config_service
-            from src.model.model_helper import AccessProhibitedException
-            try:
-                # list_configs requires user parameter; use admin user from request
-                existing_configs = config_service.list_configs(self.application.authorizer.get_user(self))
-                existing_names = [config.name for config in existing_configs]
-                if script_name in existing_names:
-                    raise tornado.web.HTTPError(400, reason=f'A script named "{script_name}" already exists')
-            except AccessProhibitedException:
-                # If access check fails, skip duplicate check (will be caught by actual config creation)
-                pass
+            existing_configs = config_service.list_configs(user)
+            existing_names = [config.name.lower() for config in existing_configs]
+            if script_name.lower() in existing_names:
+                raise tornado.web.HTTPError(400, reason=f'A script named "{script_name}" already exists')
 
             # Generate wrapper script (pass script_name for unique filename)
             wrapper_path = project_service.generate_wrapper(
