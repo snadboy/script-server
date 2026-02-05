@@ -560,11 +560,8 @@ export default {
       const allScripts = this.$store.state.scripts?.scripts || [];
       return allScripts
         .filter(script => {
-          // Check if script config path contains project ID (e.g., "gmail-trim-3_ScriptName.json")
-          if (script.filename) {
-            return script.filename.startsWith(`${projectId}_`);
-          }
-          return false;
+          // Check if script has project_id field matching this project
+          return script.project_id === projectId;
         })
         .map(script => script.name);
     },
@@ -1186,15 +1183,16 @@ export default {
 }
 
 .config-details {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
 }
 
 .config-section {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+  min-width: 0;
 }
 
 .config-section-label {
@@ -1202,15 +1200,19 @@ export default {
   color: var(--text-muted);
   font-weight: 500;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .config-list {
   display: flex;
   flex-direction: column;
-  max-height: calc(3 * 20px);
+  max-height: 60px;
   overflow-y: auto;
-  gap: 2px;
-  padding: 2px 0;
+  gap: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.2);
 }
 
 .config-list::-webkit-scrollbar {
@@ -1227,28 +1229,31 @@ export default {
 }
 
 .config-list-item {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--accent);
   font-family: monospace;
-  padding: 2px 4px;
+  padding: 4px 6px;
   cursor: help;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  line-height: 16px;
+  height: 20px;
+  line-height: 12px;
+  flex-shrink: 0;
 }
 
 .config-list-item:hover {
   background: rgba(93, 173, 226, 0.15);
-  border-radius: 2px;
 }
 
 .config-list-empty {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-muted);
   font-style: italic;
-  padding: 2px 4px;
-  line-height: 16px;
+  padding: 4px 6px;
+  height: 20px;
+  line-height: 12px;
+  flex-shrink: 0;
 }
 
 /* Old card-footer and btn-icon-action styles removed - now using card-actions with btn-icon-small */
