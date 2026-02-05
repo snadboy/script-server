@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Python Packages Modal - Design Playground</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0d0d0d;
+      color: #cccccc;
+      padding: 20px;
+      line-height: 1.6;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 20px;
+      max-width: 1800px;
+      margin: 0 auto;
+    }
+
+    .controls {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 20px;
+      height: fit-content;
+      position: sticky;
+      top: 20px;
+      overflow-y: auto;
+      max-height: calc(100vh - 40px);
+    }
+
+    .controls h2 {
+      font-size: 18px;
+      margin-bottom: 20px;
+      color: #fff;
+    }
+
+    .control-group {
+      margin-bottom: 24px;
+    }
+
+    .control-group h3 {
+      font-size: 12px;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .control {
+      margin-bottom: 16px;
+    }
+
+    .control label {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 6px;
+      color: #aaa;
+    }
+
+    .control input[type="range"] {
+      width: 100%;
+      height: 4px;
+      background: #333;
+      border-radius: 2px;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    .control input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      background: #4a90e2;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .control input[type="range"]::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      background: #4a90e2;
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+    }
+
+    .control input[type="color"] {
+      width: 100%;
+      height: 32px;
+      border: 1px solid #333;
+      border-radius: 4px;
+      background: #1a1a1a;
+      cursor: pointer;
+    }
+
+    .control input[type="number"],
+    .control input[type="text"] {
+      width: 100%;
+      padding: 6px 10px;
+      background: #252525;
+      border: 1px solid #333;
+      border-radius: 4px;
+      color: #ccc;
+      font-size: 13px;
+    }
+
+    .control select {
+      width: 100%;
+      padding: 6px 10px;
+      background: #252525;
+      border: 1px solid #333;
+      border-radius: 4px;
+      color: #ccc;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .value-display {
+      display: inline-block;
+      float: right;
+      font-size: 12px;
+      color: #4a90e2;
+      font-family: monospace;
+    }
+
+    .presets {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .preset-btn {
+      padding: 8px 12px;
+      background: #252525;
+      border: 1px solid #333;
+      border-radius: 4px;
+      color: #ccc;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .preset-btn:hover {
+      background: #2a2a2a;
+      border-color: #4a90e2;
+    }
+
+    .preview {
+      background: #0d0d0d;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 40px;
+      min-height: 600px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .prompt-output {
+      margin-top: 20px;
+      padding: 20px;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      max-width: 1800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .prompt-output h3 {
+      font-size: 14px;
+      margin-bottom: 12px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .prompt-text {
+      font-family: monospace;
+      font-size: 13px;
+      line-height: 1.8;
+      color: #ccc;
+      white-space: pre-wrap;
+      margin-bottom: 12px;
+    }
+
+    .copy-btn {
+      padding: 8px 16px;
+      background: #4a90e2;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .copy-btn:hover {
+      background: #357abd;
+    }
+
+    .copy-btn.copied {
+      background: #27ae60;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal {
+      background: var(--modal-bg);
+      border: 1px solid var(--modal-border);
+      border-radius: var(--modal-radius);
+      width: var(--modal-width);
+      max-width: var(--modal-max-width);
+      height: var(--modal-height);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-header {
+      padding: var(--header-padding);
+      border-bottom: 1px solid var(--modal-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .modal-title {
+      font-size: var(--title-font-size);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .close-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 24px;
+      cursor: pointer;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .close-btn:hover {
+      background: var(--hover-bg);
+      color: var(--text-primary);
+    }
+
+    .modal-tabs {
+      display: flex;
+      border-bottom: var(--tab-border-width) solid var(--modal-border);
+      padding: 0 var(--header-padding);
+      flex-shrink: 0;
+    }
+
+    .tab {
+      padding: var(--tab-padding);
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: var(--tab-font-size);
+      cursor: pointer;
+      border-bottom: var(--tab-border-width) solid transparent;
+      margin-bottom: calc(var(--tab-border-width) * -1);
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+
+    .tab:hover {
+      color: var(--text-primary);
+      background: var(--hover-bg);
+    }
+
+    .tab.active {
+      color: var(--accent-color);
+      border-bottom-color: var(--accent-color);
+      background: var(--tab-active-bg);
+    }
+
+    .modal-body {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: var(--body-padding);
+    }
+
+    .search-bar {
+      margin-bottom: var(--section-gap);
+      display: flex;
+      gap: var(--item-gap);
+    }
+
+    .search-input {
+      flex: 1;
+      padding: var(--input-padding);
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: var(--input-radius);
+      color: var(--text-primary);
+      font-size: var(--input-font-size);
+    }
+
+    .install-btn {
+      padding: var(--button-padding);
+      background: var(--accent-color);
+      border: none;
+      border-radius: var(--button-radius);
+      color: white;
+      font-size: var(--button-font-size);
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .install-btn:hover {
+      background: var(--accent-hover);
+    }
+
+    .package-list {
+      flex: 1;
+      overflow-y: auto;
+      max-height: var(--list-max-height);
+    }
+
+    .package-item {
+      padding: var(--item-padding);
+      border: 1px solid var(--item-border);
+      border-radius: var(--item-radius);
+      margin-bottom: var(--item-gap);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      transition: all 0.2s;
+    }
+
+    .package-item:hover {
+      background: var(--hover-bg);
+      border-color: var(--accent-color);
+    }
+
+    .package-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .package-name {
+      font-size: var(--package-name-size);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+      font-family: monospace;
+    }
+
+    .package-version {
+      font-size: var(--package-version-size);
+      color: var(--text-muted);
+      font-family: monospace;
+      margin-bottom: 2px;
+    }
+
+    .package-location {
+      font-size: var(--package-location-size);
+      color: var(--text-dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .uninstall-btn {
+      padding: var(--small-button-padding);
+      background: transparent;
+      border: 1px solid var(--danger-color);
+      border-radius: var(--button-radius);
+      color: var(--danger-color);
+      font-size: var(--small-button-font-size);
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .uninstall-btn:hover {
+      background: var(--danger-color);
+      color: white;
+    }
+
+    .script-section {
+      margin-bottom: var(--section-gap);
+      border: 1px solid var(--item-border);
+      border-radius: var(--item-radius);
+      overflow: hidden;
+    }
+
+    .script-header {
+      padding: var(--item-padding);
+      background: var(--section-header-bg);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.2s;
+    }
+
+    .script-header:hover {
+      background: var(--hover-bg);
+    }
+
+    .expand-icon {
+      font-size: 16px;
+      color: var(--text-muted);
+      transition: transform 0.2s;
+    }
+
+    .script-section.expanded .expand-icon {
+      transform: rotate(90deg);
+    }
+
+    .script-name {
+      font-size: var(--script-name-size);
+      font-weight: 600;
+      color: var(--text-primary);
+      flex: 1;
+    }
+
+    .package-count {
+      font-size: var(--package-count-size);
+      color: var(--text-muted);
+      background: var(--badge-bg);
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+
+    .script-packages {
+      display: none;
+      padding: var(--section-padding);
+      background: var(--section-content-bg);
+    }
+
+    .script-section.expanded .script-packages {
+      display: block;
+    }
+
+    .script-package-item {
+      padding: var(--small-item-padding);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--item-border);
+    }
+
+    .script-package-item:last-child {
+      border-bottom: none;
+    }
+
+    .script-package-name {
+      font-size: var(--package-name-size);
+      font-family: monospace;
+      color: var(--accent-color);
+      flex: 1;
+    }
+
+    .script-package-version {
+      font-size: var(--package-version-size);
+      font-family: monospace;
+      color: var(--text-muted);
+    }
+
+    .modal-footer {
+      padding: var(--footer-padding);
+      border-top: 1px solid var(--modal-border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .footer-btn {
+      padding: var(--button-padding);
+      border: 1px solid var(--input-border);
+      border-radius: var(--button-radius);
+      background: transparent;
+      color: var(--text-primary);
+      font-size: var(--button-font-size);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .footer-btn:hover {
+      background: var(--hover-bg);
+      border-color: var(--accent-color);
+    }
+
+    .tab-content {
+      display: none;
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .tab-content.active {
+      display: flex;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="controls">
+      <h2>Python Packages Modal</h2>
+
+      <div class="presets">
+        <button class="preset-btn" onclick="applyPreset('compact')">Compact</button>
+        <button class="preset-btn" onclick="applyPreset('spacious')">Spacious</button>
+        <button class="preset-btn" onclick="applyPreset('minimal')">Minimal</button>
+        <button class="preset-btn" onclick="applyPreset('detailed')">Detailed</button>
+      </div>
+
+      <div class="control-group">
+        <h3>Modal Dimensions</h3>
+        <div class="control">
+          <label>Width <span class="value-display" id="width-val">800px</span></label>
+          <input type="range" id="modal-width" min="600" max="1200" value="800" step="50">
+        </div>
+        <div class="control">
+          <label>Height <span class="value-display" id="height-val">600px</span></label>
+          <input type="range" id="modal-height" min="400" max="800" value="600" step="50">
+        </div>
+        <div class="control">
+          <label>Max Width <span class="value-display" id="max-width-val">90%</span></label>
+          <input type="range" id="modal-max-width" min="70" max="100" value="90" step="5">
+        </div>
+        <div class="control">
+          <label>Border Radius <span class="value-display" id="radius-val">8px</span></label>
+          <input type="range" id="modal-radius" min="0" max="20" value="8" step="2">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>Colors</h3>
+        <div class="control">
+          <label>Modal Background</label>
+          <input type="color" id="modal-bg" value="#1e1e1e">
+        </div>
+        <div class="control">
+          <label>Modal Border</label>
+          <input type="color" id="modal-border" value="#333333">
+        </div>
+        <div class="control">
+          <label>Accent Color</label>
+          <input type="color" id="accent-color" value="#4a90e2">
+        </div>
+        <div class="control">
+          <label>Text Primary</label>
+          <input type="color" id="text-primary" value="#ffffff">
+        </div>
+        <div class="control">
+          <label>Text Muted</label>
+          <input type="color" id="text-muted" value="#888888">
+        </div>
+        <div class="control">
+          <label>Hover Background</label>
+          <input type="color" id="hover-bg" value="#2a2a2a">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>Typography</h3>
+        <div class="control">
+          <label>Title Size <span class="value-display" id="title-size-val">18px</span></label>
+          <input type="range" id="title-font-size" min="14" max="24" value="18" step="1">
+        </div>
+        <div class="control">
+          <label>Package Name <span class="value-display" id="pkg-name-val">14px</span></label>
+          <input type="range" id="package-name-size" min="11" max="18" value="14" step="1">
+        </div>
+        <div class="control">
+          <label>Package Version <span class="value-display" id="pkg-ver-val">12px</span></label>
+          <input type="range" id="package-version-size" min="10" max="16" value="12" step="1">
+        </div>
+        <div class="control">
+          <label>Tab Font Size <span class="value-display" id="tab-size-val">14px</span></label>
+          <input type="range" id="tab-font-size" min="12" max="18" value="14" step="1">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>Spacing</h3>
+        <div class="control">
+          <label>Header Padding <span class="value-display" id="header-pad-val">20px</span></label>
+          <input type="range" id="header-padding" min="12" max="32" value="20" step="2">
+        </div>
+        <div class="control">
+          <label>Body Padding <span class="value-display" id="body-pad-val">20px</span></label>
+          <input type="range" id="body-padding" min="12" max="32" value="20" step="2">
+        </div>
+        <div class="control">
+          <label>Item Padding <span class="value-display" id="item-pad-val">12px</span></label>
+          <input type="range" id="item-padding" min="8" max="24" value="12" step="2">
+        </div>
+        <div class="control">
+          <label>Item Gap <span class="value-display" id="item-gap-val">8px</span></label>
+          <input type="range" id="item-gap" min="4" max="20" value="8" step="2">
+        </div>
+        <div class="control">
+          <label>Section Gap <span class="value-display" id="section-gap-val">16px</span></label>
+          <input type="range" id="section-gap" min="8" max="32" value="16" step="2">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>Tabs</h3>
+        <div class="control">
+          <label>Tab Padding <span class="value-display" id="tab-pad-val">12px 24px</span></label>
+          <input type="range" id="tab-padding-v" min="8" max="20" value="12" step="2" data-axis="v">
+          <input type="range" id="tab-padding-h" min="12" max="40" value="24" step="2" data-axis="h">
+        </div>
+        <div class="control">
+          <label>Tab Border Width <span class="value-display" id="tab-border-val">2px</span></label>
+          <input type="range" id="tab-border-width" min="1" max="4" value="2" step="1">
+        </div>
+        <div class="control">
+          <label>Active Tab Background</label>
+          <input type="color" id="tab-active-bg" value="#252525">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>List Behavior</h3>
+        <div class="control">
+          <label>List Max Height <span class="value-display" id="list-height-val">400px</span></label>
+          <input type="range" id="list-max-height" min="200" max="600" value="400" step="50">
+        </div>
+        <div class="control">
+          <label>Item Border Radius <span class="value-display" id="item-radius-val">6px</span></label>
+          <input type="range" id="item-radius" min="0" max="12" value="6" step="2">
+        </div>
+      </div>
+    </div>
+
+    <div class="preview">
+      <div class="modal-overlay">
+        <div class="modal">
+          <div class="modal-header">
+            <div class="modal-title">Python Packages</div>
+            <button class="close-btn">×</button>
+          </div>
+
+          <div class="modal-tabs">
+            <button class="tab active" onclick="switchTab('packages')">By Packages</button>
+            <button class="tab" onclick="switchTab('scripts')">By Script</button>
+          </div>
+
+          <div class="modal-body">
+            <!-- By Packages Tab -->
+            <div class="tab-content active" id="packages-tab">
+              <div class="search-bar">
+                <input type="text" class="search-input" placeholder="Search packages...">
+                <button class="install-btn">Install Package</button>
+              </div>
+              <div class="package-list">
+                <div class="package-item">
+                  <div class="package-info">
+                    <div class="package-name">requests</div>
+                    <div class="package-version">v2.31.0</div>
+                    <div class="package-location">/usr/local/lib/python3.11/site-packages</div>
+                  </div>
+                  <button class="uninstall-btn">Uninstall</button>
+                </div>
+                <div class="package-item">
+                  <div class="package-info">
+                    <div class="package-name">flask</div>
+                    <div class="package-version">v3.0.0</div>
+                    <div class="package-location">/usr/local/lib/python3.11/site-packages</div>
+                  </div>
+                  <button class="uninstall-btn">Uninstall</button>
+                </div>
+                <div class="package-item">
+                  <div class="package-info">
+                    <div class="package-name">pandas</div>
+                    <div class="package-version">v2.1.3</div>
+                    <div class="package-location">/usr/local/lib/python3.11/site-packages</div>
+                  </div>
+                  <button class="uninstall-btn">Uninstall</button>
+                </div>
+                <div class="package-item">
+                  <div class="package-info">
+                    <div class="package-name">numpy</div>
+                    <div class="package-version">v1.26.2</div>
+                    <div class="package-location">/usr/local/lib/python3.11/site-packages</div>
+                  </div>
+                  <button class="uninstall-btn">Uninstall</button>
+                </div>
+                <div class="package-item">
+                  <div class="package-info">
+                    <div class="package-name">sqlalchemy</div>
+                    <div class="package-version">v2.0.23</div>
+                    <div class="package-location">/usr/local/lib/python3.11/site-packages</div>
+                  </div>
+                  <button class="uninstall-btn">Uninstall</button>
+                </div>
+                <div class="package-item">
+                  <div class="package-info">
+                    <div class="package-name">pytest</div>
+                    <div class="package-version">v7.4.3</div>
+                    <div class="package-location">/usr/local/lib/python3.11/site-packages</div>
+                  </div>
+                  <button class="uninstall-btn">Uninstall</button>
+                </div>
+                <div class="package-item">
+                  <div class="package-info">
+                    <div class="package-name">pydantic</div>
+                    <div class="package-version">v2.5.2</div>
+                    <div class="package-location">/usr/local/lib/python3.11/site-packages</div>
+                  </div>
+                  <button class="uninstall-btn">Uninstall</button>
+                </div>
+                <div class="package-item">
+                  <div class="package-info">
+                    <div class="package-name">click</div>
+                    <div class="package-version">v8.1.7</div>
+                    <div class="package-location">/usr/local/lib/python3.11/site-packages</div>
+                  </div>
+                  <button class="uninstall-btn">Uninstall</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- By Script Tab -->
+            <div class="tab-content" id="scripts-tab">
+              <div class="package-list">
+                <div class="script-section expanded" onclick="toggleSection(this)">
+                  <div class="script-header">
+                    <span class="expand-icon">▶</span>
+                    <div class="script-name">data-analyzer.py</div>
+                    <span class="package-count">4 packages</span>
+                  </div>
+                  <div class="script-packages">
+                    <div class="script-package-item">
+                      <div class="script-package-name">pandas</div>
+                      <div class="script-package-version">v2.1.3</div>
+                    </div>
+                    <div class="script-package-item">
+                      <div class="script-package-name">numpy</div>
+                      <div class="script-package-version">v1.26.2</div>
+                    </div>
+                    <div class="script-package-item">
+                      <div class="script-package-name">sqlalchemy</div>
+                      <div class="script-package-version">v2.0.23</div>
+                    </div>
+                    <div class="script-package-item">
+                      <div class="script-package-name">pydantic</div>
+                      <div class="script-package-version">v2.5.2</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="script-section" onclick="toggleSection(this)">
+                  <div class="script-header">
+                    <span class="expand-icon">▶</span>
+                    <div class="script-name">api-server.py</div>
+                    <span class="package-count">3 packages</span>
+                  </div>
+                  <div class="script-packages">
+                    <div class="script-package-item">
+                      <div class="script-package-name">flask</div>
+                      <div class="script-package-version">v3.0.0</div>
+                    </div>
+                    <div class="script-package-item">
+                      <div class="script-package-name">requests</div>
+                      <div class="script-package-version">v2.31.0</div>
+                    </div>
+                    <div class="script-package-item">
+                      <div class="script-package-name">pydantic</div>
+                      <div class="script-package-version">v2.5.2</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="script-section" onclick="toggleSection(this)">
+                  <div class="script-header">
+                    <span class="expand-icon">▶</span>
+                    <div class="script-name">test-runner.py</div>
+                    <span class="package-count">2 packages</span>
+                  </div>
+                  <div class="script-packages">
+                    <div class="script-package-item">
+                      <div class="script-package-name">pytest</div>
+                      <div class="script-package-version">v7.4.3</div>
+                    </div>
+                    <div class="script-package-item">
+                      <div class="script-package-name">click</div>
+                      <div class="script-package-version">v8.1.7</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="script-section" onclick="toggleSection(this)">
+                  <div class="script-header">
+                    <span class="expand-icon">▶</span>
+                    <div class="script-name">email-processor.py</div>
+                    <span class="package-count">2 packages</span>
+                  </div>
+                  <div class="script-packages">
+                    <div class="script-package-item">
+                      <div class="script-package-name">requests</div>
+                      <div class="script-package-version">v2.31.0</div>
+                    </div>
+                    <div class="script-package-item">
+                      <div class="script-package-name">click</div>
+                      <div class="script-package-version">v8.1.7</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="footer-btn">Refresh</button>
+            <button class="footer-btn">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="prompt-output">
+    <h3>Generated Prompt</h3>
+    <div class="prompt-text" id="prompt-text"></div>
+    <button class="copy-btn" onclick="copyPrompt()">Copy to Clipboard</button>
+  </div>
+
+  <script>
+    const DEFAULTS = {
+      modalWidth: 800,
+      modalHeight: 600,
+      modalMaxWidth: 90,
+      modalRadius: 8,
+      modalBg: '#1e1e1e',
+      modalBorder: '#333333',
+      accentColor: '#4a90e2',
+      textPrimary: '#ffffff',
+      textMuted: '#888888',
+      hoverBg: '#2a2a2a',
+      titleFontSize: 18,
+      packageNameSize: 14,
+      packageVersionSize: 12,
+      tabFontSize: 14,
+      headerPadding: 20,
+      bodyPadding: 20,
+      itemPadding: 12,
+      itemGap: 8,
+      sectionGap: 16,
+      tabPaddingV: 12,
+      tabPaddingH: 24,
+      tabBorderWidth: 2,
+      tabActiveBg: '#252525',
+      listMaxHeight: 400,
+      itemRadius: 6
+    };
+
+    const state = { ...DEFAULTS };
+
+    const presets = {
+      compact: {
+        modalWidth: 700,
+        modalHeight: 500,
+        headerPadding: 16,
+        bodyPadding: 16,
+        itemPadding: 8,
+        itemGap: 6,
+        sectionGap: 12,
+        packageNameSize: 13,
+        packageVersionSize: 11,
+        tabPaddingV: 10,
+        tabPaddingH: 20
+      },
+      spacious: {
+        modalWidth: 900,
+        modalHeight: 700,
+        headerPadding: 24,
+        bodyPadding: 24,
+        itemPadding: 16,
+        itemGap: 12,
+        sectionGap: 20,
+        packageNameSize: 15,
+        packageVersionSize: 13,
+        tabPaddingV: 14,
+        tabPaddingH: 28
+      },
+      minimal: {
+        modalRadius: 4,
+        itemRadius: 4,
+        itemPadding: 10,
+        itemGap: 6,
+        modalBorder: '#2a2a2a',
+        hoverBg: '#252525',
+        tabActiveBg: '#1e1e1e'
+      },
+      detailed: {
+        packageNameSize: 15,
+        packageVersionSize: 13,
+        titleFontSize: 20,
+        itemPadding: 14,
+        listMaxHeight: 500
+      }
+    };
+
+    function applyPreset(name) {
+      Object.assign(state, DEFAULTS, presets[name]);
+      updateAllControls();
+      updateAll();
+    }
+
+    function updateAllControls() {
+      Object.keys(state).forEach(key => {
+        const input = document.getElementById(key.replace(/([A-Z])/g, '-$1').toLowerCase());
+        if (input) {
+          input.value = state[key];
+        }
+      });
+      updateValueDisplays();
+    }
+
+    function updateValueDisplays() {
+      document.getElementById('width-val').textContent = state.modalWidth + 'px';
+      document.getElementById('height-val').textContent = state.modalHeight + 'px';
+      document.getElementById('max-width-val').textContent = state.modalMaxWidth + '%';
+      document.getElementById('radius-val').textContent = state.modalRadius + 'px';
+      document.getElementById('title-size-val').textContent = state.titleFontSize + 'px';
+      document.getElementById('pkg-name-val').textContent = state.packageNameSize + 'px';
+      document.getElementById('pkg-ver-val').textContent = state.packageVersionSize + 'px';
+      document.getElementById('tab-size-val').textContent = state.tabFontSize + 'px';
+      document.getElementById('header-pad-val').textContent = state.headerPadding + 'px';
+      document.getElementById('body-pad-val').textContent = state.bodyPadding + 'px';
+      document.getElementById('item-pad-val').textContent = state.itemPadding + 'px';
+      document.getElementById('item-gap-val').textContent = state.itemGap + 'px';
+      document.getElementById('section-gap-val').textContent = state.sectionGap + 'px';
+      document.getElementById('tab-pad-val').textContent = state.tabPaddingV + 'px ' + state.tabPaddingH + 'px';
+      document.getElementById('tab-border-val').textContent = state.tabBorderWidth + 'px';
+      document.getElementById('list-height-val').textContent = state.listMaxHeight + 'px';
+      document.getElementById('item-radius-val').textContent = state.itemRadius + 'px';
+    }
+
+    function updateAll() {
+      renderPreview();
+      updatePrompt();
+    }
+
+    function renderPreview() {
+      const root = document.documentElement;
+
+      root.style.setProperty('--modal-width', state.modalWidth + 'px');
+      root.style.setProperty('--modal-height', state.modalHeight + 'px');
+      root.style.setProperty('--modal-max-width', state.modalMaxWidth + '%');
+      root.style.setProperty('--modal-radius', state.modalRadius + 'px');
+      root.style.setProperty('--modal-bg', state.modalBg);
+      root.style.setProperty('--modal-border', state.modalBorder);
+      root.style.setProperty('--accent-color', state.accentColor);
+      root.style.setProperty('--accent-hover', adjustBrightness(state.accentColor, -20));
+      root.style.setProperty('--text-primary', state.textPrimary);
+      root.style.setProperty('--text-muted', state.textMuted);
+      root.style.setProperty('--text-dim', adjustBrightness(state.textMuted, -20));
+      root.style.setProperty('--hover-bg', state.hoverBg);
+      root.style.setProperty('--title-font-size', state.titleFontSize + 'px');
+      root.style.setProperty('--package-name-size', state.packageNameSize + 'px');
+      root.style.setProperty('--package-version-size', state.packageVersionSize + 'px');
+      root.style.setProperty('--package-location-size', (state.packageVersionSize - 1) + 'px');
+      root.style.setProperty('--tab-font-size', state.tabFontSize + 'px');
+      root.style.setProperty('--header-padding', state.headerPadding + 'px');
+      root.style.setProperty('--body-padding', state.bodyPadding + 'px');
+      root.style.setProperty('--footer-padding', state.headerPadding + 'px');
+      root.style.setProperty('--item-padding', state.itemPadding + 'px');
+      root.style.setProperty('--small-item-padding', (state.itemPadding - 2) + 'px');
+      root.style.setProperty('--item-gap', state.itemGap + 'px');
+      root.style.setProperty('--section-gap', state.sectionGap + 'px');
+      root.style.setProperty('--tab-padding', state.tabPaddingV + 'px ' + state.tabPaddingH + 'px');
+      root.style.setProperty('--tab-border-width', state.tabBorderWidth + 'px');
+      root.style.setProperty('--tab-active-bg', state.tabActiveBg);
+      root.style.setProperty('--list-max-height', state.listMaxHeight + 'px');
+      root.style.setProperty('--item-radius', state.itemRadius + 'px');
+      root.style.setProperty('--item-border', state.modalBorder);
+      root.style.setProperty('--input-bg', adjustBrightness(state.modalBg, 10));
+      root.style.setProperty('--input-border', state.modalBorder);
+      root.style.setProperty('--input-radius', state.itemRadius + 'px');
+      root.style.setProperty('--input-padding', (state.itemPadding - 2) + 'px ' + state.itemPadding + 'px');
+      root.style.setProperty('--input-font-size', state.packageVersionSize + 'px');
+      root.style.setProperty('--button-padding', (state.itemPadding - 2) + 'px ' + (state.itemPadding + 4) + 'px');
+      root.style.setProperty('--button-radius', state.itemRadius + 'px');
+      root.style.setProperty('--button-font-size', state.packageVersionSize + 'px');
+      root.style.setProperty('--small-button-padding', (state.itemPadding - 4) + 'px ' + state.itemPadding + 'px');
+      root.style.setProperty('--small-button-font-size', (state.packageVersionSize - 1) + 'px');
+      root.style.setProperty('--section-header-bg', adjustBrightness(state.modalBg, 5));
+      root.style.setProperty('--section-content-bg', adjustBrightness(state.modalBg, 3));
+      root.style.setProperty('--section-padding', state.itemPadding + 'px');
+      root.style.setProperty('--script-name-size', state.packageNameSize + 'px');
+      root.style.setProperty('--package-count-size', (state.packageVersionSize - 1) + 'px');
+      root.style.setProperty('--badge-bg', adjustBrightness(state.modalBg, 15));
+      root.style.setProperty('--danger-color', '#e74c3c');
+    }
+
+    function updatePrompt() {
+      const parts = [];
+
+      if (state.modalWidth !== DEFAULTS.modalWidth || state.modalHeight !== DEFAULTS.modalHeight) {
+        parts.push(`modal dimensions of ${state.modalWidth}×${state.modalHeight}px`);
+      }
+
+      if (state.itemPadding !== DEFAULTS.itemPadding || state.itemGap !== DEFAULTS.itemGap) {
+        const density = state.itemPadding < 10 ? 'compact' : state.itemPadding > 14 ? 'spacious' : 'balanced';
+        parts.push(`${density} spacing (${state.itemPadding}px padding, ${state.itemGap}px gaps)`);
+      }
+
+      if (state.packageNameSize !== DEFAULTS.packageNameSize) {
+        parts.push(`package name size of ${state.packageNameSize}px`);
+      }
+
+      if (state.accentColor !== DEFAULTS.accentColor) {
+        parts.push(`accent color ${state.accentColor}`);
+      }
+
+      if (state.modalBg !== DEFAULTS.modalBg) {
+        parts.push(`background ${state.modalBg}`);
+      }
+
+      if (state.listMaxHeight !== DEFAULTS.listMaxHeight) {
+        parts.push(`list height of ${state.listMaxHeight}px`);
+      }
+
+      if (state.itemRadius !== DEFAULTS.itemRadius) {
+        const style = state.itemRadius === 0 ? 'sharp corners' : state.itemRadius > 8 ? 'rounded corners' : 'subtle rounding';
+        parts.push(style);
+      }
+
+      const prompt = parts.length > 0
+        ? `Update the Python Packages modal to use ${parts.join(', ')}.`
+        : 'The Python Packages modal is using default styling.';
+
+      document.getElementById('prompt-text').textContent = prompt;
+    }
+
+    function adjustBrightness(color, amount) {
+      const hex = color.replace('#', '');
+      const r = Math.max(0, Math.min(255, parseInt(hex.substr(0, 2), 16) + amount));
+      const g = Math.max(0, Math.min(255, parseInt(hex.substr(2, 2), 16) + amount));
+      const b = Math.max(0, Math.min(255, parseInt(hex.substr(4, 2), 16) + amount));
+      return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+      event.target.classList.add('active');
+      document.getElementById(tab + '-tab').classList.add('active');
+    }
+
+    function toggleSection(section) {
+      section.classList.toggle('expanded');
+    }
+
+    function copyPrompt() {
+      const text = document.getElementById('prompt-text').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = event.target;
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy to Clipboard';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+
+    // Initialize
+    document.querySelectorAll('.control input').forEach(input => {
+      input.addEventListener('input', (e) => {
+        const key = e.target.id.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+
+        if (e.target.type === 'color') {
+          state[key] = e.target.value;
+        } else if (e.target.type === 'range') {
+          state[key] = parseFloat(e.target.value);
+        }
+
+        // Handle compound padding controls
+        if (e.target.dataset.axis === 'v') {
+          state.tabPaddingV = parseFloat(e.target.value);
+        } else if (e.target.dataset.axis === 'h') {
+          state.tabPaddingH = parseFloat(e.target.value);
+        }
+
+        updateValueDisplays();
+        updateAll();
+      });
+    });
+
+    updateAll();
+  </script>
+</body>
+</html>

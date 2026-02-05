@@ -35,6 +35,7 @@ class ShortConfig:
     parsing_failed: bool = False
     verbs_config: 'VerbsConfiguration' = None
     shared_parameters: List[str] = field(default_factory=list)
+    project_id: str = None
 
 
 class InstanceConfig:
@@ -543,6 +544,9 @@ def read_short(file_path, json_object, group_by_folders: bool, script_configs_fo
     verbs_config = VerbsConfiguration(verbs_config_data)
     shared_parameters = read_list(json_object, 'shared_parameters') or []
 
+    # Extract project_id for project-based instances
+    project_id = json_object.get('project_id')
+
     return ShortConfig(
         name=name,
         group=group,
@@ -550,7 +554,8 @@ def read_short(file_path, json_object, group_by_folders: bool, script_configs_fo
         allowed_users=allowed_users,
         admin_users=admin_users,
         verbs_config=verbs_config,
-        shared_parameters=shared_parameters
+        shared_parameters=shared_parameters,
+        project_id=project_id
     )
 
 

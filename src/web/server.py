@@ -148,7 +148,7 @@ class GetScripts(BaseRequestHandler):
             }
 
             # Add project_id if this script was created from a project
-            if hasattr(conf, 'project_id') and conf.project_id:
+            if conf.project_id:
                 script_dict['project_id'] = conf.project_id
 
             # Add verbs configuration if present

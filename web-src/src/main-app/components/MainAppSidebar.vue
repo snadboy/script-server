@@ -1,32 +1,37 @@
 <template>
   <div class="main-app-sidebar">
     <div class="list-header">
-      <router-link :class="{
-                    'header-gt-15-chars' : serverName && serverName.length >= 15,
-                   'header-gt-18-chars' : serverName && serverName.length >= 18,
-                   'header-gt-21-chars' : serverName && serverName.length >= 21
-      }" :title="versionString"
-                   class="header server-header"
-                   to="/">
-        {{ serverName || 'Script server' }}
-      </router-link>
+      <div class="header-row">
+        <router-link :class="{
+                      'header-gt-15-chars' : serverName && serverName.length >= 15,
+                     'header-gt-18-chars' : serverName && serverName.length >= 18,
+                     'header-gt-21-chars' : serverName && serverName.length >= 21
+        }" :title="versionString"
+                     class="header server-header"
+                     to="/">
+          {{ serverName || 'Script server' }}
+        </router-link>
 
-      <SearchPanel v-model="searchText"/>
-      <button v-if="adminUser" class="scripts-btn waves-effect waves-circle" @click="showScripts = true" title="Script Manager">
-        <i class="material-icons">description</i>
-      </button>
-      <button v-if="adminUser" class="packages-btn waves-effect waves-circle" @click="showPythonPackages = true" title="Python Packages">
-        <i class="material-icons">extension</i>
-      </button>
-      <button v-if="adminUser" class="requirements-btn waves-effect waves-circle" @click="showRequirements = true" title="Requirements">
-        <i class="material-icons">assignment</i>
-      </button>
-      <button v-if="adminUser" class="logs-btn waves-effect waves-circle" @click="showLogs = true" title="Server Logs">
-        <i class="material-icons">subject</i>
-      </button>
-      <button class="settings-btn waves-effect waves-circle" @click="showSettings = true" title="Settings">
-        <i class="material-icons">settings</i>
-      </button>
+        <SearchPanel v-model="searchText"/>
+      </div>
+
+      <div class="header-buttons">
+        <button v-if="adminUser" class="scripts-btn waves-effect waves-circle" @click="showScripts = true" title="Script Manager">
+          <i class="material-icons">description</i>
+        </button>
+        <button v-if="adminUser" class="packages-btn waves-effect waves-circle" @click="showPythonPackages = true" title="Python Packages">
+          <i class="material-icons">extension</i>
+        </button>
+        <button v-if="adminUser" class="requirements-btn waves-effect waves-circle" @click="showRequirements = true" title="Requirements">
+          <i class="material-icons">assignment</i>
+        </button>
+        <button v-if="adminUser" class="logs-btn waves-effect waves-circle" @click="showLogs = true" title="Server Logs">
+          <i class="material-icons">subject</i>
+        </button>
+        <button class="settings-btn waves-effect waves-circle" @click="showSettings = true" title="Settings">
+          <i class="material-icons">settings</i>
+        </button>
+      </div>
     </div>
 
     <SettingsModal :visible="showSettings" @close="showSettings = false" />
@@ -37,7 +42,14 @@
 
     <SidebarBottomNav />
 
-    <ScriptsList :search-text="searchText"/>
+    <div class="scripts-list-controls">
+      <div class="show-groups-checkbox">
+        <input type="checkbox" v-model="showGroups" id="show-groups-cb" />
+        <label for="show-groups-cb">Show Groups</label>
+      </div>
+    </div>
+
+    <ScriptsList :search-text="searchText" :show-groups="showGroups"/>
 
     <div class="bottom-panels">
       <div class="fork-version"><strong>snadboy-fork</strong> v1.0.0 <span class="build-number">build {{ buildTimestamp }}</span></div>
@@ -87,6 +99,7 @@ export default {
       showPythonPackages: false,
       showRequirements: false,
       showLogs: false,
+      showGroups: true,
       currentTime: new Date(),
       timeInterval: null
     }
@@ -139,15 +152,28 @@ export default {
 <style scoped>
 .list-header {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-end;
+  flex-direction: column;
+  gap: 4px;
 
   border-bottom: 5px solid transparent; /* This is to make the header on the same level as the script header */
 
   flex-shrink: 0;
 
   position: relative;
+}
+
+.header-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-buttons {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-evenly;
 }
 
 .server-header {
@@ -259,6 +285,61 @@ export default {
 .logs-btn i {
   font-size: 24px;
   color: var(--font-color-main);
+}
+
+.scripts-list-controls {
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--separator-color);
+  flex-shrink: 0;
+}
+
+.show-groups-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.show-groups-checkbox label {
+  font-size: 0.9rem;
+  color: var(--font-color-main);
+  cursor: pointer;
+  user-select: none;
+  margin: 0;
+}
+
+.show-groups-checkbox input[type="checkbox"] {
+  width: 16px !important;
+  height: 16px !important;
+  cursor: pointer;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  border: 2px solid var(--font-color-medium) !important;
+  border-radius: 3px !important;
+  background: var(--background-color) !important;
+  position: relative !important;
+  margin: 0 !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  transform: none !important;
+  vertical-align: middle;
+}
+
+.show-groups-checkbox input[type="checkbox"]:checked {
+  background: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+.show-groups-checkbox input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
 }
 
 </style>

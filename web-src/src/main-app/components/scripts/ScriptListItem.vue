@@ -8,7 +8,11 @@
                    'validation-warning': descriptor.validationWarning
                  }"
                  :title="getTitle()">
-      {{ descriptor.name }}
+      <div v-if="projectName" class="script-list-item-content">
+        <div class="project-name">{{ projectName }}</div>
+        <div class="instance-name">{{ descriptor.name }}</div>
+      </div>
+      <template v-else>{{ descriptor.name }}</template>
 
       <div :class="descriptor.state" class="menu-item-state">
         <i class="material-icons check-icon">check</i>
@@ -69,6 +73,17 @@ export default {
         validationWarning: hasValidationError,
         validationError: hasValidationError ? validation.error : null
       }
+    },
+    projectName() {
+      // If script has a project_id, look up the project name
+      if (!this.script.project_id) {
+        return null;
+      }
+
+      // Get projects from adminScripts store
+      const projects = this.$store.state.adminScripts?.projects || [];
+      const project = projects.find(p => p.id === this.script.project_id);
+      return project ? project.name : this.script.project_id;
     },
     ...mapState('scripts', ['selectedScript'])
   },
@@ -189,5 +204,28 @@ export default {
 
 .scripts-list .collection-item .preloader-wrapper .spinner-layer {
   border-color: var(--primary-color);
+}
+
+.script-list-item-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.2;
+}
+
+.project-name {
+  font-size: 0.75rem;
+  color: var(--font-color-medium);
+  font-weight: 500;
+}
+
+.instance-name {
+  font-size: 0.9rem;
+  color: var(--font-color-main);
+}
+
+.script-list-item.active .project-name,
+.script-list-item.active .instance-name {
+  color: var(--primary-color);
 }
 </style>

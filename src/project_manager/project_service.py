@@ -857,6 +857,7 @@ if len(sys.argv) >= 2 and sys.argv[1] == '{config_cmd}' and '--config' not in sy
         # Build config
         config: dict[str, Any] = {
             'name': script_name,
+            'project_id': project_id,  # Always set project_id for instance tracking
             'script_path': script_path,
             'working_directory': working_directory,
             'description': description or f"Imported from {meta.get('source_url', 'ZIP upload')}",
@@ -866,7 +867,6 @@ if len(sys.argv) >= 2 and sys.argv[1] == '{config_cmd}' and '--config' not in sy
 
         # NEW FORMAT: Use project_id and instance_config
         if included_parameters is not None:
-            config['project_id'] = project_id
             config['instance_config'] = {
                 'included_parameters': included_parameters,
                 'parameter_values': parameter_values or {},

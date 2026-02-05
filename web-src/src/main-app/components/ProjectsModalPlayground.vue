@@ -94,8 +94,8 @@
 
                 <!-- Configuration details (always shown) -->
                 <div class="config-details">
-                  <!-- Instances -->
-                  <div class="config-section">
+                  <!-- Instances (top row, full width) -->
+                  <div class="config-section config-section-instances">
                     <div class="config-section-label">
                       Instances ({{ getProjectInstances(project.id).length }}):
                     </div>
@@ -113,7 +113,7 @@
                     </div>
                   </div>
 
-                  <!-- Parameters -->
+                  <!-- Parameters (bottom left) -->
                   <div class="config-section">
                     <div class="config-section-label">
                       Parameters ({{ project.parameters?.length || 0 }}):
@@ -133,7 +133,7 @@
                     </div>
                   </div>
 
-                  <!-- Verbs -->
+                  <!-- Verbs (bottom right) -->
                   <div class="config-section">
                     <div class="config-section-label">
                       Verbs ({{ project.verbs?.options?.length || 0 }}):
@@ -1198,8 +1198,9 @@ export default {
 
 .config-details {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
+  align-items: start;
 }
 
 .config-section {
@@ -1207,6 +1208,11 @@ export default {
   flex-direction: column;
   gap: 4px;
   min-width: 0;
+}
+
+.config-section-instances {
+  /* Instances section spans both columns (full width of top row) */
+  grid-column: 1 / -1;
 }
 
 .config-section-label {
@@ -1247,7 +1253,7 @@ export default {
   color: var(--accent);
   font-family: monospace;
   padding: 4px 6px;
-  cursor: help;
+  cursor: default;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

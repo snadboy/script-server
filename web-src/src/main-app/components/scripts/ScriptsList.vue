@@ -20,6 +20,10 @@ export default {
     searchText: {
       type: String,
       default: null
+    },
+    showGroups: {
+      type: Boolean,
+      default: true
     }
   },
 
@@ -33,14 +37,22 @@ export default {
     ...mapState('scripts', ['scripts', 'selectedScript']),
 
     items() {
+      let foundScripts = this.scripts
+          .filter(script =>
+              isEmptyString(this.searchText) || (script.name.toLowerCase().includes(this.searchText.toLowerCase())));
+
+      // If showGroups is false, return flat list sorted by name
+      if (!this.showGroups) {
+        const result = foundScripts.slice();
+        result.sort((o1, o2) => o1.name.toLowerCase().localeCompare(o2.name.toLowerCase()));
+        return result;
+      }
+
+      // Original grouping logic
       let groups = this.scripts.filter(script => !isBlankString(script.group))
           .map(script => script.group)
           .filter((v, i, a) => a.indexOf(v) === i) // unique elements
           .map(group => ({name: group, isGroup: true, scripts: [], isActive: this.activeGroup === group}));
-
-      let foundScripts = this.scripts
-          .filter(script =>
-              isEmptyString(this.searchText) || (script.name.toLowerCase().includes(this.searchText.toLowerCase())));
 
       for (const script of foundScripts.slice()) {
         if (isBlankString(script.group)) {
