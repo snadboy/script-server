@@ -251,8 +251,8 @@ export default {
   border-radius: 4px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   width: 90%;
-  max-width: 550px;
-  max-height: 60vh;
+  max-width: 500px;
+  max-height: 50vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -295,7 +295,7 @@ export default {
 }
 
 .modal-body {
-  padding: 12px;
+  padding: 10px;
   overflow-y: auto;
   flex: 1;
   min-height: 0;
@@ -320,7 +320,7 @@ export default {
 }
 
 .form-group {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .form-group:last-child {
