@@ -48,7 +48,6 @@
               @click="validateAllScripts"
               title="Re-validate all script configurations"
             >
-              <i class="material-icons btn-icon-sm">fact_check</i>
               {{ validating ? 'Validating...' : 'Validate Scripts' }}
             </button>
           </div>
@@ -558,7 +557,12 @@ export default {
     getProjectInstances(projectId) {
       // Get all scripts and filter for instances created from this project
       const allScripts = this.$store.state.scripts?.scripts || [];
-      return allScripts
+      const adminScripts = this.$store.state.adminScripts?.scripts || [];
+
+      // Try both stores (scripts for main app, adminScripts for admin view)
+      const scripts = allScripts.length > 0 ? allScripts : adminScripts;
+
+      return scripts
         .filter(script => {
           // Check if script has project_id field matching this project
           return script.project_id === projectId;
