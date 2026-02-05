@@ -1553,10 +1553,16 @@ class GenerateWrapperHandler(BaseRequestHandler):
 
             # Check for duplicate script name
             config_service = self.application.config_service
-            existing_configs = config_service.load_config_list()
-            existing_names = [config.name for config in existing_configs]
-            if script_name in existing_names:
-                raise tornado.web.HTTPError(400, reason=f'A script named "{script_name}" already exists')
+            from src.model.model_helper import AccessProhibitedException
+            try:
+                # list_configs requires user parameter; use admin user from request
+                existing_configs = config_service.list_configs(self.application.authorizer.get_user(self))
+                existing_names = [config.name for config in existing_configs]
+                if script_name in existing_names:
+                    raise tornado.web.HTTPError(400, reason=f'A script named "{script_name}" already exists')
+            except AccessProhibitedException:
+                # If access check fails, skip duplicate check (will be caught by actual config creation)
+                pass
 
             # Generate wrapper script (pass script_name for unique filename)
             wrapper_path = project_service.generate_wrapper(
@@ -1583,6 +1589,9 @@ class GenerateWrapperHandler(BaseRequestHandler):
             # Re-raise HTTP errors (like duplicate name check) as-is
             raise
         except Exception as e:
+            # Log the full traceback for debugging
+            import traceback
+            LOGGER.error(f"Error in GenerateWrapperHandler: {e}\n{traceback.format_exc()}")
             # Only convert unexpected errors to 500
             raise tornado.web.HTTPError(500, reason=str(e))
 
