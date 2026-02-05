@@ -251,8 +251,8 @@ export default {
   border-radius: 4px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   width: 90%;
-  max-width: 600px;
-  max-height: 70vh;
+  max-width: 550px;
+  max-height: 60vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -263,13 +263,13 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 8px 12px;
   border-bottom: 1px solid var(--separator-color);
   flex-shrink: 0;
 }
 
 .modal-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   margin: 0;
   color: var(--font-color-main);
@@ -295,7 +295,7 @@ export default {
 }
 
 .modal-body {
-  padding: 16px;
+  padding: 12px;
   overflow-y: auto;
   flex: 1;
   min-height: 0;
@@ -304,8 +304,8 @@ export default {
 .modal-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: 8px;
+  padding: 8px 12px;
   border-top: 1px solid var(--separator-color);
   flex-shrink: 0;
   background: var(--background-color);
@@ -320,7 +320,7 @@ export default {
 }
 
 .form-group {
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .form-group:last-child {
@@ -329,10 +329,10 @@ export default {
 
 .form-group label {
   display: block;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--font-color-main);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .form-group label.required::after {
@@ -341,17 +341,17 @@ export default {
 }
 
 .form-value {
-  padding: 8px 12px;
+  padding: 6px 10px;
   background: var(--background-color-high-emphasis);
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--font-color-medium);
 }
 
 .form-input {
   width: 100%;
-  padding: 8px 12px;
-  font-size: 14px;
+  padding: 6px 10px;
+  font-size: 13px;
   background: var(--background-color);
   border: 1px solid var(--separator-color);
   border-radius: 4px;
@@ -375,14 +375,14 @@ export default {
 }
 
 .form-help {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--font-color-medium);
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .btn {
-  padding: 8px 16px;
-  font-size: 14px;
+  padding: 6px 14px;
+  font-size: 13px;
   border: none;
   border-radius: 4px;
   cursor: pointer;

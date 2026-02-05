@@ -8,8 +8,8 @@
     "gmail_trim_demo:main"
   ],
   "dependencies": [],
-  "wrapper_script": null,
-  "runner_config": null,
+  "wrapper_script": "/home/snadboy/projects/script-server/samples/scripts/gmail-trim-3_www.py",
+  "runner_config": "/home/snadboy/projects/script-server/conf/runners/www.json",
   "parameters": [
     {
       "name": "days",
@@ -58,38 +58,54 @@
         "name": "run",
         "label": "Run Cleanup",
         "description": "Execute email cleanup with configured settings",
-        "parameters": ["days", "dry_run", "verbose", "config_file"],
+        "parameters": [
+          "days",
+          "dry_run",
+          "verbose",
+          "config_file"
+        ],
         "required_parameters": []
       },
       {
         "name": "auth",
         "label": "Authenticate",
         "description": "Authorize access to Gmail and Contacts APIs",
-        "parameters": ["verbose"],
+        "parameters": [
+          "verbose"
+        ],
         "required_parameters": []
       },
       {
         "name": "labels",
         "label": "List Labels",
         "description": "Show all Gmail labels in the account",
-        "parameters": ["verbose"],
+        "parameters": [
+          "verbose"
+        ],
         "required_parameters": []
       },
       {
         "name": "groups",
         "label": "List Contact Groups",
         "description": "Show all Google contact groups",
-        "parameters": ["verbose"],
+        "parameters": [
+          "verbose"
+        ],
         "required_parameters": []
       },
       {
         "name": "config",
         "label": "Show Config",
         "description": "Display effective configuration",
-        "parameters": ["config_file", "verbose"],
+        "parameters": [
+          "config_file",
+          "verbose"
+        ],
         "required_parameters": []
       }
     ]
   },
-  "shared_parameters": ["verbose"]
+  "shared_parameters": [
+    "verbose"
+  ]
 }
