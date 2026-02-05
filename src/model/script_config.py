@@ -115,9 +115,11 @@ class ConfigModel:
         # Check if this is a project-based instance
         project_id = config_object.get('project_id')
         if project_id:
+            self.project_id = project_id  # Store for API response
             self._load_from_project(project_id, config_object, username, audit_name)
         else:
             # Legacy standalone script
+            self.project_id = None
             self._init_parameters(username, audit_name)
 
         for parameter in self.parameters:
