@@ -2,7 +2,7 @@
   <div v-if="visible" class="modal-overlay" @click.self="close">
     <div class="modal-dialog">
       <div class="modal-header">
-        <h5 class="modal-title">Create Script Instance</h5>
+        <h5 class="modal-title">Create Script Instance: {{ project?.name || '' }}</h5>
         <button class="modal-close" @click="close">&times;</button>
       </div>
 
@@ -12,8 +12,23 @@
         </div>
 
         <div class="form-group">
-          <label>Project</label>
-          <div class="form-value">{{ project?.name || 'No project selected' }}</div>
+          <label>Group</label>
+          <input
+            v-model="groupName"
+            type="text"
+            list="group-names"
+            placeholder="Select or enter group name"
+            class="form-input"
+            @change="checkNewGroup"
+          />
+          <datalist id="group-names">
+            <option v-for="group in existingGroups" :key="group" :value="group">
+              {{ group }}
+            </option>
+          </datalist>
+          <div class="form-help">
+            Select existing group or type new name
+          </div>
         </div>
 
         <div class="form-group">
@@ -92,9 +107,12 @@ export default {
     return {
       scriptName: '',
       description: '',
+      groupName: 'Imported Projects',
+      existingGroups: [],
       scriptNameError: null,
       error: null,
-      creating: false
+      creating: false,
+      confirmingNewGroup: false
     };
   },
 
@@ -115,13 +133,49 @@ export default {
         // Reset form when modal opens
         this.scriptName = '';
         this.description = '';
+        this.groupName = 'Imported Projects';
         this.scriptNameError = null;
         this.error = null;
+        this.confirmingNewGroup = false;
+        // Load existing groups
+        this.loadExistingGroups();
       }
     }
   },
 
   methods: {
+    async loadExistingGroups() {
+      try {
+        const response = await axiosInstance.get('/scripts');
+        const scripts = response.data.scripts || [];
+        // Extract unique group names
+        const groups = new Set();
+        scripts.forEach(script => {
+          if (script.group) {
+            groups.add(script.group);
+          }
+        });
+        this.existingGroups = Array.from(groups).sort();
+        // Add default if not present
+        if (!this.existingGroups.includes('Imported Projects')) {
+          this.existingGroups.unshift('Imported Projects');
+        }
+      } catch (err) {
+        console.error('Error loading groups:', err);
+        // Fallback to default
+        this.existingGroups = ['Imported Projects'];
+      }
+    },
+
+    checkNewGroup() {
+      if (this.groupName && !this.existingGroups.includes(this.groupName)) {
+        const confirmed = confirm(`Create new group "${this.groupName}"?`);
+        if (!confirmed) {
+          this.groupName = 'Imported Projects';
+        }
+      }
+    },
+
     validateScriptName() {
       this.scriptNameError = null;
 
@@ -149,7 +203,8 @@ export default {
         const response = await axiosInstance.post(`/admin/projects/${this.project.id}/wrapper`, {
           entry_point: this.entryPoint,
           script_name: this.scriptName,
-          description: this.description
+          description: this.description,
+          group: this.groupName
         });
 
         if (response.data.wrapper_path && response.data.config_path) {
@@ -197,10 +252,11 @@ export default {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   width: 90%;
   max-width: 600px;
-  max-height: 85vh;
+  max-height: 80vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  margin: auto 0;
 }
 
 .modal-header {

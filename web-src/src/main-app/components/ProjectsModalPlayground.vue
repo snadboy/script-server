@@ -604,7 +604,7 @@ export default {
         this.success = null;
       }, 3000);
       this.showCreateScriptInstance = false;
-      this.close(); // Close the main modal after creating instance
+      // Don't close the main Script Manager modal - keep it open
     },
 
     truncateUrl(url) {
