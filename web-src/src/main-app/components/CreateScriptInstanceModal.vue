@@ -252,23 +252,24 @@ export default {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   width: 90%;
   max-width: 600px;
-  max-height: 80vh;
+  max-height: 70vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  margin: auto 0;
+  margin: auto;
 }
 
 .modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--separator-color);
+  flex-shrink: 0;
 }
 
 .modal-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 500;
   margin: 0;
   color: var(--font-color-main);
@@ -294,7 +295,7 @@ export default {
 }
 
 .modal-body {
-  padding: 20px;
+  padding: 16px;
   overflow-y: auto;
   flex: 1;
   min-height: 0;
@@ -304,7 +305,7 @@ export default {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  padding: 16px 20px;
+  padding: 12px 16px;
   border-top: 1px solid var(--separator-color);
   flex-shrink: 0;
   background: var(--background-color);
@@ -319,7 +320,11 @@ export default {
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 14px;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
 }
 
 .form-group label {

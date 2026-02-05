@@ -1579,7 +1579,11 @@ class GenerateWrapperHandler(BaseRequestHandler):
                 'wrapper_path': wrapper_path,
                 'config_path': config_path
             }))
+        except tornado.web.HTTPError:
+            # Re-raise HTTP errors (like duplicate name check) as-is
+            raise
         except Exception as e:
+            # Only convert unexpected errors to 500
             raise tornado.web.HTTPError(500, reason=str(e))
 
 
