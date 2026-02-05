@@ -66,9 +66,14 @@
           </div>
         </div>
 
-        <!-- Selected Path -->
-        <div v-if="selectedPath" class="selected-info">
-          Selected: <code>{{ selectedPath }}</code>
+        <!-- Selected Path (always visible) -->
+        <div class="selected-info">
+          <template v-if="selectedPath">
+            Selected: <code>{{ selectedPath }}</code>
+          </template>
+          <template v-else>
+            Current: <code>{{ currentPath }}</code>
+          </template>
         </div>
       </div>
 
@@ -401,9 +406,13 @@ export default {
 }
 
 .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 10px 20px;
   border-radius: var(--radius-sm);
   font-size: 14px;
+  line-height: 1;
   cursor: pointer;
   border: none;
   background: var(--background-color-high-emphasis);
