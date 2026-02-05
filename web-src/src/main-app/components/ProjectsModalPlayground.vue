@@ -63,14 +63,32 @@
               :class="['project-card', { selected: selectedProject?.id === project.id }]"
               @click="selectProject(project)"
             >
+              <!-- Action icons in upper right -->
+              <div class="card-actions">
+                <button
+                  class="btn-icon-small"
+                  @click.stop="configureProject(project)"
+                  title="Configure"
+                >
+                  <i class="material-icons">settings</i>
+                </button>
+                <button
+                  class="btn-icon-small delete-btn"
+                  :disabled="deleting === project.id"
+                  @click.stop="deleteProject(project.id)"
+                  title="Delete"
+                >
+                  <i class="material-icons">{{ deleting === project.id ? 'hourglass_empty' : 'delete' }}</i>
+                </button>
+              </div>
+
               <div class="card-header">
-                <div class="card-title-row">
-                  <div class="card-title">{{ project.name }}</div>
-                  <span class="card-badge">{{ project.import_type }}</span>
-                </div>
+                <div class="card-title">{{ project.name }}</div>
                 <div class="card-date">{{ formatDate(project.imported_at) }}</div>
               </div>
               <div class="card-body">
+                <!-- Source badge above path -->
+                <span class="card-badge-inline">{{ project.import_type }}</span>
                 <div v-if="project.source_url" class="card-description">
                   {{ truncateUrl(project.source_url) }}
                 </div>
@@ -78,23 +96,6 @@
                   <i class="material-icons status-icon">check_circle</i>
                   <span>Configured</span>
                 </div>
-              </div>
-              <div class="card-footer">
-                <button
-                  class="btn-icon-action"
-                  @click.stop="configureProject(project)"
-                  title="Configure"
-                >
-                  <i class="material-icons">settings</i>
-                </button>
-                <button
-                  class="btn-icon-action delete-btn"
-                  :disabled="deleting === project.id"
-                  @click.stop="deleteProject(project.id)"
-                  title="Delete"
-                >
-                  <i class="material-icons">{{ deleting === project.id ? 'hourglass_empty' : 'delete' }}</i>
-                </button>
               </div>
             </div>
           </div>
@@ -341,10 +342,6 @@
 
       <div class="modal-footer">
         <button class="btn waves-effect" @click="close">Close</button>
-        <button class="btn waves-effect" @click="refreshProjects" :disabled="loading">
-          <i class="material-icons btn-icon">refresh</i>
-          Refresh
-        </button>
       </div>
     </div>
 
@@ -945,7 +942,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 14px;
+  padding: 8px 12px;
   font-size: 13px;
   background: var(--card-bg);
   border: 1px solid var(--border);
@@ -1014,6 +1011,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  position: relative;
 }
 
 .project-card:hover {
@@ -1026,30 +1024,63 @@ export default {
   background: #252525;
 }
 
+.card-actions {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 6px;
+  z-index: 10;
+}
+
+.btn-icon-small {
+  background: transparent;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  border-radius: 4px;
+}
+
+.btn-icon-small:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--accent);
+}
+
+.btn-icon-small.delete-btn:hover:not(:disabled) {
+  color: #f44336;
+}
+
+.btn-icon-small:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-icon-small i {
+  font-size: 20px;
+}
+
 .card-header {
   display: flex;
   flex-direction: column;
   gap: 6px;
-}
-
-.card-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  padding-right: 60px;
 }
 
 .card-title {
   font-size: var(--card-title-size);
   font-weight: 500;
   color: var(--text);
-  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.card-badge {
+.card-badge-inline {
   background: #2a2a2a;
   color: var(--accent);
   padding: 3px 8px;
@@ -1057,7 +1088,7 @@ export default {
   font-size: 11px;
   text-transform: uppercase;
   font-weight: 500;
-  flex-shrink: 0;
+  width: fit-content;
 }
 
 .card-date {
@@ -1093,46 +1124,7 @@ export default {
   font-size: 16px;
 }
 
-.card-footer {
-  display: flex;
-  gap: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
-}
-
-.btn-icon-action {
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 6px 10px;
-  cursor: pointer;
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  flex: 1;
-}
-
-.btn-icon-action:hover:not(:disabled) {
-  background: #2a2a2a;
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.btn-icon-action.delete-btn:hover:not(:disabled) {
-  border-color: #f44336;
-  color: #f44336;
-}
-
-.btn-icon-action:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-icon-action i {
-  font-size: 18px;
-}
+/* Old card-footer and btn-icon-action styles removed - now using card-actions with btn-icon-small */
 
 /* Import Section */
 .import-section {
