@@ -27,6 +27,13 @@
           <i class="material-icons">code</i>
           Verbs
         </button>
+        <button
+          :class="['tab-btn', { active: activeTab === 'connections' }]"
+          @click="activeTab = 'connections'"
+        >
+          <i class="material-icons">vpn_key</i>
+          Connections
+        </button>
       </div>
 
       <div class="modal-body">
@@ -59,6 +66,30 @@
             :available-parameters="parameterNames"
             @update:verbsConfig="markUnsaved"
           />
+        </div>
+
+        <!-- Connections Tab -->
+        <div v-else-if="activeTab === 'connections'" class="tab-content connections-config">
+          <div class="config-section">
+            <h3>Supported Connection Types</h3>
+            <p class="help-text">
+              Select which connection types this script can use. If none selected, all connections will be available.
+            </p>
+            <div class="connection-types-list">
+              <label v-for="connType in availableConnectionTypes" :key="connType.value" class="connection-type-option">
+                <input
+                  type="checkbox"
+                  :value="connType.value"
+                  v-model="supportedConnections"
+                  @change="markUnsaved"
+                />
+                <span>
+                  <i class="material-icons">{{ connType.icon }}</i>
+                  {{ connType.label }}
+                </span>
+              </label>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -116,7 +147,18 @@ export default {
       // Configuration data
       parameters: [],
       verbsConfig: null,
-      sharedParameters: []
+      sharedParameters: [],
+      supportedConnections: [],
+
+      // Available connection types
+      availableConnectionTypes: [
+        { value: 'plex', label: 'Plex Media Server', icon: 'play_circle' },
+        { value: 'sonarr', label: 'Sonarr', icon: 'tv' },
+        { value: 'radarr', label: 'Radarr', icon: 'movie' },
+        { value: 'home-assistant', label: 'Home Assistant', icon: 'home' },
+        { value: 'google', label: 'Google', icon: 'cloud' },
+        { value: 'generic', label: 'Generic', icon: 'vpn_key' }
+      ]
     };
   },
 
@@ -150,6 +192,10 @@ export default {
       } else {
         this.reset();
       }
+    },
+
+    supportedConnections() {
+      this.markUnsaved();
     }
   },
 
@@ -167,6 +213,7 @@ export default {
         this.parameters = config.parameters || [];
         this.verbsConfig = config.verbs || null;
         this.sharedParameters = config.sharedParameters || [];
+        this.supportedConnections = config.supported_connections || [];
         this.hasUnsavedChanges = false;
       } catch (err) {
         console.error('Failed to load project configuration:', err);
@@ -195,6 +242,12 @@ export default {
             verbs: this.verbsConfig,
             sharedParameters: []
           }
+        );
+
+        // Save supported connections
+        await axiosInstance.put(
+          `/admin/projects/${this.project.id}/supported_connections`,
+          {supported_connections: this.supportedConnections}
         );
 
         this.success = 'Configuration saved successfully!';
@@ -240,6 +293,7 @@ export default {
       this.parameters = [];
       this.verbsConfig = null;
       this.sharedParameters = [];
+      this.supportedConnections = [];
       this.hasUnsavedChanges = false;
       this.error = null;
       this.success = null;

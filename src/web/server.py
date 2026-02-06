@@ -1696,6 +1696,32 @@ class UpdateProjectVerbsHandler(BaseRequestHandler):
             raise tornado.web.HTTPError(500, reason=str(e))
 
 
+class UpdateProjectSupportedConnectionsHandler(BaseRequestHandler):
+    """Update supported connection types for a project."""
+
+    @requires_admin_rights
+    def put(self, project_id):
+        project_service = self.application.project_service
+        if project_service is None:
+            raise tornado.web.HTTPError(503, 'Project service not available')
+
+        try:
+            body = json.loads(self.request.body.decode('utf-8'))
+            supported_connections = body.get('supported_connections', [])
+
+            updated = project_service.update_project_supported_connections(
+                project_id,
+                supported_connections
+            )
+            self.write(json.dumps({'success': True, 'project': updated}))
+        except FileNotFoundError as e:
+            raise tornado.web.HTTPError(404, reason=str(e))
+        except ValueError as e:
+            raise tornado.web.HTTPError(400, reason=str(e))
+        except Exception as e:
+            raise tornado.web.HTTPError(500, reason=str(e))
+
+
 # ============================================================================
 # Connection Management Handlers (Phase 1)
 # ============================================================================
@@ -1947,6 +1973,7 @@ def init(server_config: ServerConfig,
                 (r'/admin/projects/([^/]+)/config', GetProjectConfigHandler),
                 (r'/admin/projects/([^/]+)/parameters', UpdateProjectParametersHandler),
                 (r'/admin/projects/([^/]+)/verbs', UpdateProjectVerbsHandler),
+                (r'/admin/projects/([^/]+)/supported_connections', UpdateProjectSupportedConnectionsHandler),
                 # Connection management endpoints
                 (r'/admin/connections/types', ConnectionTypesHandler),
                 (r'/admin/connections/([^/]+)', ConnectionHandler),

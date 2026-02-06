@@ -34,11 +34,6 @@ module.exports = {
             template: 'public/index.html',
             chunks: ['chunk-index-vendors', 'index']
         },
-        admin: {
-            entry: 'src/admin/admin.js',
-            template: 'public/admin.html',
-            chunks: ['chunk-admin-vendors', 'admin']
-        },
         login: {
             entry: 'src/login/login.js',
             template: 'public/login.html',

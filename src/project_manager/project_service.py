@@ -783,6 +783,32 @@ if len(sys.argv) >= 2 and sys.argv[1] == '{config_cmd}' and '--config' not in sy
         LOGGER.info(f"Updated verbs for project {project_id}")
         return meta
 
+    def update_project_supported_connections(
+        self,
+        project_id: str,
+        supported_connections: list[str]
+    ) -> dict:
+        """
+        Update supported connection types for a project.
+
+        Args:
+            project_id: The project identifier
+            supported_connections: List of connection type identifiers
+
+        Returns:
+            Updated project metadata
+        """
+        project_path = self.projects_dir / project_id
+        if not project_path.exists():
+            raise FileNotFoundError(f"Project {project_id} not found")
+
+        meta = self._load_meta(project_path)
+        meta['supported_connections'] = supported_connections
+        self._save_meta(project_path, meta)
+
+        LOGGER.info(f"Updated supported_connections for project {project_id}")
+        return meta
+
     def get_project_parameters(self, project_id: str) -> list[dict]:
         """
         Get parameter definitions from project.
