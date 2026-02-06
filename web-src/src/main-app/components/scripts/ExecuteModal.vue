@@ -28,10 +28,10 @@
         </div>
 
         <!-- Connections section -->
-        <div v-if="availableConnections.length > 0" class="connections-section">
+        <div v-if="filteredConnections.length > 0" class="connections-section">
           <label class="section-label">Connections</label>
           <div class="connections-list">
-            <label v-for="conn in availableConnections" :key="conn.id" class="connection-checkbox">
+            <label v-for="conn in filteredConnections" :key="conn.id" class="connection-checkbox">
               <input
                 type="checkbox"
                 :value="conn.id"
@@ -165,6 +165,21 @@ export default {
 
     verbsConfig() {
       return this.scriptConfig?.verbs || null;
+    },
+
+    supportedConnectionTypes() {
+      return this.scriptConfig?.supportedConnections || [];
+    },
+
+    filteredConnections() {
+      // If script specifies supported connections, filter to those types only
+      if (this.supportedConnectionTypes.length > 0) {
+        return this.availableConnections.filter(conn =>
+          this.supportedConnectionTypes.includes(conn.type)
+        );
+      }
+      // Otherwise show all connections
+      return this.availableConnections;
     },
 
     hasVerbs() {

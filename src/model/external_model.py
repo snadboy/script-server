@@ -37,6 +37,11 @@ def config_to_external(config, id, external_id=None):
         result['verbs'] = verbs_config.to_dict()
         result['sharedParameters'] = getattr(config, 'shared_parameters', [])
 
+    # Add supported connections if present
+    supported_connections = getattr(config, 'supported_connections', [])
+    if supported_connections:
+        result['supportedConnections'] = supported_connections
+
     return result
 
 

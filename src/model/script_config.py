@@ -348,6 +348,9 @@ class ConfigModel:
         # Also read shared_parameters list for verbs
         self.shared_parameters = read_list(config, 'shared_parameters') or []
 
+        # Read supported connections list
+        self.supported_connections = read_list(config, 'supported_connections') or []
+
         if not self.script_command:
             raise Exception('No script_path is specified for ' + self.name)
 
