@@ -435,7 +435,9 @@ class ScriptExecute(StreamUploadRequestHandler):
             config_model.set_all_param_values(parameter_values)
 
             execution_id = self.application.execution_service.start_script(
-                config_model, user, instance_name=execution_info.instance_name)
+                config_model, user,
+                instance_name=execution_info.instance_name,
+                connection_ids=execution_info.connection_ids)
 
             self.write(str(execution_id))
 

@@ -8,6 +8,7 @@ class ExecutionInfo(object):
         self.param_values = {}
         self.script = None
         self.instance_name = None
+        self.connection_ids = None
 
 
 def config_to_external(config, id, external_id=None):
@@ -130,13 +131,21 @@ def running_flag_to_status(running):
 def to_execution_info(request_parameters):
     NAME_KEY = '__script_name'
     INSTANCE_KEY = '__instance_name'
+    CONNECTIONS_KEY = '__connection_ids'
 
     script_name = request_parameters.get(NAME_KEY)
     instance_name = request_parameters.get(INSTANCE_KEY)
+    connection_ids = request_parameters.get(CONNECTIONS_KEY)
+
+    # Parse connection_ids if provided as comma-separated string
+    if connection_ids and isinstance(connection_ids, str):
+        connection_ids = [cid.strip() for cid in connection_ids.split(',') if cid.strip()]
+    elif connection_ids and not isinstance(connection_ids, list):
+        connection_ids = [connection_ids]
 
     param_values = {}
     for name, value in request_parameters.items():
-        if name in (NAME_KEY, INSTANCE_KEY):
+        if name in (NAME_KEY, INSTANCE_KEY, CONNECTIONS_KEY):
             continue
         param_values[name] = value
 
@@ -144,6 +153,7 @@ def to_execution_info(request_parameters):
     info.script = script_name
     info.instance_name = instance_name
     info.param_values = param_values
+    info.connection_ids = connection_ids if connection_ids else None
 
     return info
 

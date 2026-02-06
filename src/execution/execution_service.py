@@ -44,7 +44,7 @@ class ExecutionService:
 
         return self._executors.get(execution_id)
 
-    def start_script(self, config, user: User, schedule_id=None, instance_name=None):
+    def start_script(self, config, user: User, schedule_id=None, instance_name=None, connection_ids=None):
         audit_name = user.get_audit_name()
 
         executor = ScriptExecutor(config, self._env_vars)
@@ -53,7 +53,7 @@ class ExecutionService:
         audit_command = executor.get_secure_command()
         LOGGER.info('Calling script #%s: %s', execution_id, audit_command)
 
-        executor.start(execution_id)
+        executor.start(execution_id, connection_ids=connection_ids)
         self._executors[execution_id] = executor
         self._execution_infos[execution_id] = _ExecutionInfo(
             execution_id=execution_id,

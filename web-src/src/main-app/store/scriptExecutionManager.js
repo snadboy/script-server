@@ -123,6 +123,7 @@ export default {
             const parameterValues = clone(rootState.scriptSetup.parameterValues);
             const scriptName = rootState.scriptConfig.scriptConfig.name;
             const instanceName = payload.instanceName || null;
+            const connectionIds = payload.connectionIds || null;
 
             // Save parameter history when script is executed
             saveParameterHistory(scriptName, parameterValues);
@@ -131,6 +132,9 @@ export default {
             formData.append('__script_name', scriptName);
             if (instanceName) {
                 formData.append('__instance_name', instanceName);
+            }
+            if (connectionIds && connectionIds.length > 0) {
+                formData.append('__connection_ids', connectionIds.join(','));
             }
 
             const executor = scriptExecutor(null, scriptName, parameterValues);

@@ -27,6 +27,25 @@
           </button>
         </div>
 
+        <!-- Connections section -->
+        <div v-if="availableConnections.length > 0" class="connections-section">
+          <label class="section-label">Connections</label>
+          <div class="connections-list">
+            <label v-for="conn in availableConnections" :key="conn.id" class="connection-checkbox">
+              <input
+                type="checkbox"
+                :value="conn.id"
+                v-model="selectedConnections"
+              />
+              <span>
+                <i class="material-icons connection-icon">{{ getConnectionIcon(conn.type) }}</i>
+                {{ conn.name }}
+                <span class="connection-type-label">({{ getConnectionTypeName(conn.type) }})</span>
+              </span>
+            </label>
+          </div>
+        </div>
+
         <div v-if="hasVisibleParameters" class="parameters-section">
           <span class="parameters-label">Parameters</span>
           <div class="params-table-wrapper">
@@ -106,6 +125,7 @@
 <script>
 import {mapState, mapActions, mapGetters} from 'vuex';
 import {isNull, isEmptyString, isEmptyValue} from '@/common/utils/common';
+import {axiosInstance} from '@/common/utils/axios_utils';
 import clone from 'lodash/clone';
 
 export default {
@@ -126,7 +146,10 @@ export default {
     return {
       instanceName: '',
       localValues: {},
-      selectedVerb: null
+      selectedVerb: null,
+      selectedConnections: [],
+      availableConnections: [],
+      connectionTypes: []
     };
   },
 
@@ -214,6 +237,7 @@ export default {
     visible(newVal) {
       if (newVal) {
         this.initLocalValues();
+        this.loadConnections();
         document.body.style.overflow = 'hidden';
         this.$nextTick(() => {
           M.updateTextFields();
@@ -231,6 +255,7 @@ export default {
       // Clone current parameter values to local state
       this.localValues = clone(this.parameterValues) || {};
       this.instanceName = '';
+      this.selectedConnections = [];
 
       // Initialize verb selection
       if (this.hasVerbs) {
@@ -243,6 +268,33 @@ export default {
       } else {
         this.selectedVerb = null;
       }
+    },
+
+    async loadConnections() {
+      try {
+        // Load connection types first
+        const typesResp = await axiosInstance.get('/admin/connections/types');
+        this.connectionTypes = typesResp.data.types || [];
+
+        // Load available connections
+        const connsResp = await axiosInstance.get('/admin/connections');
+        this.availableConnections = connsResp.data.connections || [];
+      } catch (error) {
+        console.error('Failed to load connections:', error);
+        // Silently fail - connections are optional
+        this.availableConnections = [];
+        this.connectionTypes = [];
+      }
+    },
+
+    getConnectionIcon(typeId) {
+      const type = this.connectionTypes.find(t => t.type_id === typeId);
+      return type ? type.icon : 'vpn_key';
+    },
+
+    getConnectionTypeName(typeId) {
+      const type = this.connectionTypes.find(t => t.type_id === typeId);
+      return type ? type.display_name : typeId;
     },
 
     onVerbChanged() {
@@ -316,7 +368,8 @@ export default {
       // Small delay to let values propagate, then start execution
       this.$nextTick(() => {
         this.$store.dispatch('executions/startExecution', {
-          instanceName: this.instanceName || null
+          instanceName: this.instanceName || null,
+          connectionIds: this.selectedConnections.length > 0 ? this.selectedConnections : null
         });
         this.close();
       });
@@ -340,13 +393,14 @@ export default {
 }
 
 .execute-modal {
-  width: 85%;
-  max-width: 500px;
+  width: 90%;
+  max-width: 600px;
   height: auto;
   max-height: 85vh;
   display: flex;
   flex-direction: column;
   border-radius: var(--radius-md);
+  overflow: hidden;
   margin: 0 !important;
   position: relative;
 }
@@ -375,7 +429,9 @@ export default {
 .modal-body {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 16px 24px;
+  box-sizing: border-box;
 }
 
 .verb-section {
@@ -637,6 +693,99 @@ export default {
 
 .modal-footer .btn i.left {
   margin-right: 4px;
+}
+
+/* Connections section */
+.connections-section {
+  margin-bottom: 24px;
+}
+
+.connections-section .section-label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--font-color-main);
+  margin-bottom: 12px;
+}
+
+.connections-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--background-color-high-emphasis);
+  border-radius: 4px;
+  border: 1px solid var(--separator-color);
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.connection-checkbox {
+  display: flex !important;
+  align-items: center;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  position: relative;
+}
+
+.connection-checkbox:hover {
+  background: var(--background-color);
+}
+
+.connection-checkbox input[type="checkbox"] {
+  position: static !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  margin: 0 8px 0 0 !important;
+  width: 16px !important;
+  height: 16px !important;
+  flex-shrink: 0;
+  cursor: pointer;
+  appearance: auto !important;
+  -webkit-appearance: checkbox !important;
+  -moz-appearance: checkbox !important;
+}
+
+/* Hide all Materialize checkbox pseudo-elements */
+.connection-checkbox input[type="checkbox"] + span::before,
+.connection-checkbox input[type="checkbox"] + span::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Remove all Materialize padding/margin from the span */
+.connection-checkbox input[type="checkbox"] + span {
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+}
+
+.connection-checkbox > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--font-color-main);
+  flex: 1;
+  min-width: 0;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.connection-checkbox > span > span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.connection-icon {
+  color: var(--primary-color);
+  font-size: 20px;
+}
+
+.connection-type-label {
+  color: var(--font-color-medium);
+  font-size: 0.85rem;
 }
 
 @media screen and (max-width: 768px) {

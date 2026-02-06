@@ -114,7 +114,7 @@ class ScriptExecutor:
         self.raw_output_stream = None
         self.protected_output_stream = None
 
-    def start(self, execution_id):
+    def start(self, execution_id, connection_ids=None):
         if self.process_wrapper is not None:
             raise Exception('Executor already started')
 
@@ -123,6 +123,11 @@ class ScriptExecutor:
         script_args = build_command_args(parameter_values, self.config)
         command = self.script_base_command + script_args
         env_variables = _build_env_variables(parameter_values, self.config.parameters, execution_id)
+
+        # Inject connection credentials as environment variables
+        if connection_ids:
+            from connections.injection import inject_connection_credentials
+            env_variables = inject_connection_credentials(connection_ids, env_variables)
 
         all_env_variables = self._env_vars.build_env_vars(env_variables)
 
