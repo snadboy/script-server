@@ -22,16 +22,26 @@
 
 ### Current Focus
 
-**Status:** ✅ **CreateScriptInstanceModal Complete** - All error handling and validation working
+**Status:** ✅ **Script Manager UI Refactored** - Modal-based design complete
 
-**Latest work (2026-02-05):**
+**Latest work (2026-02-06):**
+- ✅ Removed tab-based navigation (Projects/Import/Configure tabs)
+- ✅ Created new `ImportProjectModal.vue` component for Git/ZIP/Local imports
+- ✅ Converted project display from 2-column grid to single-column table layout
+- ✅ Added 2x2 stats grid: Instances | Connections | Parameters | Verbs
+- ✅ Added connections display with `getConnectionCount()` and `getConnectionLabel()` methods
+- ✅ Import button in modal header (no more tab switching)
+- ✅ Configure gear icon directly opens ProjectConfigPlaygroundModal
+- ✅ Auto-open configure modal after successful import
+- ⏳ **Next:** Test in browser, consider production deployment
+
+**Previous work (2026-02-05):**
 - ✅ Fixed 500 error by adding `@inject_user` decorator to GenerateWrapperHandler
 - ✅ Made duplicate script name check case-insensitive
 - ✅ Fixed error message display (Tornado sends plain text, not JSON)
 - ✅ Fixed button text centering with flexbox (inline-flex, align-items, justify-content)
 - ✅ Ultra-compact modal layout (50vh max-height) to prevent button clipping
 - ✅ All validation and error messages working correctly
-- ⏳ **Next:** Ready for production use, consider Docker image push
 
 **Previous work (2026-02-04):**
 - ✅ Created `script-manager-playground.html` interactive design tool
@@ -55,8 +65,9 @@
 
 **Files Created:**
 - `script-manager-playground.html` - Interactive design playground
-- `web-src/src/main-app/components/ProjectsModalPlayground.vue` - New Script Manager (795 lines)
+- `web-src/src/main-app/components/ProjectsModalPlayground.vue` - Script Manager (refactored, 460 lines)
 - `web-src/src/main-app/components/CreateScriptInstanceModal.vue` - Instance creation modal (411 lines)
+- `web-src/src/main-app/components/ImportProjectModal.vue` - Import modal (Git/ZIP/Local, 315 lines)
 
 **Files Modified:**
 - `web-src/src/main-app/components/MainAppSidebar.vue` - Import ProjectsModalPlayground

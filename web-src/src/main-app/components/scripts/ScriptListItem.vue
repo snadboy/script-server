@@ -224,8 +224,11 @@ export default {
   color: var(--font-color-main);
 }
 
-.script-list-item.active .project-name,
+.script-list-item.active .project-name {
+  color: rgba(255, 255, 255, 0.8);
+}
+
 .script-list-item.active .instance-name {
-  color: var(--primary-color);
+  color: #ffffff;
 }
 </style>
