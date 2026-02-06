@@ -1694,6 +1694,118 @@ class UpdateProjectVerbsHandler(BaseRequestHandler):
             raise tornado.web.HTTPError(500, reason=str(e))
 
 
+# ============================================================================
+# Connection Management Handlers (Phase 1)
+# ============================================================================
+
+class ConnectionTypesHandler(BaseRequestHandler):
+    """Get available connection types with field schemas."""
+
+    @requires_admin_rights
+    def get(self):
+        from connections.connection_types import list_connection_type_schemas
+
+        try:
+            schemas = list_connection_type_schemas()
+            self.write(json.dumps({'types': schemas}))
+        except Exception as e:
+            LOGGER.error(f"Failed to list connection types: {e}")
+            raise tornado.web.HTTPError(500, reason=str(e))
+
+
+class ConnectionsHandler(BaseRequestHandler):
+    """Handle connections list and create operations."""
+
+    @requires_admin_rights
+    def get(self):
+        """List all connections (secrets masked)."""
+        from connections.connection_service import get_connection_service
+
+        try:
+            connection_service = get_connection_service()
+            connections = connection_service.list_connections()
+            self.write(json.dumps({'connections': connections}))
+        except Exception as e:
+            LOGGER.error(f"Failed to list connections: {e}")
+            raise tornado.web.HTTPError(500, reason=str(e))
+
+    @requires_admin_rights
+    def post(self):
+        """Create a new connection."""
+        from connections.connection_service import get_connection_service
+
+        try:
+            connection_service = get_connection_service()
+            connection_data = json.loads(self.request.body.decode('utf-8'))
+
+            created = connection_service.create_connection(connection_data)
+            self.write(json.dumps(created))
+        except ValueError as e:
+            raise tornado.web.HTTPError(400, reason=str(e))
+        except Exception as e:
+            LOGGER.error(f"Failed to create connection: {e}")
+            raise tornado.web.HTTPError(500, reason=str(e))
+
+
+class ConnectionHandler(BaseRequestHandler):
+    """Handle single connection get/update/delete operations."""
+
+    @requires_admin_rights
+    def get(self, connection_id):
+        """Get a single connection by ID (secrets masked)."""
+        from connections.connection_service import get_connection_service
+
+        try:
+            connection_service = get_connection_service()
+            connection = connection_service.get_connection(connection_id, mask_secrets=True)
+
+            if connection is None:
+                raise tornado.web.HTTPError(404, reason=f"Connection {connection_id} not found")
+
+            self.write(json.dumps(connection))
+        except tornado.web.HTTPError:
+            raise
+        except Exception as e:
+            LOGGER.error(f"Failed to get connection {connection_id}: {e}")
+            raise tornado.web.HTTPError(500, reason=str(e))
+
+    @requires_admin_rights
+    def put(self, connection_id):
+        """Update an existing connection."""
+        from connections.connection_service import get_connection_service
+
+        try:
+            connection_service = get_connection_service()
+            updates = json.loads(self.request.body.decode('utf-8'))
+
+            updated = connection_service.update_connection(connection_id, updates)
+            self.write(json.dumps(updated))
+        except ValueError as e:
+            raise tornado.web.HTTPError(400, reason=str(e))
+        except Exception as e:
+            LOGGER.error(f"Failed to update connection {connection_id}: {e}")
+            raise tornado.web.HTTPError(500, reason=str(e))
+
+    @requires_admin_rights
+    def delete(self, connection_id):
+        """Delete a connection."""
+        from connections.connection_service import get_connection_service
+
+        try:
+            connection_service = get_connection_service()
+            deleted = connection_service.delete_connection(connection_id, soft_delete=True)
+
+            if not deleted:
+                raise tornado.web.HTTPError(404, reason=f"Connection {connection_id} not found")
+
+            self.write(json.dumps({'success': True}))
+        except tornado.web.HTTPError:
+            raise
+        except Exception as e:
+            LOGGER.error(f"Failed to delete connection {connection_id}: {e}")
+            raise tornado.web.HTTPError(500, reason=str(e))
+
+
 def pipe_output_to_http(output_stream, write_callback):
     class OutputToHttpListener:
         def on_next(self, output):
@@ -1833,6 +1945,10 @@ def init(server_config: ServerConfig,
                 (r'/admin/projects/([^/]+)/config', GetProjectConfigHandler),
                 (r'/admin/projects/([^/]+)/parameters', UpdateProjectParametersHandler),
                 (r'/admin/projects/([^/]+)/verbs', UpdateProjectVerbsHandler),
+                # Connection management endpoints
+                (r'/admin/connections/types', ConnectionTypesHandler),
+                (r'/admin/connections/([^/]+)', ConnectionHandler),
+                (r'/admin/connections', ConnectionsHandler),
                 (r"/", ProxiedRedirectHandler, {"url": "/index.html"})]
 
     if auth.is_enabled():
@@ -1888,6 +2004,15 @@ def init(server_config: ServerConfig,
     from project_manager.project_service import ProjectService
     # project_root is already calculated above
     application.project_service = ProjectService(project_root)
+
+    # Initialize connection management (encryption + connection service)
+    from connections.encryption import init_encryption
+    from connections.connection_service import init_connection_service
+    connections_dir = os.path.join(conf_folder, 'connections')
+    connection_key_path = os.path.join(conf_folder, '.connection_key')
+    init_encryption(connection_key_path)
+    init_connection_service(connections_dir)
+    LOGGER.info('Connection management initialized')
 
     # Initialize script validator and validate all scripts on startup
     from script_validator import ScriptValidator

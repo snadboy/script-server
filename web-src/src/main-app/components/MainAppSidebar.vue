@@ -28,6 +28,9 @@
         <button v-if="adminUser" class="logs-btn waves-effect waves-circle" @click="showLogs = true" title="Server Logs">
           <i class="material-icons">subject</i>
         </button>
+        <button v-if="adminUser" class="connections-btn waves-effect waves-circle" @click="showConnections = true" title="Connections">
+          <i class="material-icons">vpn_key</i>
+        </button>
         <button class="settings-btn waves-effect waves-circle" @click="showSettings = true" title="Settings">
           <i class="material-icons">settings</i>
         </button>
@@ -39,6 +42,7 @@
     <PythonPackagesModal v-if="adminUser" :visible="showPythonPackages" @update:visible="showPythonPackages = $event" />
     <RequirementsModal v-if="adminUser" :visible="showRequirements" @update:visible="showRequirements = $event" />
     <ServerLogsModal v-if="adminUser" :visible="showLogs" @update:visible="showLogs = $event" />
+    <ConnectionsModal v-if="adminUser" :visible="showConnections" @close="showConnections = false" />
 
     <SidebarBottomNav />
 
@@ -75,6 +79,7 @@ import ProjectsModalPlayground from './ProjectsModalPlayground';
 import PythonPackagesModal from './PythonPackagesModal';
 import RequirementsModal from './RequirementsModal';
 import ServerLogsModal from './ServerLogsModal';
+import ConnectionsModal from './ConnectionsModal';
 import ThemeToggle from '@/common/components/ThemeToggle';
 
 export default {
@@ -88,6 +93,7 @@ export default {
     PythonPackagesModal,
     RequirementsModal,
     ServerLogsModal,
+    ConnectionsModal,
     ThemeToggle
   },
 
@@ -99,6 +105,7 @@ export default {
       showPythonPackages: false,
       showRequirements: false,
       showLogs: false,
+      showConnections: false,
       showGroups: true,
       currentTime: new Date(),
       timeInterval: null
@@ -258,7 +265,8 @@ export default {
 .packages-btn,
 .scripts-btn,
 .requirements-btn,
-.logs-btn {
+.logs-btn,
+.connections-btn {
   background: none;
   border: none;
   cursor: pointer;
@@ -274,7 +282,8 @@ export default {
 .packages-btn:hover,
 .scripts-btn:hover,
 .requirements-btn:hover,
-.logs-btn:hover {
+.logs-btn:hover,
+.connections-btn:hover {
   background: var(--background-color-high-emphasis);
 }
 
@@ -282,7 +291,8 @@ export default {
 .packages-btn i,
 .scripts-btn i,
 .requirements-btn i,
-.logs-btn i {
+.logs-btn i,
+.connections-btn i {
   font-size: 24px;
   color: var(--font-color-main);
 }
