@@ -17,10 +17,10 @@
 
     <button
         v-if="isAdmin"
-        class="action-btn edit-btn waves-effect waves-light"
-        title="Edit script configuration"
-        @click="openEditModal">
-      <i class="material-icons">edit</i>
+        class="action-btn settings-btn waves-effect waves-light"
+        title="Instance settings"
+        @click="openSettingsModal">
+      <i class="material-icons">settings</i>
     </button>
 
     <button
@@ -41,11 +41,11 @@
         :script-name="scriptName"
         @close="showScheduleModal = false"/>
 
-    <EditScriptModal
-        :visible="showEditModal"
+    <InstanceSettingsModal
+        :visible="showSettingsModal"
         :script-name="scriptName"
-        @close="showEditModal = false"
-        @saved="handleEditSaved"/>
+        @close="showSettingsModal = false"
+        @saved="handleSettingsSaved"/>
   </div>
 </template>
 
@@ -54,7 +54,7 @@ import {scriptNameToHash} from '../../utils/model_helper';
 import {mapState} from 'vuex';
 import ExecuteModal from '@/main-app/components/scripts/ExecuteModal';
 import ScheduleModal from '@/main-app/components/schedule/ScheduleModal';
-import EditScriptModal from '@/main-app/components/scripts/EditScriptModal';
+import InstanceSettingsModal from '@/main-app/components/InstanceSettingsModal';
 
 export default {
   name: 'ScriptInlineActions',
@@ -62,7 +62,7 @@ export default {
   components: {
     ExecuteModal,
     ScheduleModal,
-    EditScriptModal
+    InstanceSettingsModal
   },
 
   props: {
@@ -80,7 +80,7 @@ export default {
     return {
       showExecuteModal: false,
       showScheduleModal: false,
-      showEditModal: false
+      showSettingsModal: false
     };
   },
 
@@ -131,13 +131,13 @@ export default {
       this.showScheduleModal = true;
     },
 
-    openEditModal() {
-      this.showEditModal = true;
+    openSettingsModal() {
+      this.showSettingsModal = true;
     },
 
-    handleEditSaved(scriptName) {
-      this.showEditModal = false;
-      M.toast({ html: 'Script saved successfully' });
+    handleSettingsSaved(scriptName) {
+      this.showSettingsModal = false;
+      M.toast({ html: 'Settings saved successfully' });
       // Reload script config if we're viewing this script
       if (this.selectedScript === this.scriptName || this.selectedScript === scriptName) {
         this.$store.dispatch('scriptConfig/reloadScript', { selectedScript: scriptName });
@@ -213,7 +213,8 @@ export default {
 
 .execute-btn,
 .edit-btn,
-.schedule-btn {
+.schedule-btn,
+.settings-btn {
   background-color: var(--surface-color);
   color: var(--font-color-main);
   border: 1px solid var(--separator-color);
@@ -221,7 +222,8 @@ export default {
 
 .execute-btn:hover,
 .edit-btn:hover,
-.schedule-btn:hover {
+.schedule-btn:hover,
+.settings-btn:hover {
   background-color: var(--hover-color);
   color: var(--primary-color);
 }

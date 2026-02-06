@@ -8,10 +8,10 @@
 
       <div class="modal-tabs">
         <button
-          :class="['tab-btn', { active: activeTab === 'defaults' }]"
-          @click="activeTab = 'defaults'"
+          :class="['tab-btn', { active: activeTab === 'connections' }]"
+          @click="activeTab = 'connections'"
         >
-          Defaults
+          Connections
         </button>
         <button
           :class="['tab-btn', { active: activeTab === 'access' }]"
@@ -32,8 +32,8 @@
         <div v-if="loading" class="loading">Loading...</div>
 
         <template v-else-if="config">
-          <!-- Defaults Tab -->
-          <div v-if="activeTab === 'defaults'" class="tab-content">
+          <!-- Connections Tab -->
+          <div v-if="activeTab === 'connections'" class="tab-content">
             <p class="tab-description">
               Set default values for this instance. These will be pre-filled when executing or scheduling.
             </p>
@@ -50,22 +50,40 @@
               <div class="form-help">Which command/verb to run by default</div>
             </div>
 
-            <!-- Connection Selection -->
-            <div v-if="availableConnections.length > 0" class="form-group">
-              <label>Default Connections</label>
-              <div class="connections-list">
-                <label v-for="conn in availableConnections" :key="conn.id" class="checkbox-label">
-                  <input
-                    type="checkbox"
-                    :value="conn.id"
-                    v-model="defaultConnections"
-                  />
-                  <i class="material-icons">{{ getConnectionIcon(conn.type) }}</i>
-                  <span>{{ conn.name }}</span>
-                  <span class="connection-type">({{ getConnectionTypeName(conn.type) }})</span>
-                </label>
+            <!-- Connection Selection (Grouped by Type) -->
+            <div v-if="connectionsByType && Object.keys(connectionsByType).length > 0" class="form-group">
+              <label>Connections</label>
+              <div class="connections-grouped">
+                <div v-for="(connections, type) in connectionsByType" :key="type" class="connection-type-group">
+                  <div class="connection-type-header">
+                    <i class="material-icons">{{ getConnectionIcon(type) }}</i>
+                    <span>{{ getConnectionTypeName(type) }}</span>
+                  </div>
+                  <div class="connection-options">
+                    <label class="radio-label">
+                      <input
+                        type="radio"
+                        :name="'connection-' + type"
+                        :value="null"
+                        v-model="defaultConnectionsByType[type]"
+                      />
+                      <span class="radio-custom"></span>
+                      <span class="connection-option-text">None</span>
+                    </label>
+                    <label v-for="conn in connections" :key="conn.id" class="radio-label">
+                      <input
+                        type="radio"
+                        :name="'connection-' + type"
+                        :value="conn.id"
+                        v-model="defaultConnectionsByType[type]"
+                      />
+                      <span class="radio-custom"></span>
+                      <span class="connection-option-text">{{ conn.name }}</span>
+                    </label>
+                  </div>
+                </div>
               </div>
-              <div class="form-help">Pre-select these connections for execution</div>
+              <div class="form-help">Select one connection per type (or none)</div>
             </div>
 
             <!-- Parameter Defaults -->
@@ -95,6 +113,7 @@
             <div class="form-group">
               <label class="checkbox-label">
                 <input type="checkbox" v-model="allowAllUsers" />
+                <span class="checkbox-custom"></span>
                 <span>Allow all users</span>
               </label>
             </div>
@@ -112,6 +131,7 @@
             <div class="form-group">
               <label class="checkbox-label">
                 <input type="checkbox" v-model="allowAllAdmins" />
+                <span class="checkbox-custom"></span>
                 <span>Allow any admin</span>
               </label>
             </div>
@@ -132,6 +152,7 @@
             <div class="form-group">
               <label class="checkbox-label">
                 <input type="checkbox" v-model="schedulingEnabled" />
+                <span class="checkbox-custom"></span>
                 <span>Enable scheduling</span>
               </label>
             </div>
@@ -139,6 +160,7 @@
             <div v-if="schedulingEnabled" class="form-group">
               <label class="checkbox-label">
                 <input type="checkbox" v-model="schedulingAutoCleanup" />
+                <span class="checkbox-custom"></span>
                 <span>Auto-cleanup one-time schedules</span>
               </label>
             </div>
@@ -175,7 +197,7 @@ export default {
 
   data() {
     return {
-      activeTab: 'defaults',
+      activeTab: 'connections',
       loading: false,
       saving: false,
       error: null,
@@ -183,10 +205,12 @@ export default {
       // Defaults
       defaultVerb: '',
       defaultConnections: [],
+      defaultConnectionsByType: {}, // Maps type -> connection_id
       defaultParameters: {},
       availableVerbs: [],
       availableParameters: [],
       availableConnections: [],
+      connectionsByType: {}, // Groups connections by type
       connectionTypes: [],
       // Access
       allowAllUsers: true,
@@ -234,6 +258,15 @@ export default {
           ? allConnections.filter(conn => supportedTypes.includes(conn.type))
           : allConnections;
 
+        // Group connections by type
+        this.connectionsByType = {};
+        this.availableConnections.forEach(conn => {
+          if (!this.connectionsByType[conn.type]) {
+            this.connectionsByType[conn.type] = [];
+          }
+          this.connectionsByType[conn.type].push(conn);
+        });
+
         // Load connection types
         const typesResponse = await axiosInstance.get('/admin/connections/types');
         this.connectionTypes = typesResponse.data.types || [];
@@ -242,6 +275,20 @@ export default {
         this.defaultVerb = this.config.defaultVerb || '';
         this.defaultConnections = this.config.defaultConnections || [];
         this.defaultParameters = { ...(this.config.defaultParameters || {}) };
+
+        // Convert defaultConnections array to defaultConnectionsByType object
+        // defaultConnections is an array of connection IDs
+        // We need to map each to its type
+        this.defaultConnectionsByType = {};
+        Object.keys(this.connectionsByType).forEach(type => {
+          this.defaultConnectionsByType[type] = null; // Default to none
+        });
+        this.defaultConnections.forEach(connId => {
+          const conn = this.availableConnections.find(c => c.id === connId);
+          if (conn) {
+            this.defaultConnectionsByType[conn.type] = conn.id;
+          }
+        });
 
         // Access settings
         this.allowAllUsers = this.config.allowed_users === '*';
@@ -275,10 +322,15 @@ export default {
         const adminUsers = this.allowAllAdmins ? [] :
           this.adminUsersInput.split(',').map(u => u.trim()).filter(u => u);
 
+        // Convert defaultConnectionsByType object to array
+        // Only include non-null selections
+        const defaultConnections = Object.values(this.defaultConnectionsByType)
+          .filter(connId => connId !== null && connId !== undefined);
+
         // Prepare updated config
         const updates = {
           defaultVerb: this.defaultVerb || null,
-          defaultConnections: this.defaultConnections,
+          defaultConnections: defaultConnections,
           defaultParameters: this.defaultParameters,
           allowed_users: allowedUsers,
           admin_users: adminUsers,
@@ -322,6 +374,12 @@ export default {
 </script>
 
 <style scoped>
+/*
+ * IMPORTANT: NEVER use browser default checkboxes!
+ * Default checkboxes render as tilted rectangles on some systems.
+ * Always use custom checkbox styling like .checkbox-custom below.
+ */
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -480,10 +538,116 @@ export default {
   font-size: 13px;
   color: #e0e0e0;
   cursor: pointer;
+  position: relative;
 }
 
+/* Hide native checkbox (never use default tilted rectangles!) */
 .checkbox-label input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
   cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+/* Custom checkbox */
+.checkbox-custom {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  background: #2a2a2a;
+  border: 2px solid #555;
+  border-radius: 3px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.checkbox-label:hover .checkbox-custom {
+  border-color: #5dade2;
+}
+
+/* Checked state */
+.checkbox-label input[type="checkbox"]:checked + .checkbox-custom {
+  background: #5dade2;
+  border-color: #5dade2;
+}
+
+/* Checkmark */
+.checkbox-label input[type="checkbox"]:checked + .checkbox-custom::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 4px;
+  height: 8px;
+  border: solid #000;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Radio button styling (for connection selection) */
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #e0e0e0;
+  cursor: pointer;
+  position: relative;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.radio-label:hover {
+  background: rgba(93, 173, 226, 0.1);
+}
+
+/* Hide native radio button */
+.radio-label input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+/* Custom radio button */
+.radio-custom {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  background: #2a2a2a;
+  border: 2px solid #555;
+  border-radius: 50%;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.radio-label:hover .radio-custom {
+  border-color: #5dade2;
+}
+
+/* Checked state */
+.radio-label input[type="radio"]:checked + .radio-custom {
+  border-color: #5dade2;
+}
+
+/* Radio dot */
+.radio-label input[type="radio"]:checked + .radio-custom::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  background: #5dade2;
+  border-radius: 50%;
+}
+
+.connection-option-text {
+  flex: 1;
 }
 
 .connections-list,
@@ -493,14 +657,59 @@ export default {
   gap: 8px;
 }
 
+.connections-grouped {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.connection-type-group {
+  background: #2a2a2a;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.connection-type-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #333;
+  font-weight: 600;
+  color: #e0e0e0;
+}
+
+.connection-type-header .material-icons {
+  font-size: 20px;
+  color: #5dade2;
+}
+
+.connection-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 8px;
+}
+
 .checkbox-label .material-icons {
   font-size: 18px;
   color: #5dade2;
+  flex-shrink: 0;
+}
+
+.connection-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .connection-type {
   color: #666;
   font-size: 12px;
+  flex-shrink: 0;
 }
 
 .parameter-row {
@@ -547,6 +756,9 @@ export default {
 }
 
 .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 8px 16px;
   border-radius: 4px;
   font-size: 13px;
