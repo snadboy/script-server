@@ -230,6 +230,63 @@ class AdminScriptEndpoint(BaseRequestHandler):
 
     @requires_admin_rights
     @inject_user
+    def put(self, user, script_name):
+        """Update script configuration (settings)."""
+        try:
+            config_service = self.application.config_service
+
+            # Load existing config
+            config_path = config_service.find_config(script_name)
+            if not config_path:
+                raise tornado.web.HTTPError(404, reason=f'Script "{script_name}" not found')
+
+            # Read existing config
+            with open(config_path, 'r') as f:
+                config = json.load(f)
+
+            # Parse request body
+            body = json.loads(self.request.body.decode('utf-8'))
+
+            # Update defaults (if provided)
+            if 'defaultVerb' in body:
+                config['defaultVerb'] = body['defaultVerb']
+            if 'defaultConnections' in body:
+                config['defaultConnections'] = body['defaultConnections']
+            if 'defaultParameters' in body:
+                config['defaultParameters'] = body['defaultParameters']
+
+            # Update access control (if provided)
+            if 'allowed_users' in body:
+                config['allowed_users'] = body['allowed_users']
+            if 'admin_users' in body:
+                config['admin_users'] = body['admin_users']
+
+            # Update scheduling settings (if provided)
+            if 'scheduling_enabled' in body or 'scheduling_auto_cleanup' in body:
+                if 'scheduling' not in config:
+                    config['scheduling'] = {}
+                if 'scheduling_enabled' in body:
+                    config['scheduling']['enabled'] = body['scheduling_enabled']
+                if 'scheduling_auto_cleanup' in body:
+                    config['scheduling']['auto_cleanup'] = body['scheduling_auto_cleanup']
+
+            # Write updated config
+            with open(config_path, 'w') as f:
+                json.dump(config, f, indent=2)
+
+            LOGGER.info(f"Updated configuration for script '{script_name}'")
+            self.write(json.dumps({'success': True}))
+
+        except ConfigNotAllowedException:
+            LOGGER.warning(f'Admin access to the script "{script_name}" is denied for {user.get_audit_name()}')
+            respond_error(self, 403, 'Access to the script is denied')
+            return
+        except Exception as e:
+            LOGGER.error(f'Failed to update script {script_name}: {e}', exc_info=True)
+            raise tornado.web.HTTPError(500, reason=str(e))
+
+    @requires_admin_rights
+    @inject_user
     def delete(self, user, script_name):
         try:
             self.application.config_service.delete_config(user, script_name)
@@ -1550,6 +1607,12 @@ class GenerateWrapperHandler(BaseRequestHandler):
             parameter_values = body.get('parameter_values')
             selected_verb = body.get('selected_verb')
 
+            # NEW: Access control and scheduling
+            allowed_users = body.get('allowed_users', '*')
+            admin_users = body.get('admin_users', [])
+            scheduling_enabled = body.get('scheduling_enabled', True)
+            scheduling_auto_cleanup = body.get('scheduling_auto_cleanup', False)
+
             # LEGACY: Direct parameter definitions
             parameters = body.get('parameters')
 
@@ -1579,7 +1642,11 @@ class GenerateWrapperHandler(BaseRequestHandler):
                 parameters,
                 included_parameters,
                 parameter_values,
-                selected_verb
+                selected_verb,
+                allowed_users,
+                admin_users,
+                scheduling_enabled,
+                scheduling_auto_cleanup
             )
 
             self.write(json.dumps({

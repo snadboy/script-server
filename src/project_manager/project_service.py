@@ -882,7 +882,11 @@ if len(sys.argv) >= 2 and sys.argv[1] == '{config_cmd}' and '--config' not in sy
         parameters: Optional[list[dict]] = None,
         included_parameters: Optional[list[str]] = None,
         parameter_values: Optional[dict] = None,
-        selected_verb: Optional[str] = None
+        selected_verb: Optional[str] = None,
+        allowed_users: Optional[Any] = '*',
+        admin_users: Optional[list[str]] = None,
+        scheduling_enabled: bool = True,
+        scheduling_auto_cleanup: bool = False
     ) -> str:
         """
         Generate a script-server runner configuration.
@@ -896,6 +900,10 @@ if len(sys.argv) >= 2 and sys.argv[1] == '{config_cmd}' and '--config' not in sy
             included_parameters: List of parameter names to include from project (NEW)
             parameter_values: Dictionary of parameter value overrides (NEW)
             selected_verb: Selected verb name if project has verbs (NEW)
+            allowed_users: Users allowed to run script ('*' or list of usernames)
+            admin_users: Users with admin access (list of usernames)
+            scheduling_enabled: Whether scheduling is enabled for this script
+            scheduling_auto_cleanup: Whether to auto-cleanup one-time schedules
 
         Returns:
             Path to the generated config file
@@ -922,7 +930,12 @@ if len(sys.argv) >= 2 and sys.argv[1] == '{config_cmd}' and '--config' not in sy
             'working_directory': working_directory,
             'description': description or f"Imported from {meta.get('source_url', 'ZIP upload')}",
             'group': group,
-            'scheduling': {'enabled': True}
+            'allowed_users': allowed_users if allowed_users is not None else '*',
+            'admin_users': admin_users if admin_users is not None else [],
+            'scheduling': {
+                'enabled': scheduling_enabled,
+                'auto_cleanup': scheduling_auto_cleanup
+            }
         }
 
         # NEW FORMAT: Use project_id and instance_config

@@ -15,7 +15,9 @@ class SchedulingJob:
         script_name: str,
         parameter_values: dict,
         description: Optional[str] = None,
-        enabled: bool = True
+        enabled: bool = True,
+        verb: Optional[str] = None,
+        connection_ids: Optional[list] = None
     ) -> None:
         self.id: str = str(id)
         self.user: User = user
@@ -24,6 +26,8 @@ class SchedulingJob:
         self.parameter_values: dict = parameter_values
         self.description: Optional[str] = description
         self.enabled: bool = enabled
+        self.verb: Optional[str] = verb
+        self.connection_ids: list = connection_ids if connection_ids is not None else []
 
     def as_serializable_dict(self) -> dict:
         result = {
@@ -36,6 +40,10 @@ class SchedulingJob:
         }
         if self.description:
             result['description'] = self.description
+        if self.verb:
+            result['verb'] = self.verb
+        if self.connection_ids:
+            result['connection_ids'] = self.connection_ids
         return result
 
     def get_log_name(self) -> str:
@@ -50,5 +58,7 @@ def from_dict(job_as_dict: dict) -> SchedulingJob:
     parameter_values = job_as_dict['parameter_values']
     description = job_as_dict.get('description')
     enabled = job_as_dict.get('enabled', True)  # Default to enabled for backwards compatibility
+    verb = job_as_dict.get('verb')
+    connection_ids = job_as_dict.get('connection_ids', [])
 
-    return SchedulingJob(id, parsed_user, schedule, script_name, parameter_values, description, enabled)
+    return SchedulingJob(id, parsed_user, schedule, script_name, parameter_values, description, enabled, verb, connection_ids)

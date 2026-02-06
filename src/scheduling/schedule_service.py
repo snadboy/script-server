@@ -80,7 +80,22 @@ class ScheduleService:
         if user is None:
             raise InvalidUserException('User id is missing')
 
-        config_model = self._config_service.load_config_model(script_name, user, parameter_values)
+        # Extract verb from schedule config (if provided)
+        verb = incoming_schedule_config.get('verb')
+
+        # Add verb to parameter_values before loading config
+        # This ensures the config model processes it correctly
+        if verb:
+            parameter_values_with_verb = parameter_values.copy() if parameter_values else {}
+            # First load to get verb parameter name
+            temp_config = self._config_service.load_config_model(script_name, user, {})
+            if temp_config.verbs_config and temp_config.verbs_config.enabled:
+                verb_param_name = temp_config.verbs_config.parameter_name
+                parameter_values_with_verb[verb_param_name] = verb
+        else:
+            parameter_values_with_verb = parameter_values
+
+        config_model = self._config_service.load_config_model(script_name, user, parameter_values_with_verb)
         self.validate_script_config(config_model)
 
         schedule_config = read_schedule_config(incoming_schedule_config)
@@ -104,7 +119,9 @@ class ScheduleService:
 
         description = incoming_schedule_config.get('description')
         enabled = incoming_schedule_config.get('enabled', True)
-        job = SchedulingJob(id, user, schedule_config, script_name, normalized_values, description, enabled)
+        connection_ids = incoming_schedule_config.get('connectionIds', [])
+
+        job = SchedulingJob(id, user, schedule_config, script_name, normalized_values, description, enabled, verb, connection_ids)
 
         job_path = self.save_job(job)
 
@@ -155,14 +172,24 @@ class ScheduleService:
             return
 
         script_name = job.script_name
-        parameter_values = job.parameter_values
+        parameter_values = job.parameter_values.copy()  # Copy to avoid modifying stored values
         user = job.user
+        connection_ids = job.connection_ids if hasattr(job, 'connection_ids') else []
+
+        # Inject verb into parameter_values if stored in job
+        if hasattr(job, 'verb') and job.verb:
+            # Load config to get verb parameter name
+            temp_config = self._config_service.load_config_model(script_name, user, {})
+            if temp_config.verbs_config and temp_config.verbs_config.enabled:
+                verb_param_name = temp_config.verbs_config.parameter_name
+                parameter_values[verb_param_name] = job.verb
 
         try:
             config = self._config_service.load_config_model(script_name, user, parameter_values)
             self.validate_script_config(config)
 
-            execution_id = self._execution_service.start_script(config, user, schedule_id=job.id)
+            execution_id = self._execution_service.start_script(
+                config, user, schedule_id=job.id, connection_ids=connection_ids)
             LOGGER.info('Started script #' + str(execution_id) + ' for ' + job.get_log_name())
 
             if config.scheduling_auto_cleanup:
@@ -331,6 +358,8 @@ class ScheduleService:
         job.schedule = schedule_config
         job.description = incoming_schedule_config.get('description')
         job.enabled = incoming_schedule_config.get('enabled', True)
+        job.verb = incoming_schedule_config.get('verb')
+        job.connection_ids = incoming_schedule_config.get('connectionIds', [])
 
         # Save the updated job
         new_job_path = self.save_job(job)
