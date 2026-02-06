@@ -107,6 +107,31 @@ class ProjectService:
         project_id = project_id.strip('-')
         return project_id or 'project'
 
+    def _ensure_unique_name(self, proposed_name: str) -> str:
+        """
+        Ensure a project name is unique by appending a counter if needed.
+
+        Args:
+            proposed_name: The desired project name
+
+        Returns:
+            A unique project name (e.g., "Gmail Trim" or "Gmail Trim 2")
+        """
+        existing_projects = self.list_projects()
+        existing_names = {p['name'].lower() for p in existing_projects}
+
+        # If name is unique, return as-is
+        if proposed_name.lower() not in existing_names:
+            return proposed_name
+
+        # Find next available number
+        counter = 2
+        while True:
+            candidate = f"{proposed_name} {counter}"
+            if candidate.lower() not in existing_names:
+                return candidate
+            counter += 1
+
     def list_projects(self) -> list[dict]:
         """
         List all imported projects.
@@ -232,10 +257,13 @@ class ProjectService:
         dependencies = self.detect_dependencies(project_path)
         entry_points = self.detect_entry_points(project_path)
 
-        # Create metadata
+        # Create metadata with unique name
+        base_name = repo_name.replace('-', ' ').replace('_', ' ').title()
+        unique_name = self._ensure_unique_name(base_name)
+
         meta = {
             'id': project_id,
-            'name': repo_name.replace('-', ' ').replace('_', ' ').title(),
+            'name': unique_name,
             'import_type': 'git',
             'source_url': url,
             'branch': branch,
@@ -315,10 +343,13 @@ class ProjectService:
         dependencies = self.detect_dependencies(project_path)
         entry_points = self.detect_entry_points(project_path)
 
-        # Create metadata
+        # Create metadata with unique name
+        display_name = base_name.replace('-', ' ').replace('_', ' ').title()
+        unique_name = self._ensure_unique_name(display_name)
+
         meta = {
             'id': project_id,
-            'name': base_name.replace('-', ' ').replace('_', ' ').title(),
+            'name': unique_name,
             'import_type': 'zip',
             'source_url': None,
             'imported_at': datetime.now().isoformat(),
@@ -375,10 +406,13 @@ class ProjectService:
         dependencies = self.detect_dependencies(project_path)
         entry_points = self.detect_entry_points(project_path)
 
-        # Create metadata
+        # Create metadata with unique name
+        display_name = dir_name.replace('-', ' ').replace('_', ' ').title()
+        unique_name = self._ensure_unique_name(display_name)
+
         meta = {
             'id': project_id,
-            'name': dir_name.replace('-', ' ').replace('_', ' ').title(),
+            'name': unique_name,
             'import_type': 'local',
             'source_url': str(source_path),
             'imported_at': datetime.now().isoformat(),
