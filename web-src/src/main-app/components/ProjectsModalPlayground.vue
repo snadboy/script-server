@@ -148,6 +148,13 @@
                 <td class="project-actions">
                   <button
                     class="btn-icon"
+                    @click="createInstance(project)"
+                    title="Create Instance"
+                  >
+                    <i class="material-icons">add_circle</i>
+                  </button>
+                  <button
+                    class="btn-icon"
                     @click="configureProject(project)"
                     title="Configure"
                   >
@@ -376,6 +383,12 @@ export default {
     configureProject(project) {
       this.selectedProject = project;
       this.showProjectConfig = true;
+    },
+
+    createInstance(project) {
+      this.selectedProject = project;
+      this.effectiveEntryPoint = null; // Reset entry point
+      this.showCreateScriptInstance = true;
     },
 
     openImportModal() {
