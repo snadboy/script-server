@@ -125,8 +125,8 @@ export default {
             const instanceName = payload.instanceName || null;
             const connectionIds = payload.connectionIds || null;
 
-            // Save parameter history when script is executed
-            saveParameterHistory(scriptName, parameterValues);
+            // Save parameter history (including connection selections) when script is executed
+            saveParameterHistory(scriptName, parameterValues, connectionIds);
 
             const formData = parametersToFormData(parameterValues);
             formData.append('__script_name', scriptName);

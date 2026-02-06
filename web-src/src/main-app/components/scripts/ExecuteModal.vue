@@ -126,6 +126,7 @@
 import {mapState, mapActions, mapGetters} from 'vuex';
 import {isNull, isEmptyString, isEmptyValue} from '@/common/utils/common';
 import {axiosInstance} from '@/common/utils/axios_utils';
+import {getMostRecentValues} from '@/common/utils/parameterHistory';
 import clone from 'lodash/clone';
 
 export default {
@@ -270,7 +271,10 @@ export default {
       // Clone current parameter values to local state
       this.localValues = clone(this.parameterValues) || {};
       this.instanceName = '';
-      this.selectedConnections = [];
+
+      // Load most recent connection selections from history
+      const recentValues = getMostRecentValues(this.scriptName);
+      this.selectedConnections = recentValues?.connectionIds || [];
 
       // Initialize verb selection
       if (this.hasVerbs) {

@@ -19,8 +19,9 @@ function getStorageKey(scriptName) {
  * Save parameter values to localStorage for a specific script
  * @param {string} scriptName - The name of the script
  * @param {Object} parameterValues - The parameter values to save
+ * @param {Array} connectionIds - Optional array of connection IDs to save
  */
-export function saveParameterHistory(scriptName, parameterValues) {
+export function saveParameterHistory(scriptName, parameterValues, connectionIds = null) {
     try {
         const key = getStorageKey(scriptName);
         const history = loadParameterHistory(scriptName);
@@ -29,17 +30,19 @@ export function saveParameterHistory(scriptName, parameterValues) {
         if (Object.keys(parameterValues).length === 0) {
             return;
         }
-        
+
         // Add current values to history (avoid duplicates)
         const newEntry = {
             timestamp: Date.now(),
             values: { ...parameterValues },
+            connectionIds: connectionIds || [],
             favorite: false
         };
         
-        // Check if an entry with the same values already exists
-        const existingEntryIndex = history.findIndex(entry => 
-            JSON.stringify(entry.values) === JSON.stringify(newEntry.values)
+        // Check if an entry with the same values and connections already exists
+        const existingEntryIndex = history.findIndex(entry =>
+            JSON.stringify(entry.values) === JSON.stringify(newEntry.values) &&
+            JSON.stringify(entry.connectionIds || []) === JSON.stringify(newEntry.connectionIds)
         );
         
         let filteredHistory;
@@ -84,10 +87,11 @@ export function loadParameterHistory(scriptName) {
         const stored = localStorage.getItem(key);
         const history = stored ? JSON.parse(stored) : [];
         
-        // Ensure all entries have the favorite property (for backward compatibility)
+        // Ensure all entries have the favorite and connectionIds properties (for backward compatibility)
         return history.map(entry => ({
             ...entry,
-            favorite: entry.favorite || false
+            favorite: entry.favorite || false,
+            connectionIds: entry.connectionIds || []
         }));
     } catch (error) {
         console.warn('Failed to load parameter history:', error);
