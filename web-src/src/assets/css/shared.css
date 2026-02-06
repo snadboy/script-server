@@ -1171,3 +1171,90 @@ button .material-icons {
     box-shadow: 0 0 0 2px var(--primary-color-light-color);
 }
 
+
+/* ============================================
+   GLOBAL CHECKBOX STYLES
+   CRITICAL: NEVER use default browser checkboxes!
+   They render as tilted rectangles on some systems.
+   ============================================ */
+
+/* Container for checkbox labels */
+label.checkbox-label,
+.checkbox-wrapper label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+}
+
+/* Hide ALL native checkboxes globally */
+input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+  margin: 0;
+}
+
+/* Custom checkbox - requires a sibling span after input */
+input[type="checkbox"] + .checkbox-custom,
+input[type="checkbox"] + span.checkbox-custom {
+  position: relative;
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  background: #2a2a2a;
+  border: 2px solid #555;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+/* Hover state */
+label:hover input[type="checkbox"] + .checkbox-custom,
+label:hover input[type="checkbox"] + span.checkbox-custom {
+  border-color: var(--primary-color, #5dade2);
+}
+
+/* Checked state */
+input[type="checkbox"]:checked + .checkbox-custom,
+input[type="checkbox"]:checked + span.checkbox-custom {
+  background: var(--primary-color, #5dade2);
+  border-color: var(--primary-color, #5dade2);
+}
+
+/* Checkmark */
+input[type="checkbox"]:checked + .checkbox-custom::after,
+input[type="checkbox"]:checked + span.checkbox-custom::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 4px;
+  height: 8px;
+  border: solid #000;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Focus state for accessibility */
+input[type="checkbox"]:focus + .checkbox-custom,
+input[type="checkbox"]:focus + span.checkbox-custom {
+  outline: 2px solid var(--primary-color, #5dade2);
+  outline-offset: 2px;
+}
+
+/* Disabled state */
+input[type="checkbox"]:disabled + .checkbox-custom,
+input[type="checkbox"]:disabled + span.checkbox-custom {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+label:has(input[type="checkbox"]:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

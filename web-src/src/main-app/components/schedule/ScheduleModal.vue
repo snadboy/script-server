@@ -14,6 +14,37 @@
           <label for="schedule-description">Description</label>
         </div>
 
+        <!-- Verb Selector -->
+        <div v-if="hasVerbs" class="schedule-verb-section">
+          <label class="section-label">Command</label>
+          <select v-model="selectedVerb" class="verb-select">
+            <option v-for="verb in verbOptions" :key="verb.name" :value="verb.name">
+              {{ verb.label || verb.name }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Connection Selection -->
+        <div v-if="filteredConnections.length > 0" class="schedule-connections-section">
+          <label class="section-label">Connections</label>
+          <div class="connections-list">
+            <label v-for="conn in filteredConnections" :key="conn.id" class="connection-checkbox">
+              <input
+                type="checkbox"
+                :value="conn.id"
+                v-model="selectedConnections"
+                class="filled-in"
+              />
+              <span class="checkbox-custom"></span>
+              <span>
+                <i class="material-icons">{{ getConnectionIcon(conn.type) }}</i>
+                {{ conn.name }}
+                <span class="connection-type">({{ getConnectionTypeName(conn.type) }})</span>
+              </span>
+            </label>
+          </div>
+        </div>
+
         <div v-if="hasParameters" class="schedule-parameters-section">
           <span class="parameters-label">Parameters</span>
           <div class="params-table-wrapper">
@@ -144,6 +175,7 @@
         <div class="enabled-toggle-row" :class="{ 'toggle-disabled': oneTimeSchedule }">
           <label class="enabled-toggle-label">
             <input type="checkbox" v-model="scheduleEnabled" class="filled-in" :disabled="oneTimeSchedule" />
+            <span class="checkbox-custom"></span>
             <span>Enabled</span>
           </label>
           <span class="enabled-hint">{{ oneTimeSchedule ? 'Only applies to recurring schedules' : 'Disabled schedules won\'t run until enabled' }}</span>
@@ -234,7 +266,12 @@ export default {
       boundFixOverlayDimensions: null,
       originalParent: null,
       description: '',
-      scheduleEnabled: true
+      scheduleEnabled: true,
+      // Execution configuration
+      selectedVerb: null,
+      selectedConnections: [],
+      availableConnections: [],
+      connectionTypes: []
     }
   },
 
@@ -262,6 +299,34 @@ export default {
 
     setParamValue(paramName, value) {
       this.setParameterValue({ parameterName: paramName, value: value });
+    },
+
+    async loadConnections() {
+      try {
+        const axiosInstance = (await import('@/common/utils/axios_utils')).axiosInstance;
+
+        // Load connection types
+        const typesResp = await axiosInstance.get('/admin/connections/types');
+        this.connectionTypes = typesResp.data.types || [];
+
+        // Load available connections
+        const connsResp = await axiosInstance.get('/admin/connections');
+        this.availableConnections = connsResp.data.connections || [];
+      } catch (error) {
+        console.error('Failed to load connections:', error);
+        this.availableConnections = [];
+        this.connectionTypes = [];
+      }
+    },
+
+    getConnectionIcon(typeId) {
+      const type = this.connectionTypes.find(t => t.type_id === typeId);
+      return type ? type.icon : 'vpn_key';
+    },
+
+    getConnectionTypeName(typeId) {
+      const type = this.connectionTypes.find(t => t.type_id === typeId);
+      return type ? type.display_name : typeId;
     },
 
     runScheduleAction() {
@@ -371,7 +436,10 @@ export default {
         repeatPeriod: this.repeatPeriod,
         weekDays: weekDays,
         description: this.description,
-        enabled: this.oneTimeSchedule ? true : this.scheduleEnabled
+        enabled: this.oneTimeSchedule ? true : this.scheduleEnabled,
+        // Execution configuration
+        verb: this.selectedVerb || null,
+        connectionIds: this.selectedConnections || []
       };
     },
 
@@ -379,7 +447,10 @@ export default {
       this.$emit('close');
     },
 
-    resetForm() {
+    async resetForm() {
+      // Load connections first
+      await this.loadConnections();
+
       if (this.editSchedule) {
         // Edit mode - populate form with existing schedule data
         this.populateFromSchedule(this.editSchedule);
@@ -410,6 +481,14 @@ export default {
         ];
         this.description = '';
         this.scheduleEnabled = true;
+
+        // Initialize verb from instance defaults
+        if (this.hasVerbs) {
+          this.selectedVerb = this.scriptConfig?.defaultVerb || this.verbsConfig?.default || this.verbOptions[0]?.name;
+        }
+
+        // Initialize connections from instance defaults
+        this.selectedConnections = this.scriptConfig?.defaultConnections || [];
       }
       this.errors = [];
       this.apiError = null;
@@ -469,6 +548,10 @@ export default {
           ];
         }
       }
+
+      // Load execution configuration (verb and connections)
+      this.selectedVerb = sched.verb || this.scriptConfig?.defaultVerb || null;
+      this.selectedConnections = sched.connectionIds || this.scriptConfig?.defaultConnections || [];
     },
 
     checkErrors() {
@@ -500,6 +583,32 @@ export default {
 
     hasParameters() {
       return this.parameters && this.parameters.length > 0;
+    },
+
+    verbsConfig() {
+      return this.scriptConfig?.verbs || null;
+    },
+
+    hasVerbs() {
+      return this.verbsConfig && this.verbsConfig.options && this.verbsConfig.options.length > 0;
+    },
+
+    verbOptions() {
+      if (!this.verbsConfig) return [];
+      return this.verbsConfig.options || [];
+    },
+
+    supportedConnectionTypes() {
+      return this.scriptConfig?.supportedConnections || [];
+    },
+
+    filteredConnections() {
+      if (this.supportedConnectionTypes.length > 0) {
+        return this.availableConnections.filter(conn =>
+          this.supportedConnectionTypes.includes(conn.type)
+        );
+      }
+      return this.availableConnections;
     },
 
     isEditMode() {
@@ -891,5 +1000,61 @@ input[type="radio"]:not(:checked) + span:before {
 
 .toggle-disabled input[type="checkbox"]:disabled + span {
   color: var(--font-color-medium);
+}
+
+/* Verb and Connection Sections */
+.schedule-verb-section,
+.schedule-connections-section {
+  margin-bottom: 20px;
+}
+
+.section-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--font-color-main);
+  margin-bottom: 8px;
+}
+
+.verb-select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--background-color);
+  color: var(--font-color-main);
+  font-size: 14px;
+}
+
+.connections-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.connection-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.connection-checkbox:hover {
+  background-color: var(--background-color-medium-emphasis);
+}
+
+.connection-checkbox .material-icons {
+  font-size: 18px;
+  color: var(--primary-color);
+}
+
+.connection-type {
+  color: var(--font-color-medium);
+  font-size: 12px;
+  margin-left: 4px;
 }
 </style>

@@ -37,6 +37,7 @@
                 :value="conn.id"
                 v-model="selectedConnections"
               />
+              <span class="checkbox-custom"></span>
               <span>
                 <i class="material-icons connection-icon">{{ getConnectionIcon(conn.type) }}</i>
                 {{ conn.name }}
@@ -272,17 +273,38 @@ export default {
       this.localValues = clone(this.parameterValues) || {};
       this.instanceName = '';
 
-      // Load most recent connection selections from history
-      const recentValues = getMostRecentValues(this.scriptName);
-      this.selectedConnections = recentValues?.connectionIds || [];
+      // Pre-fill from instance settings (defaultParameters)
+      const defaultParams = this.scriptConfig?.defaultParameters || {};
+      Object.keys(defaultParams).forEach(paramName => {
+        if (defaultParams[paramName] !== undefined && defaultParams[paramName] !== null && defaultParams[paramName] !== '') {
+          this.$set(this.localValues, paramName, defaultParams[paramName]);
+        }
+      });
 
-      // Initialize verb selection
+      // Load connection selections from instance settings (defaultConnections)
+      // Fall back to most recent from history if no defaults set
+      const defaultConns = this.scriptConfig?.defaultConnections || [];
+      if (defaultConns.length > 0) {
+        this.selectedConnections = [...defaultConns];
+      } else {
+        const recentValues = getMostRecentValues(this.scriptName);
+        this.selectedConnections = recentValues?.connectionIds || [];
+      }
+
+      // Initialize verb selection from instance settings (defaultVerb)
       if (this.hasVerbs) {
-        const currentVerbValue = this.localValues[this.verbParameterName];
-        if (currentVerbValue) {
-          this.selectedVerb = currentVerbValue;
+        const defaultVerb = this.scriptConfig?.defaultVerb;
+        if (defaultVerb) {
+          // Use instance default verb
+          this.selectedVerb = defaultVerb;
         } else {
-          this.selectedVerb = this.verbsConfig.default || this.verbOptions[0]?.name;
+          // Fall back to current value or verb config default
+          const currentVerbValue = this.localValues[this.verbParameterName];
+          if (currentVerbValue) {
+            this.selectedVerb = currentVerbValue;
+          } else {
+            this.selectedVerb = this.verbsConfig.default || this.verbOptions[0]?.name;
+          }
         }
       } else {
         this.selectedVerb = null;

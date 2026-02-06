@@ -66,6 +66,68 @@
             Optional description for this script instance
           </div>
         </div>
+
+        <!-- Access Control Section -->
+        <div class="form-section">
+          <h6 class="section-title">Access Control</h6>
+
+          <div class="form-group-row">
+            <label class="checkbox-label">
+              <input type="checkbox" v-model="allowAllUsers" />
+              <span class="checkbox-custom"></span>
+              <span>Allow all users</span>
+            </label>
+          </div>
+
+          <div v-if="!allowAllUsers" class="form-group">
+            <label>Allowed Users (comma-separated)</label>
+            <input
+              v-model="allowedUsersInput"
+              type="text"
+              placeholder="user1, user2, user3"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group-row">
+            <label class="checkbox-label">
+              <input type="checkbox" v-model="allowAllAdmins" />
+              <span class="checkbox-custom"></span>
+              <span>Allow any admin</span>
+            </label>
+          </div>
+
+          <div v-if="!allowAllAdmins" class="form-group">
+            <label>Admin Users (comma-separated)</label>
+            <input
+              v-model="adminUsersInput"
+              type="text"
+              placeholder="admin1, admin2"
+              class="form-input"
+            />
+          </div>
+        </div>
+
+        <!-- Scheduling Section -->
+        <div class="form-section">
+          <h6 class="section-title">Scheduling</h6>
+
+          <div class="form-group-row">
+            <label class="checkbox-label">
+              <input type="checkbox" v-model="schedulingEnabled" />
+              <span class="checkbox-custom"></span>
+              <span>Enable scheduling</span>
+            </label>
+          </div>
+
+          <div v-if="schedulingEnabled" class="form-group-row">
+            <label class="checkbox-label">
+              <input type="checkbox" v-model="schedulingAutoCleanup" />
+              <span class="checkbox-custom"></span>
+              <span>Auto-cleanup one-time schedules</span>
+            </label>
+          </div>
+        </div>
       </div>
 
       <div class="modal-footer">
@@ -112,7 +174,18 @@ export default {
       scriptNameError: null,
       error: null,
       creating: false,
-      confirmingNewGroup: false
+      confirmingNewGroup: false,
+      // Access Control
+      allowAllUsers: true,
+      allowedUsers: [],
+      allowAllAdmins: true,
+      adminUsers: [],
+      // Scheduling
+      schedulingEnabled: true,
+      schedulingAutoCleanup: false,
+      // User input strings
+      allowedUsersInput: '',
+      adminUsersInput: ''
     };
   },
 
@@ -200,11 +273,23 @@ export default {
       this.error = null;
 
       try {
+        // Parse user lists
+        const allowedUsers = this.allowAllUsers ? [] :
+          this.allowedUsersInput.split(',').map(u => u.trim()).filter(u => u);
+        const adminUsers = this.allowAllAdmins ? [] :
+          this.adminUsersInput.split(',').map(u => u.trim()).filter(u => u);
+
         const response = await axiosInstance.post(`/admin/projects/${this.project.id}/wrapper`, {
           entry_point: this.entryPoint,
           script_name: this.scriptName,
           description: this.description,
-          group: this.groupName
+          group: this.groupName,
+          // Access control
+          allowed_users: this.allowAllUsers ? '*' : allowedUsers,
+          admin_users: this.allowAllAdmins ? [] : adminUsers,
+          // Scheduling
+          scheduling_enabled: this.schedulingEnabled,
+          scheduling_auto_cleanup: this.schedulingAutoCleanup
         });
 
         if (response.data.wrapper_path && response.data.config_path) {
@@ -267,7 +352,7 @@ export default {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   width: 90%;
   max-width: 500px;
-  max-height: 50vh;
+  max-height: 80vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -425,5 +510,39 @@ export default {
 
 .btn-primary:hover:not(:disabled) {
   background: var(--primary-color-light);
+}
+
+.form-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--separator-color);
+}
+
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--font-color-main);
+  margin: 0 0 12px 0;
+}
+
+.form-group-row {
+  margin-bottom: 12px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--font-color-main);
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  cursor: pointer;
+}
+
+.checkbox-label span {
+  user-select: none;
 }
 </style>
