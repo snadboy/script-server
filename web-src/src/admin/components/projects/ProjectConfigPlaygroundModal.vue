@@ -21,6 +21,12 @@
         >
           Verbs
         </div>
+        <div
+          :class="['dialog-tab', { active: activeTab === 'connections' }]"
+          @click="activeTab = 'connections'"
+        >
+          Connections
+        </div>
       </div>
 
       <!-- Content -->
@@ -460,6 +466,42 @@
             </div>
           </template>
         </div>
+
+        <!-- Connections Tab -->
+        <div v-else-if="activeTab === 'connections'" class="tab-content active">
+          <div class="connections-section">
+            <p class="section-description">
+              Select which connection types this script can use. If none selected, all connections will be available.
+            </p>
+
+            <div class="connections-table-container">
+              <table class="connections-table">
+                <thead>
+                  <tr>
+                    <th class="col-checkbox">Select</th>
+                    <th class="col-name">Connection Type</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="connType in availableConnectionTypes" :key="connType.value">
+                    <td class="col-checkbox">
+                      <input
+                        type="checkbox"
+                        :value="connType.value"
+                        v-model="supportedConnections"
+                        @change="markUnsaved"
+                      />
+                    </td>
+                    <td class="col-name">
+                      <i class="material-icons">{{ connType.icon }}</i>
+                      <span>{{ connType.label }}</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Footer -->
@@ -516,7 +558,18 @@ export default {
         options: []
       },
       selectedVerbIndex: null,
-      globalExpanded: false
+      globalExpanded: false,
+
+      // Connections
+      supportedConnections: [],
+      availableConnectionTypes: [
+        { value: 'plex', label: 'Plex Media Server', icon: 'theaters' },
+        { value: 'sonarr', label: 'Sonarr', icon: 'tv' },
+        { value: 'radarr', label: 'Radarr', icon: 'movie' },
+        { value: 'home-assistant', label: 'Home Assistant', icon: 'home' },
+        { value: 'google', label: 'Google', icon: 'cloud' },
+        { value: 'generic', label: 'Generic', icon: 'vpn_key' }
+      ]
     };
   },
 
@@ -578,6 +631,7 @@ export default {
           options: []
         };
         this.verbsEnabled = !!config.verbs;
+        this.supportedConnections = config.supported_connections || [];
         this.hasUnsavedChanges = false;
       } catch (err) {
         console.error('Failed to load project configuration:', err);
@@ -602,6 +656,11 @@ export default {
         await axiosInstance.put(`/admin/projects/${this.project.id}/verbs`, {
           verbs: this.verbsEnabled ? this.verbsConfig : null,
           sharedParameters: []
+        });
+
+        // Save supported connections
+        await axiosInstance.put(`/admin/projects/${this.project.id}/supported_connections`, {
+          supported_connections: this.supportedConnections
         });
 
         this.success = 'Configuration saved successfully!';
@@ -640,6 +699,7 @@ export default {
       this.verbsEnabled = false;
       this.selectedParamIndex = null;
       this.selectedVerbIndex = null;
+      this.supportedConnections = [];
       this.hasUnsavedChanges = false;
       this.error = null;
       this.success = null;
@@ -1444,5 +1504,91 @@ input[type='checkbox'] + span:after {
 
 .spinning {
   animation: spin 1s linear infinite;
+}
+
+/* Connections Tab */
+.connections-section {
+  padding: 24px;
+}
+
+.section-description {
+  margin: 0 0 20px 0;
+  color: #b0b0b0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.connections-table-container {
+  max-height: 240px; /* Show ~4 rows at 60px each */
+  overflow-y: auto;
+  border: 1px solid #333;
+  border-radius: 4px;
+}
+
+.connections-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #252525;
+}
+
+.connections-table thead {
+  position: sticky;
+  top: 0;
+  background: #1e1e1e;
+  z-index: 1;
+}
+
+.connections-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 13px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #333;
+}
+
+.connections-table tbody tr {
+  border-bottom: 1px solid #2a2a2a;
+  transition: background-color 0.2s;
+}
+
+.connections-table tbody tr:hover {
+  background: #2a2a2a;
+}
+
+.connections-table td {
+  padding: 16px;
+  font-size: 14px;
+  color: #cccccc;
+}
+
+.connections-table .col-checkbox {
+  width: 100px;
+  text-align: center;
+}
+
+.connections-table .col-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.connections-table .col-name {
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.connections-table .col-name .material-icons {
+  font-size: 22px;
+  color: #4a90e2;
+  flex-shrink: 0;
+}
+
+.connections-table .col-name span {
+  flex: 1;
 }
 </style>
