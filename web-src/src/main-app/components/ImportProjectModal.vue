@@ -39,25 +39,125 @@
 
         <!-- Git Import -->
         <div v-if="importType === 'git'" class="import-form">
-          <div class="form-group">
-            <label>Repository URL</label>
-            <input
-              v-model="gitUrl"
-              type="text"
-              placeholder="https://github.com/user/repo"
-              class="form-input"
-              :disabled="importing"
-            />
+          <!-- Input Mode Toggle -->
+          <div class="input-mode-toggle">
+            <button
+              :class="['mode-btn', { active: gitInputMode === 'url' }]"
+              @click="switchToUrlMode"
+            >
+              Direct URL
+            </button>
+            <button
+              :class="['mode-btn', { active: gitInputMode === 'browse' }]"
+              @click="switchToBrowseMode"
+            >
+              Browse GitHub
+            </button>
           </div>
-          <div class="form-group">
-            <label>Branch (optional)</label>
-            <input
-              v-model="gitBranch"
-              type="text"
-              placeholder="main"
-              class="form-input"
-              :disabled="importing"
-            />
+
+          <!-- Direct URL Mode -->
+          <div v-if="gitInputMode === 'url'">
+            <div class="form-group">
+              <label>Repository URL</label>
+              <input
+                v-model="gitUrl"
+                type="text"
+                placeholder="https://github.com/user/repo"
+                class="form-input"
+                :disabled="importing"
+              />
+            </div>
+            <div class="form-group">
+              <label>Branch (optional)</label>
+              <input
+                v-model="gitBranch"
+                type="text"
+                placeholder="main"
+                class="form-input"
+                :disabled="importing"
+              />
+            </div>
+          </div>
+
+          <!-- Browse GitHub Mode -->
+          <div v-else-if="gitInputMode === 'browse'">
+            <!-- Username Input -->
+            <div class="form-group">
+              <label>GitHub Username</label>
+              <div class="search-row">
+                <input
+                  v-model="githubUsername"
+                  type="text"
+                  placeholder="username"
+                  class="form-input"
+                  :disabled="loadingRepos"
+                  @keyup.enter="fetchGitHubRepos"
+                />
+                <button
+                  class="btn-search"
+                  :disabled="!githubUsername || loadingRepos"
+                  @click="fetchGitHubRepos"
+                >
+                  {{ loadingRepos ? 'Loading...' : 'Search' }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Repository List -->
+            <div v-if="githubRepos.length > 0" class="repo-list-container">
+              <!-- Filter Input -->
+              <div class="filter-input">
+                <i class="material-icons">search</i>
+                <input
+                  v-model="repoFilter"
+                  type="text"
+                  placeholder="Filter repositories..."
+                  class="form-input-inline"
+                />
+              </div>
+
+              <!-- Repository Items -->
+              <div class="repo-list">
+                <div
+                  v-for="repo in filteredRepos"
+                  :key="repo.full_name"
+                  :class="['repo-item', { selected: selectedRepo?.full_name === repo.full_name }]"
+                  @click="selectRepo(repo)"
+                >
+                  <div class="repo-header">
+                    <span class="repo-name">{{ repo.name }}</span>
+                    <div class="repo-badges">
+                      <span v-if="repo.is_fork" class="badge-fork">fork</span>
+                      <span v-if="repo.stars > 0" class="badge-stars">
+                        ⭐ {{ repo.stars }}
+                      </span>
+                    </div>
+                  </div>
+                  <p v-if="repo.description" class="repo-description">
+                    {{ repo.description }}
+                  </p>
+                  <div class="repo-meta">
+                    <span v-if="repo.language" class="repo-language">{{ repo.language }}</span>
+                    <span class="repo-updated">Updated {{ formatRelativeTime(repo.updated_at) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Selected Repository Display -->
+            <div v-if="selectedRepo" class="selected-repo">
+              <div class="selected-label">Selected:</div>
+              <div class="selected-name">{{ selectedRepo.full_name }}</div>
+              <div class="form-group">
+                <label>Branch</label>
+                <input
+                  v-model="gitBranch"
+                  type="text"
+                  :placeholder="selectedRepo.default_branch"
+                  class="form-input"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -159,6 +259,12 @@ export default {
       // Git
       gitUrl: '',
       gitBranch: '',
+      gitInputMode: 'url',  // 'url' or 'browse'
+      githubUsername: '',
+      githubRepos: [],
+      loadingRepos: false,
+      repoFilter: '',
+      selectedRepo: null,
 
       // ZIP
       selectedFile: null,
@@ -170,9 +276,23 @@ export default {
   },
 
   computed: {
+    filteredRepos() {
+      if (!this.repoFilter) return this.githubRepos;
+
+      const filter = this.repoFilter.toLowerCase();
+      return this.githubRepos.filter(repo =>
+        repo.name.toLowerCase().includes(filter) ||
+        (repo.description && repo.description.toLowerCase().includes(filter))
+      );
+    },
+
     canImport() {
       if (this.importType === 'git') {
-        return !!this.gitUrl;
+        if (this.gitInputMode === 'url') {
+          return !!this.gitUrl;
+        } else {
+          return !!this.selectedRepo;
+        }
       } else if (this.importType === 'zip') {
         return !!this.selectedFile;
       } else if (this.importType === 'local') {
@@ -216,6 +336,59 @@ export default {
 
     onDirectorySelected(path) {
       this.localPath = path;
+    },
+
+    async fetchGitHubRepos() {
+      if (!this.githubUsername) return;
+
+      this.loadingRepos = true;
+      this.error = null;
+
+      try {
+        const response = await axiosInstance.get('/admin/github/repos', {
+          params: { username: this.githubUsername }
+        });
+
+        this.githubRepos = response.data.repositories || [];
+
+        if (this.githubRepos.length === 0) {
+          this.error = `No repositories found for user "${this.githubUsername}"`;
+        }
+      } catch (e) {
+        this.error = e.response?.data?.reason || e.response?.data || 'Failed to fetch GitHub repositories';
+        this.githubRepos = [];
+      } finally {
+        this.loadingRepos = false;
+      }
+    },
+
+    selectRepo(repo) {
+      this.selectedRepo = repo;
+      this.gitUrl = repo.clone_url;
+      this.gitBranch = repo.default_branch;
+    },
+
+    switchToUrlMode() {
+      this.gitInputMode = 'url';
+      this.selectedRepo = null;
+    },
+
+    switchToBrowseMode() {
+      this.gitInputMode = 'browse';
+    },
+
+    formatRelativeTime(dateString) {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 0) return 'today';
+      if (diffDays === 1) return 'yesterday';
+      if (diffDays < 7) return `${diffDays} days ago`;
+      if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+      if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
+      return `${Math.floor(diffDays / 365)} years ago`;
     },
 
     async handleImport() {
@@ -607,6 +780,204 @@ export default {
 .btn-primary:disabled {
   background: #5dade2;
   opacity: 0.5;
+}
+
+/* Input Mode Toggle */
+.input-mode-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  border: 1px solid #333333;
+  border-radius: 6px;
+  padding: 4px;
+  background: #1a1a1a;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: #999999;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.mode-btn:hover {
+  background: #2a2a2a;
+  color: #e0e0e0;
+}
+
+.mode-btn.active {
+  background: #5dade2;
+  color: #000;
+  font-weight: 500;
+}
+
+/* Search Row */
+.search-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.search-row .form-input {
+  flex: 1;
+}
+
+.btn-search {
+  padding: 10px 20px;
+  background: #5dade2;
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-search:hover:not(:disabled) {
+  background: #4a9fd6;
+}
+
+.btn-search:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Repository List */
+.repo-list-container {
+  border: 1px solid #333333;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.filter-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #1a1a1a;
+  border-bottom: 1px solid #333333;
+}
+
+.filter-input i {
+  color: #999999;
+  font-size: 20px;
+}
+
+.form-input-inline {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #e0e0e0;
+  font-size: 14px;
+  outline: none;
+}
+
+.repo-list {
+  max-height: 300px;
+  overflow-y: auto;
+  background: #222222;
+}
+
+.repo-item {
+  padding: 12px;
+  border-bottom: 1px solid #333333;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.repo-item:hover {
+  background: #2a2a2a;
+}
+
+.repo-item.selected {
+  background: rgba(93, 173, 226, 0.15);
+  border-left: 3px solid #5dade2;
+}
+
+.repo-item:last-child {
+  border-bottom: none;
+}
+
+.repo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.repo-name {
+  font-weight: 600;
+  color: #e0e0e0;
+  font-size: 14px;
+}
+
+.repo-badges {
+  display: flex;
+  gap: 6px;
+}
+
+.badge-fork,
+.badge-stars {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: #333333;
+  color: #999999;
+}
+
+.badge-stars {
+  background: rgba(255, 215, 0, 0.15);
+  color: #ffd700;
+}
+
+.repo-description {
+  font-size: 13px;
+  color: #999999;
+  margin: 4px 0;
+  line-height: 1.4;
+}
+
+.repo-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #666666;
+  margin-top: 6px;
+}
+
+.repo-language {
+  font-weight: 500;
+}
+
+/* Selected Repository */
+.selected-repo {
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(93, 173, 226, 0.1);
+  border: 1px solid rgba(93, 173, 226, 0.3);
+  border-radius: 6px;
+}
+
+.selected-label {
+  font-size: 11px;
+  color: #999999;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.selected-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #5dade2;
+  margin-bottom: 12px;
 }
 
 @media screen and (max-width: 768px) {

@@ -1597,6 +1597,78 @@ class GenerateWrapperHandler(BaseRequestHandler):
             raise tornado.web.HTTPError(500, reason=str(e))
 
 
+class GitHubReposHandler(BaseRequestHandler):
+    """Handler for fetching GitHub user repositories."""
+
+    @requires_admin_rights
+    def get(self):
+        username = self.get_argument('username', None)
+        if not username:
+            raise tornado.web.HTTPError(400, reason='Username parameter required')
+
+        try:
+            repos = self._fetch_github_repos(username)
+            self.write(json.dumps({'repositories': repos}))
+        except ValueError as e:
+            raise tornado.web.HTTPError(400, reason=str(e))
+        except Exception as e:
+            LOGGER.error(f'Failed to fetch GitHub repos: {e}')
+            raise tornado.web.HTTPError(500, reason=f'Failed to fetch repositories: {str(e)}')
+
+    def _fetch_github_repos(self, username: str) -> list:
+        """Fetch public repositories for a GitHub user."""
+        import requests
+        import os
+
+        url = f'https://api.github.com/users/{username}/repos'
+        params = {
+            'sort': 'updated',
+            'per_page': 100,
+            'type': 'all'
+        }
+
+        headers = {'Accept': 'application/vnd.github.v3+json'}
+
+        # Optional: Add GitHub token for higher rate limits
+        github_token = os.getenv('GITHUB_TOKEN')
+        if github_token:
+            headers['Authorization'] = f'token {github_token}'
+
+        try:
+            response = requests.get(url, params=params, headers=headers, timeout=10)
+
+            # Handle rate limiting
+            if response.status_code == 403 and 'rate limit' in response.text.lower():
+                raise ValueError('GitHub API rate limit exceeded. Try again later or configure GITHUB_TOKEN.')
+
+            # Handle user not found
+            if response.status_code == 404:
+                raise ValueError(f'GitHub user "{username}" not found')
+
+            response.raise_for_status()
+
+            repos_data = response.json()
+
+            # Transform to simplified format
+            return [
+                {
+                    'name': repo['name'],
+                    'full_name': repo['full_name'],
+                    'description': repo['description'],
+                    'clone_url': repo['clone_url'],
+                    'html_url': repo['html_url'],
+                    'stars': repo['stargazers_count'],
+                    'language': repo['language'],
+                    'updated_at': repo['updated_at'],
+                    'is_fork': repo['fork'],
+                    'default_branch': repo['default_branch']
+                }
+                for repo in repos_data
+            ]
+        except requests.RequestException as e:
+            raise ValueError(f'Failed to fetch GitHub repositories: {str(e)}')
+
+
 class GetWrapperPreviewHandler(BaseRequestHandler):
     @requires_admin_rights
     def post(self, project_id):
@@ -1974,6 +2046,8 @@ def init(server_config: ServerConfig,
                 (r'/admin/projects/([^/]+)/parameters', UpdateProjectParametersHandler),
                 (r'/admin/projects/([^/]+)/verbs', UpdateProjectVerbsHandler),
                 (r'/admin/projects/([^/]+)/supported_connections', UpdateProjectSupportedConnectionsHandler),
+                # GitHub integration endpoints
+                (r'/admin/github/repos', GitHubReposHandler),
                 # Connection management endpoints
                 (r'/admin/connections/types', ConnectionTypesHandler),
                 (r'/admin/connections/([^/]+)', ConnectionHandler),
