@@ -318,6 +318,10 @@ export default {
     visible(newVal) {
       if (newVal) {
         this.error = null;
+        // Restore last used GitHub username
+        if (!this.githubUsername) {
+          this.githubUsername = localStorage.getItem('import_github_username') || '';
+        }
       }
     }
   },
@@ -353,6 +357,9 @@ export default {
 
         if (this.githubRepos.length === 0) {
           this.error = `No repositories found for user "${this.githubUsername}"`;
+        } else {
+          // Remember username for next time
+          localStorage.setItem('import_github_username', this.githubUsername);
         }
       } catch (e) {
         this.error = e.response?.data?.reason || e.response?.data || 'Failed to fetch GitHub repositories';
