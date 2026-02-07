@@ -1925,12 +1925,13 @@ class ConnectionHandler(BaseRequestHandler):
 
     @requires_admin_rights
     def get(self, connection_id):
-        """Get a single connection by ID (secrets masked)."""
+        """Get a single connection by ID. Pass ?unmask=true to get decrypted secrets."""
         from connections.connection_service import get_connection_service
 
         try:
             connection_service = get_connection_service()
-            connection = connection_service.get_connection(connection_id, mask_secrets=True)
+            unmask = self.get_argument('unmask', 'false').lower() == 'true'
+            connection = connection_service.get_connection(connection_id, mask_secrets=not unmask)
 
             if connection is None:
                 raise tornado.web.HTTPError(404, reason=f"Connection {connection_id} not found")

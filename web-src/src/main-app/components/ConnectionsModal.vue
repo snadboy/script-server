@@ -380,30 +380,34 @@ export default {
       this.view = 'form';
     },
 
-    duplicateConnection(conn) {
+    async duplicateConnection(conn) {
       this.currentType = this.connectionTypes.find(t => t.type_id === conn.type);
       if (!this.currentType) {
         this.showError('Unknown connection type');
         return;
       }
 
-      this.formMode = 'create';
-      this.formData = {
-        id: conn.id + '-copy',
-        name: conn.name + ' (Copy)',
-        type: conn.type,
-        fields: {}
-      };
-      // Copy non-secret fields; secret fields start blank (they're masked)
-      const secretFields = new Set(
-        this.currentType.fields.filter(f => f.secret).map(f => f.name)
-      );
-      for (const [fieldName, fieldValue] of Object.entries(conn.fields)) {
-        this.formData.fields[fieldName] = secretFields.has(fieldName) ? '' : fieldValue;
+      try {
+        // Fetch unmasked connection data so secret fields are copied
+        const response = await axiosInstance.get(
+          `${API.ADMIN.CONNECTIONS}/${conn.id}?unmask=true`
+        );
+        const fullConn = response.data;
+
+        this.formMode = 'create';
+        this.formData = {
+          id: conn.id + '-copy',
+          name: conn.name + ' (Copy)',
+          type: conn.type,
+          fields: {...fullConn.fields}
+        };
+        this.secretFieldRevealed = {};
+        this.editingField = {};
+        this.view = 'form';
+      } catch (error) {
+        console.error('Failed to fetch connection for duplicate:', error);
+        this.showError('Failed to duplicate connection');
       }
-      this.secretFieldRevealed = {};
-      this.editingField = {};
-      this.view = 'form';
     },
 
     async deleteConnection(conn) {
