@@ -121,15 +121,19 @@ class ScriptExecutor:
         command = self.script_base_command + script_args
         env_variables = _build_env_variables(parameter_values, self.config.parameters, execution_id)
 
-        # Inject connection credentials as environment variables
+        # Inject connection credentials as environment variables and/or temp files
+        credential_cleanup = None
         if connection_ids:
             from connections.injection import inject_connection_credentials
-            env_variables = inject_connection_credentials(connection_ids, env_variables)
+            env_variables, credential_cleanup = inject_connection_credentials(connection_ids, env_variables)
 
         all_env_variables = self._env_vars.build_env_vars(env_variables)
 
         process_wrapper = _process_creator(self, command, self._working_directory, all_env_variables)
         process_wrapper.start()
+
+        if credential_cleanup:
+            process_wrapper.add_finish_listener(credential_cleanup)
 
         self.process_wrapper = process_wrapper
 

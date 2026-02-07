@@ -151,7 +151,7 @@ register_type(ConnectionType(
 register_type(ConnectionType(
     type_id='sabnzbd',
     display_name='SABnzbd',
-    icon='download',
+    icon='get_app',
     description='Usenet download client',
     injection_mode='env',
     env_prefix='SABNZBD',

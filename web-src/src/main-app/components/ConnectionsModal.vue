@@ -4,6 +4,7 @@
     title="Connections"
     modal-class="connections-modal"
     overlay-class="connections-modal-overlay"
+    :close-on-overlay-click="false"
     @close="close"
   >
     <template #default>
@@ -60,6 +61,13 @@
                   </button>
                   <button
                     class="btn-icon waves-effect waves-circle"
+                    title="Duplicate"
+                    @click="duplicateConnection(conn)"
+                  >
+                    <i class="material-icons">content_copy</i>
+                  </button>
+                  <button
+                    class="btn-icon waves-effect waves-circle"
                     title="Delete"
                     @click="deleteConnection(conn)"
                   >
@@ -99,10 +107,6 @@
       <!-- Add/Edit Connection Form View -->
       <div v-if="view === 'form'">
         <div class="form-header">
-          <button class="btn-text waves-effect" @click="cancelForm">
-            <i class="material-icons left">arrow_back</i>
-            Back
-          </button>
           <h6>{{ formMode === 'create' ? 'New Connection' : 'Edit Connection' }}</h6>
         </div>
 
@@ -373,6 +377,32 @@ export default {
       };
       this.secretFieldRevealed = {};
       this.editingField = {}; // Reset editing state
+      this.view = 'form';
+    },
+
+    duplicateConnection(conn) {
+      this.currentType = this.connectionTypes.find(t => t.type_id === conn.type);
+      if (!this.currentType) {
+        this.showError('Unknown connection type');
+        return;
+      }
+
+      this.formMode = 'create';
+      this.formData = {
+        id: conn.id + '-copy',
+        name: conn.name + ' (Copy)',
+        type: conn.type,
+        fields: {}
+      };
+      // Copy non-secret fields; secret fields start blank (they're masked)
+      const secretFields = new Set(
+        this.currentType.fields.filter(f => f.secret).map(f => f.name)
+      );
+      for (const [fieldName, fieldValue] of Object.entries(conn.fields)) {
+        this.formData.fields[fieldName] = secretFields.has(fieldName) ? '' : fieldValue;
+      }
+      this.secretFieldRevealed = {};
+      this.editingField = {};
       this.view = 'form';
     },
 

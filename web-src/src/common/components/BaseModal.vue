@@ -116,18 +116,19 @@ export default {
 }
 
 .modal-dialog {
-  background: white;
+  background: var(--background-color, white);
   border-radius: 4px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
   max-width: 90%;
   max-height: 90%;
   display: flex;
   flex-direction: column;
+  color: var(--font-color-main, rgba(0, 0, 0, 0.87));
 }
 
 .modal-header {
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--separator-color, #e0e0e0);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -148,12 +149,12 @@ export default {
   cursor: pointer;
   padding: 0;
   margin-left: 1rem;
-  color: #666;
+  color: var(--font-color-medium, #666);
   transition: color 0.2s;
 }
 
 .btn-close:hover {
-  color: #000;
+  color: var(--font-color-main, #000);
 }
 
 .modal-body {
@@ -164,7 +165,7 @@ export default {
 
 .modal-footer {
   padding: 1rem 1.5rem;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--separator-color, #e0e0e0);
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
