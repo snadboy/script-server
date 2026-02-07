@@ -8,6 +8,7 @@
     @close="close"
   >
     <template #default>
+      <div v-if="error" class="error-message">{{ error }}</div>
       <div class="settings-section">
           <h6>Display</h6>
 
@@ -91,7 +92,8 @@ export default {
         logSizeLimit: 250,
         onetimeRetentionMinutes: 60
       },
-      saving: false
+      saving: false,
+      error: null
     };
   },
 
@@ -142,8 +144,7 @@ export default {
         this.close();
       } catch (e) {
         console.error('Failed to save settings:', e);
-        // Still close on error - client settings were saved
-        this.close();
+        this.error = 'Failed to save server settings. Client settings were saved.';
       } finally {
         this.saving = false;
       }

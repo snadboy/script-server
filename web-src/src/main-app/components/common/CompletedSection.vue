@@ -18,6 +18,7 @@
         <i v-else class="material-icons">delete_sweep</i>
       </button>
     </template>
+    <div v-if="error" class="error-message" @click="error = null">{{ error }}</div>
     <template v-if="loading">
       <div class="loading-state">
         <div class="spinner"></div>
@@ -95,7 +96,8 @@ export default {
 
   data() {
     return {
-      deleting: false
+      deleting: false,
+      error: null
     };
   },
 
@@ -179,6 +181,7 @@ export default {
         this.refresh();
       } catch (e) {
         console.error('Failed to delete execution:', e.response?.data || e.message);
+        this.error = 'Failed to delete execution';
       }
     },
 
@@ -192,11 +195,11 @@ export default {
           url = '/history/execution_log/all';
         }
 
-        const response = await axiosInstance.delete(url);
-        // Successfully deleted execution entries
+        await axiosInstance.delete(url);
         this.refresh();
       } catch (e) {
         console.error('Failed to delete executions:', e.response?.data || e.message);
+        this.error = 'Failed to delete executions';
       } finally {
         this.deleting = false;
       }

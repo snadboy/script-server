@@ -6,8 +6,7 @@ import os
 import signal
 import ssl
 import time
-import urllib
-from urllib.parse import urlencode
+import urllib.parse
 
 import tornado.concurrent
 import tornado.escape
@@ -34,7 +33,7 @@ from model.parameter_config import WrongParameterUsageException
 from model.script_config import InvalidValueException, ParameterNotFoundException
 from model.server_conf import ServerConfig, XSRF_PROTECTION_TOKEN, XSRF_PROTECTION_DISABLED, XSRF_PROTECTION_HEADER
 from scheduling.schedule_service import ScheduleService, UnavailableScriptException, InvalidScheduleException, AccessDeniedException, JobNotFoundException
-from utils import file_utils as file_utils
+from utils import file_utils
 from utils import tornado_utils, os_utils, env_utils, custom_json
 from utils.audit_utils import get_audit_name_from_request
 from utils.exceptions.missing_arg_exception import MissingArgumentException

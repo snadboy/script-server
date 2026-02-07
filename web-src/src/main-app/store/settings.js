@@ -62,6 +62,7 @@ export default {
         const response = await axios.get('schedules/settings');
         commit('SET_RETENTION', response.data.onetime_retention_minutes);
       } catch (e) {
+        // Silent failure - settings modal will use defaults if fetch fails
         console.error('Failed to fetch schedule settings:', e);
       }
     },

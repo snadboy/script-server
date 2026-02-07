@@ -650,7 +650,6 @@ export default {
   flex: 1;
 }
 
-.connections-list,
 .parameters-list {
   display: flex;
   flex-direction: column;

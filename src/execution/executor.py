@@ -1,6 +1,8 @@
 import logging
+import os
 import re
 import sys
+from pathlib import Path
 from typing import List
 
 from execution import process_popen, process_base
@@ -16,8 +18,6 @@ from utils.transliteration import transliterate
 TIME_BUFFER_MS = 100
 
 LOGGER = logging.getLogger('script_server.ScriptExecutor')
-
-mock_process = False
 
 
 def create_process_wrapper(executor, command, working_directory, all_env_variables):
@@ -64,9 +64,6 @@ def _normalize_working_dir(working_directory):
     # For imported projects, enforce sandboxing
     # Check both normalized and original paths to catch traversal attempts
     if 'projects/' in normalized or 'projects/' in working_directory:
-        from pathlib import Path
-        import os
-
         # Get server root (where launcher.py lives) - go up from src/execution/ to project root
         server_root = str(Path(__file__).parent.parent.parent.resolve())
 
