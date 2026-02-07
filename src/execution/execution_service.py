@@ -259,8 +259,8 @@ class ExecutionService:
         for callback in self._finish_listeners:
             try:
                 callback(execution_id, user)
-            except:
-                LOGGER.exception('Could not notify finish listener (%s), execution: %s', str(callback), execution_id)
+            except Exception as e:
+                LOGGER.exception('Could not notify finish listener (%s), execution: %s: %s', callback, execution_id, e)
 
     def add_start_listener(self, callback):
         self._start_listeners.append(callback)
@@ -269,8 +269,8 @@ class ExecutionService:
         for callback in self._start_listeners:
             try:
                 callback(execution_id, user)
-            except:
-                LOGGER.exception('Could not notify start listener (%s), execution: %s', str(callback), execution_id)
+            except Exception as e:
+                LOGGER.exception('Could not notify start listener (%s), execution: %s: %s', callback, execution_id, e)
 
     def _has_full_history_rights(self, user_id):
         return self._authorizer.has_full_history_access(user_id)

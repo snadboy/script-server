@@ -24,8 +24,8 @@ class Scheduler:
             while not self.stopped:
                 try:
                     self.scheduler.run(blocking=False)
-                except:
-                    LOGGER.exception('Failed to execute scheduled job')
+                except Exception as e:
+                    LOGGER.exception('Failed to execute scheduled job: %s', e)
 
                 now = date_utils.now()
                 sleep_delta = timedelta(seconds=1) - timedelta(microseconds=now.microsecond)

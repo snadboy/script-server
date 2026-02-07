@@ -28,6 +28,6 @@ export class HtmlOutput {
     }
 
     setInlineImage(outputPath, downloadUrl) {
-        console.log('WARNING! inline images are not supported for html output')
+        // Inline images not supported for html output
     }
 }

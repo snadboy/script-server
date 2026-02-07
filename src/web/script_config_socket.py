@@ -108,8 +108,8 @@ class ScriptConfigSocket(tornado.websocket.WebSocketHandler):
                 return
 
             LOGGER.warning('Unknown message received in ScriptConfigSocket: ' + text)
-        except:
-            LOGGER.exception('Failed to process message ' + text)
+        except Exception as e:
+            LOGGER.exception('Failed to process message %s: %s', text, e)
 
     def _start_task(self, func):
         future = tornado.ioloop.IOLoop.current().run_in_executor(

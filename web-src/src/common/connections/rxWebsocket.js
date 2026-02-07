@@ -83,7 +83,7 @@ export function ReactiveWebSocket(path, observer) {
 
     this.send = function (data) {
         if (isWebsocketClosed(self._websocket) || self._finished) {
-            console.log('Attempt to write to closed socket. Data: ' + data);
+            // Cannot write to closed websocket
             return false;
         }
 

@@ -49,8 +49,8 @@ def _resolve_hostname(ip):
     try:
         (hostname, _, _) = socket.gethostbyaddr(ip)
         return hostname
-    except:
-        LOGGER.warning('Could not get hostname for ' + ip)
+    except (socket.herror, socket.gaierror, OSError) as e:
+        LOGGER.warning('Could not get hostname for %s: %s', ip, e)
         return None
 
 

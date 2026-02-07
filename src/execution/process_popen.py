@@ -10,14 +10,17 @@ LOGGER = logging.getLogger('script_server.process_popen')
 
 
 def prepare_cmd_for_win(command):
+    # SECURITY: Never use shell=True to prevent command injection vulnerabilities
+    # Instead, we escape special characters in arguments
     shell = False
 
     command_path = command[0]
     if os.path.exists(command_path):
         file_extension = os.path.splitext(command_path)[1]
         if file_extension not in ['.bat', '.exe']:
+            # Escape ampersands and other special characters in arguments
             command = [command[0]] + [arg.replace('&', '^&') for arg in command[1:]]
-            shell = True
+            # REMOVED: shell = True (security vulnerability)
 
     return command, shell
 
@@ -88,15 +91,15 @@ class POpenProcessWrapper(process_base.ProcessWrapper):
                 if wait_new_output:
                     time.sleep(0.01)
 
-        except:
+        except Exception as e:
             self._write_script_output("Unexpected error occurred. Contact the administrator.")
 
             try:
                 self.kill()
-            except:
-                LOGGER.exception('Failed to kill a process')
+            except Exception as kill_error:
+                LOGGER.exception('Failed to kill a process: %s', kill_error)
 
-            LOGGER.exception('Failed to read script output')
+            LOGGER.exception('Failed to read script output: %s', e)
 
         finally:
             self.output_stream.close()

@@ -18,6 +18,6 @@ export class TextOutput {
     }
 
     setInlineImage(outputPath, downloadUrl) {
-        console.log('WARNING! inline images are not supported for text output')
+        // Inline images not supported for text output
     }
 }

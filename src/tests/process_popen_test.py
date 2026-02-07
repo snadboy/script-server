@@ -84,26 +84,49 @@ class TestPrepareForWindows(unittest.TestCase):
         (command, shell) = prepare_cmd_for_win([script_path])
 
         self.assertEqual([script_path], command)
-        self.assertTrue(shell)
+        # SECURITY: shell=False to prevent command injection
+        self.assertFalse(shell)
 
     def test_prepare_py_with_ampersand_short_command(self):
         script_path = test_utils.create_file('test.py')
         (command, shell) = prepare_cmd_for_win([script_path, '&ping&'])
 
+        # Ampersands are still escaped, but shell=False for security
         self.assertEqual([script_path, '^&ping^&'], command)
-        self.assertTrue(shell)
+        # SECURITY: shell=False to prevent command injection
+        self.assertFalse(shell)
 
     def test_prepare_py_with_ampersand_another_command(self):
         script_path = test_utils.create_file('test.py')
         (command, shell) = prepare_cmd_for_win([script_path, '"&& dir c:"'])
 
+        # Ampersands are still escaped, but shell=False for security
         self.assertEqual([script_path, '"^&^& dir c:"'], command)
-        self.assertTrue(shell)
+        # SECURITY: shell=False to prevent command injection
+        self.assertFalse(shell)
 
     def setUp(self):
         test_utils.setup()
 
         super().setUp()
+
+    def test_security_no_command_injection_via_shell(self):
+        """Security test: Verify shell=False prevents command injection"""
+        script_path = test_utils.create_file('test.py')
+        # Malicious input attempting command injection
+        malicious_args = [
+            script_path,
+            '; rm -rf /',  # Unix command injection
+            '&& del /f /s /q C:\\*',  # Windows command injection
+            '$(whoami)',  # Command substitution
+            '`id`',  # Backtick command substitution
+            '|cat /etc/passwd'  # Pipe injection
+        ]
+
+        (command, shell) = prepare_cmd_for_win(malicious_args)
+
+        # SECURITY: shell must ALWAYS be False to prevent injection
+        self.assertFalse(shell, 'shell=True would allow command injection attacks')
 
     def tearDown(self):
         test_utils.cleanup()

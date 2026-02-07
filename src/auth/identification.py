@@ -102,8 +102,8 @@ class IpBasedIdentification(Identification):
 
         try:
             expiry_time = int(parts[1])
-        except:
-            LOGGER.exception('Invalid expiry time in: ' + client_id_token)
+        except (ValueError, TypeError) as e:
+            LOGGER.exception('Invalid expiry time in %s: %s', client_id_token, e)
             return self.EMPTY_TOKEN
 
         days_remaining = date_utils.ms_to_days(expiry_time - date_utils.get_current_millis())

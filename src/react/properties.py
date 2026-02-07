@@ -174,8 +174,8 @@ class ObservableDict(UserDict):
             for observer in self._observers:
                 try:
                     observer(key, old_value, new_value)
-                except:
-                    LOGGER.exception('Failed to notify observer ' + repr(observer))
+                except Exception as e:
+                    LOGGER.exception('Failed to notify observer %r: %s', observer, e)
 
 
 def observable_fields(*fields):

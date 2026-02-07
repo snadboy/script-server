@@ -28,8 +28,8 @@ def initialize():
                 defaults_str = str({key: val if 'pass' not in key else '***' for key, val in proxy_defaults.items()})
                 LOGGER.info('Configured global proxy: ' + defaults_str)
                 return
-    except:
-        LOGGER.exception('Failed to read system proxy')
+    except Exception as e:
+        LOGGER.exception('Failed to read system proxy: %s', e)
 
 
 def _read_proxy_defaults(proxy):

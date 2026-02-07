@@ -455,8 +455,8 @@ class ConfigModel:
 
                             merged_params.append(param)
                             merged_param_names.add(param_name)
-                except:
-                    LOGGER.exception('Failed to load included file ' + path)
+                except Exception as e:
+                    LOGGER.exception('Failed to load included file %s: %s', path, e)
                     continue
             else:
                 LOGGER.warning('Failed to load included file, path does not exist: ' + path)

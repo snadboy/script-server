@@ -183,7 +183,7 @@ export default {
             this.output = new TextOutput()
             break
           default:
-            console.log('WARNING! Unknown outputFormat: "' + this.outputFormat + '". Falling back to terminal')
+            // Unknown output format, falling back to terminal
             this.output = new TerminalOutput()
         }
 

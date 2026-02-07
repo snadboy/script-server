@@ -609,5 +609,5 @@ class ExecutionLoggingInitiatorTest(unittest.TestCase):
             try:
                 self.executor_service.kill_script(execution_id, USER_X)
                 self.executor_service.cleanup_execution(execution_id, USER_X)
-            except:
+            except Exception:
                 traceback.print_exc()

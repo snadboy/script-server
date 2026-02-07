@@ -593,7 +593,7 @@ class MoveCursorToPositionHandler extends CommandHandler {
         }
 
         if ((position < 0) || (line < 0)) {
-            console.log('Negative line/column are not allowed: were ' + line + ';' + position);
+            // Negative line/column values invalid, skipping
             return;
         }
 
@@ -610,7 +610,7 @@ class SaveCursorPositionHandler extends CommandHandler {
 class RestoreCursorPositionHandler extends CommandHandler {
     handle(args, terminal) {
         if (isNull(terminal.savedCursorPosition)) {
-            console.log('WARN! trying to restore cursor position, but nothing is saved');
+            // No saved cursor position to restore
             return;
         }
         const [line, position] = terminal.savedCursorPosition;
@@ -633,7 +633,7 @@ class ClearLineHandler extends CommandHandler {
         } else if (direction === 2) {
             terminal.clearFullLine();
         } else {
-            console.log('WARN! Unsupported [' + direction + 'K command');
+            // Unsupported erase line command direction
         }
     }
 }
@@ -654,7 +654,7 @@ class ClearScreenHandler extends CommandHandler {
         } else if ((direction === 2) || (direction === 3)) {
             terminal.clear();
         } else {
-            console.log('WARN! Unsupported [' + direction + 'J command');
+            // Unsupported erase display command direction
         }
     }
 }

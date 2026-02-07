@@ -304,8 +304,8 @@ class ConfigService:
                 if e.value is not None:
                     result.append(e.value)
 
-            except:
-                LOGGER.exception("Couldn't read the file: " + config_path)
+            except Exception as e:
+                LOGGER.exception("Couldn't read the file %s: %s", config_path, e)
 
         return result
 

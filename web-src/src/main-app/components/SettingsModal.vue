@@ -1,12 +1,14 @@
 <template>
-  <div v-if="visible" class="settings-modal-overlay" @click.self="close">
-    <div class="settings-modal">
-      <div class="modal-header">
-        <span class="modal-title">Settings</span>
-      </div>
-
-      <div class="modal-body">
-        <div class="settings-section">
+  <BaseModal
+    :visible="visible"
+    title="Settings"
+    modal-class="settings-modal"
+    overlay-class="settings-modal-overlay"
+    :show-close-button="false"
+    @close="close"
+  >
+    <template #default>
+      <div class="settings-section">
           <h6>Display</h6>
 
           <div class="setting-row">
@@ -55,21 +57,25 @@
             />
           </div>
         </div>
-      </div>
+    </template>
 
-      <div class="modal-footer">
-        <button class="btn waves-effect" @click="close">Cancel</button>
-        <button class="btn waves-effect btn-primary" @click="save">Save</button>
-      </div>
-    </div>
-  </div>
+    <template #footer>
+      <button class="btn waves-effect" @click="close">Cancel</button>
+      <button class="btn waves-effect btn-primary" @click="save">Save</button>
+    </template>
+  </BaseModal>
 </template>
 
 <script>
 import {mapState, mapActions} from 'vuex';
+import BaseModal from '@/common/components/BaseModal.vue';
 
 export default {
   name: 'SettingsModal',
+
+  components: {
+    BaseModal
+  },
 
   props: {
     visible: {
@@ -147,49 +153,11 @@ export default {
 </script>
 
 <style scoped>
-.settings-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
+/* Custom modal sizing */
 .settings-modal {
-  background: var(--background-color);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
   width: 85%;
   max-width: 400px;
   max-height: 85vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--separator-color);
-  flex-shrink: 0;
-}
-
-.modal-title {
-  font-size: 1.4em;
-  font-weight: 500;
-  color: var(--font-color-main);
-}
-
-.modal-body {
-  padding: 16px 24px;
-  overflow-y: auto;
-  flex: 1;
 }
 
 .settings-section h6 {
@@ -264,16 +232,7 @@ export default {
   box-shadow: 0 0 0 2px rgba(38, 166, 154, 0.2) !important;
 }
 
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 16px 24px;
-  border-top: 1px solid var(--separator-color);
-  flex-shrink: 0;
-  background: var(--background-color-level-16dp);
-}
-
+/* Footer styling */
 .btn {
   padding: 10px 20px;
   border-radius: var(--radius-sm);

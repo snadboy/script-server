@@ -97,7 +97,8 @@ class ProcessWrapper(metaclass=abc.ABCMeta):
                 os.killpg(group_id, signal.SIGKILL)
                 self._write_script_output('\n>> KILLED\n')
             else:
-                subprocess.Popen("taskkill /F /T /PID " + self.get_process_id())
+                # SECURITY: Use list arguments with shell=False to prevent command injection
+                subprocess.Popen(['taskkill', '/F', '/T', '/PID', str(self.get_process_id())], shell=False)
 
     def add_finish_listener(self, listener):
         if self.is_finished():
@@ -112,8 +113,8 @@ class ProcessWrapper(metaclass=abc.ABCMeta):
         for listener in self.finish_listeners:
             try:
                 listener.finished()
-            except:
-                LOGGER.exception('Failed to notify listener: ' + str(listener))
+            except Exception as e:
+                LOGGER.exception('Failed to notify listener %s: %s', listener, e)
 
     def cleanup(self):
         self.output_stream.dispose()

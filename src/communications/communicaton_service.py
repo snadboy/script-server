@@ -19,8 +19,8 @@ class CommunicationsService:
             for destination in self._destinations:
                 try:
                     destination.send(title, body, files)
-                except:
-                    LOGGER.exception('Could not send message to ' + str(destination))
+                except Exception as e:
+                    LOGGER.exception('Could not send message to %s: %s', destination, e)
 
         thread = threading.Thread(target=_send, name=_THREAD_PREFIX + title)
         thread.start()

@@ -198,7 +198,7 @@ export default () => ({
             }
 
             if (foundIndex < 0) {
-                console.log('Failed to find parameter ' + parameter['name']);
+                // Parameter not found in parameters list
                 return;
             }
 
@@ -226,7 +226,7 @@ export default () => ({
             }
 
             if (foundIndex < 0) {
-                console.log('Failed to find parameter ' + parameterName);
+                // Parameter not found in parameters list
                 return;
             }
 
@@ -359,8 +359,7 @@ function reconnect(state, internalState, commit, dispatch, selectedScript) {
                     return;
                 }
 
-                console.log('Socket closed. code=' + error.code + ', reason=' + error.reason);
-
+                // Socket closed, attempting reconnection
                 if (isNull(state.scriptConfig)) {
                     commit('SET_ERROR', 'Failed to connect to the server');
                     return;
@@ -374,7 +373,7 @@ function reconnect(state, internalState, commit, dispatch, selectedScript) {
                 }
 
                 setTimeout(function () {
-                    console.log('Trying to reconnect. Attempt ' + internalState.reconnectionAttempt);
+                    // Attempting reconnection
                     reconnect(state, internalState, commit, dispatch, selectedScript);
                 }, (internalState.reconnectionAttempt - 1) * reconnectionDelay);
 
@@ -400,7 +399,7 @@ function reconnect(state, internalState, commit, dispatch, selectedScript) {
         },
 
         onComplete: function () {
-            console.log('Websocket completed. This should not be possible for a config socket');
+            // Websocket completed unexpectedly for config socket
             commit('SET_ERROR', 'Connection to server closed');
         }
     });

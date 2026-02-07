@@ -198,7 +198,8 @@ function attachToWebsocket(internalState, state, commit, dispatch) {
     try {
         websocket = new WebSocket(getWebsocketUrl('executions/io/' + executionId));
     } catch (e) {
-        console.log('Failed to open websocket')
+        // Failed to open websocket connection
+        return;
     }
 
     websocket.addEventListener('message', function (message) {
@@ -238,7 +239,7 @@ function attachToWebsocket(internalState, state, commit, dispatch) {
                     }
                 })
                 .catch((error) => {
-                    console.log('Failed to connect to the server: ' + error);
+                    // Failed to check execution status
                     dispatch('setErrorStatus');
                 });
 

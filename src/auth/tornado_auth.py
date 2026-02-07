@@ -81,8 +81,8 @@ class TornadoAuth:
             respond_error(request_handler, 400, e.get_message())
             return
 
-        except:
-            LOGGER.exception('Failed to call authenticate')
+        except Exception as e:
+            LOGGER.exception('Failed to call authenticate: %s', e)
             respond_error(request_handler, 500, login_generic_error)
             return
 

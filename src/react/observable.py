@@ -58,15 +58,15 @@ class ObservableBase(Generic[T], metaclass=abc.ABCMeta):
         for observer in self.observers:
             try:
                 observer.on_next(data)
-            except:
-                LOGGER.exception('Could not notify on_next, observer ' + str(observer))
+            except Exception as e:
+                LOGGER.exception('Could not notify on_next, observer %s: %s', observer, e)
 
     def _fire_on_close(self):
         for observer in self.observers:
             try:
                 observer.on_close()
-            except:
-                LOGGER.exception('Could not notify on_close, observer ' + str(observer))
+            except Exception as e:
+                LOGGER.exception('Could not notify on_close, observer %s: %s', observer, e)
 
     def time_buffered(self, period_millis, aggregate_function=None):
         return _TimeBufferedPipe(self, period_millis, aggregate_function)

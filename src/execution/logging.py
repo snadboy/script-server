@@ -43,8 +43,8 @@ class ScriptOutputLogger:
 
         try:
             self.log_file = open(self.log_file_path, 'wb')
-        except:
-            LOGGER.exception("Couldn't create a log file")
+        except (OSError, IOError) as e:
+            LOGGER.exception("Couldn't create a log file: %s", e)
 
         self.opened = True
 
@@ -60,15 +60,15 @@ class ScriptOutputLogger:
             if text is not None:
                 self.log_file.write(text.encode(ENCODING))
                 self.log_file.flush()
-        except:
-            LOGGER.exception("Couldn't write to the log file")
+        except (OSError, IOError, UnicodeEncodeError) as e:
+            LOGGER.exception("Couldn't write to the log file: %s", e)
 
     def _close(self):
         try:
             if self.log_file:
                 self.log_file.close()
-        except:
-            LOGGER.exception("Couldn't close the log file")
+        except (OSError, IOError) as e:
+            LOGGER.exception("Couldn't close the log file: %s", e)
 
         self.closed = True
 

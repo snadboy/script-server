@@ -60,6 +60,16 @@
       </div>
     </div>
 
+    <div>
+      <h5>Connections</h5>
+      <div class="row">
+        <div class="col s12">Specify which connection types this script can use. If empty, all connections will be available.</div>
+      </div>
+      <div class="row">
+        <Combobox v-model="supportedConnections" :config="supportedConnectionsField" class="col s12" multiple/>
+      </div>
+    </div>
+
   </form>
 </template>
 
@@ -121,6 +131,7 @@ export default {
       allowAllUsers: true,
       adminUsers: [],
       allowAllAdmins: true,
+      supportedConnections: [],
       nameField,
       groupField,
       scriptPathField,
@@ -133,7 +144,20 @@ export default {
       globalInstancesField,
       schedulingEnabledField,
       schedulingAutoCleanupField,
-      includeScriptField
+      includeScriptField,
+      supportedConnectionsField: {
+        name: 'Supported Connections',
+        description: 'Connection types this script can use',
+        required: false,
+        values: [
+          { value: 'plex', text: 'Plex Media Server' },
+          { value: 'sonarr', text: 'Sonarr' },
+          { value: 'radarr', text: 'Radarr' },
+          { value: 'home-assistant', text: 'Home Assistant' },
+          { value: 'google', text: 'Google' },
+          { value: 'generic', text: 'Generic' }
+        ]
+      }
     }
   },
 
@@ -185,6 +209,9 @@ export default {
             'adminUsers',
             'allowAllAdmins',
             'admin_users')
+
+        // Load supported connections
+        this.supportedConnections = config['supported_connections'] || []
       }
     },
     allowAllUsers() {
@@ -211,6 +238,13 @@ export default {
     },
     schedulingAutoCleanup() {
       this.updateScheduling()
+    },
+    supportedConnections() {
+      if (isEmptyArray(this.supportedConnections)) {
+        this.$delete(this.value, 'supported_connections');
+      } else {
+        this.$set(this.value, 'supported_connections', this.supportedConnections);
+      }
     }
   },
 

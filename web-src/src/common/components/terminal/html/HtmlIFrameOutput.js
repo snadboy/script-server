@@ -23,7 +23,7 @@ export class HtmlIFrameOutput {
     }
 
     setInlineImage(outputPath, downloadUrl) {
-        console.log('WARNING! inline images are not supported for html output')
+        // Inline images not supported for html output
     }
 
 }

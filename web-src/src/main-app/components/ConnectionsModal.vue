@@ -479,12 +479,11 @@ export default {
     },
 
     showSuccess(message) {
-      // Use existing notification system if available, otherwise console
+      // Use existing notification system if available
       if (window.M && window.M.toast) {
         window.M.toast({html: message, classes: 'green'});
-      } else {
-        console.log('Success:', message);
       }
+      // Silently succeed if toast system not available
     },
 
     showError(message) {

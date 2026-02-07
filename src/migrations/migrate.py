@@ -332,8 +332,8 @@ def __migrate_ldap_username_pattern_to_user_resolver(context):
     content = file_utils.read_file(file_path)
     try:
         json_object = custom_json.loads(content, object_pairs_hook=OrderedDict)
-    except:
-        LOGGER.exception('Failed to load config file for LDAP migration: ' + file_path)
+    except (ValueError, TypeError) as e:
+        LOGGER.exception('Failed to load config file for LDAP migration %s: %s', file_path, e)
         return
 
     if 'auth' not in json_object:
@@ -392,8 +392,8 @@ def _load_runner_files(conf_folder):
         try:
             json_object = custom_json.loads(content, object_pairs_hook=OrderedDict)
             result.append((conf_file, json_object, content))
-        except:
-            LOGGER.exception('Failed to load file for migration: ' + conf_file)
+        except (ValueError, TypeError) as e:
+            LOGGER.exception('Failed to load file for migration %s: %s', conf_file, e)
             continue
 
     return result

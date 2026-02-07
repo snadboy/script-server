@@ -97,7 +97,9 @@ export default {
                                 }
                             }
                         }))
-                        .catch(e => console.log(e));
+                        .catch(e => {
+                            // Failed to fetch executor logs
+                        });
                 })
 
         },
@@ -192,7 +194,9 @@ export default {
                 if (abort === true) {
                     const abortPromises = activeExecutors.map(executor => dispatch(executor.state.id + '/abort'));
                     Promise.all(abortPromises)
-                        .catch(error => console.log('Failed to stop an executor: ' + error))
+                        .catch(error => {
+                            // Failed to stop one or more executors
+                        })
                         .finally(() => {
                             let retries = 0;
                             const intervalId = setInterval(waitForStop, 50);

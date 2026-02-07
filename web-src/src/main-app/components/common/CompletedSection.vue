@@ -193,7 +193,7 @@ export default {
         }
 
         const response = await axiosInstance.delete(url);
-        console.log(`Deleted ${response.data.deleted} entries`);
+        // Successfully deleted execution entries
         this.refresh();
       } catch (e) {
         console.error('Failed to delete executions:', e.response?.data || e.message);
