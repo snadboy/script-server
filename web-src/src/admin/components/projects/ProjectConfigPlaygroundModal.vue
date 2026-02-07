@@ -507,7 +507,7 @@
       <!-- Footer -->
       <div class="dialog-footer">
         <button class="btn-secondary" @click="close">Cancel</button>
-        <button class="btn-primary" :disabled="saving || !hasUnsavedChanges" @click="save">
+        <button class="btn-primary" :disabled="saving" @click="save">
           <i v-if="saving" class="material-icons spinning">hourglass_empty</i>
           <i v-else class="material-icons">save</i>
           {{ saving ? 'Saving...' : 'Save Configuration' }}
