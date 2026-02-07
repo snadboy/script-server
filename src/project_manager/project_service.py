@@ -258,7 +258,9 @@ class ProjectService:
         entry_points = self.detect_entry_points(project_path)
 
         # Create metadata with unique name
-        base_name = repo_name.replace('-', ' ').replace('_', ' ').title()
+        # Remove .git suffix before creating display name
+        display_name = re.sub(r'\.git$', '', repo_name, flags=re.IGNORECASE)
+        base_name = display_name.replace('-', ' ').replace('_', ' ').title()
         unique_name = self._ensure_unique_name(base_name)
 
         meta = {
