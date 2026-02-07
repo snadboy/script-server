@@ -16,15 +16,41 @@
 ## Current State
 
 **Branch:** `master`
-**Latest Commit:** `bc8307f` - Improve script instance creation error handling
+**Latest Commit:** `9b9dc03` - Fix duplicate connection to copy secret fields via unmask API
 **Docker Image:** `ghcr.io/snadboy/script-server:latest` (auto-builds via GitHub Actions)
 **Local Server:** Running on http://localhost:5000
 
 ### Current Focus
 
-**Status:** ✅ **Code Review Complete** - All 8 tasks finished
+**Status:** ✅ **File Injection & Connections UI Complete**
 
-**Latest work (2026-02-06 - Code Review Action Plan COMPLETE):**
+**Latest work (2026-02-07 - File-Based Credential Injection & Connections UI):**
+- ✅ **File-based credential injection** for connection types with `injection_mode='file'`
+  - Writes credential files to temp dirs with `0600` permissions
+  - Sets `PREFIX_STEM_PATH` env vars (e.g., `GOOGLE_CREDENTIALS_PATH`)
+  - Auto-cleanup via finish listener when process completes
+  - Supports `env`, `file`, and `both` injection modes
+  - Google Account type uses `file` mode with `credentials.json` and `token.json` templates
+- ✅ **Bug fix:** `get_connection()` now called with `mask_secrets=False` so decrypted values are injected
+- ✅ **BaseModal dark theme fix** - replaced hardcoded `white` background/colors with CSS variables
+- ✅ **SABnzbd icon fix** - changed `download` (missing from font) to `get_app`
+- ✅ **Connections UI improvements:**
+  - Removed Back button from form view (Cancel/Save suffice)
+  - Added Duplicate button (content_copy icon) between Edit and Delete
+  - Duplicate fetches unmasked data via `GET /admin/connections/{id}?unmask=true`
+  - Disabled overlay-click dismiss on Connections dialog
+- ✅ **20 injection tests passing** (file, both, cleanup, helper tests added)
+
+**Files Modified:**
+- `src/connections/injection.py` - File injection, cleanup handler, mask_secrets fix
+- `src/execution/executor.py` - Register cleanup listener on process wrapper
+- `src/connections/connection_types.py` - SABnzbd icon fix
+- `src/web/server.py` - `?unmask=true` query param on connection GET
+- `web-src/src/common/components/BaseModal.vue` - Dark theme CSS variable support
+- `web-src/src/main-app/components/ConnectionsModal.vue` - Duplicate, no Back, no overlay dismiss
+- `src/tests/connections/test_injection.py` - Updated for tuple return + new tests
+
+**Previous work (2026-02-06 - Code Review Action Plan COMPLETE):**
 - ✅ **CRITICAL SECURITY FIX:** Command injection vulnerabilities eliminated
   - Fixed `shell=True` in process_popen.py (Windows script execution)
   - Fixed string concatenation in taskkill command (process_base.py)
@@ -183,6 +209,8 @@ Detailed implementation notes organized by feature area:
 - ✅ **Master-Detail UX** - Fixed-height tables for parameter/verb editing
 - ✅ **Project Manager** - Import projects via Git/ZIP/Local with auto-detection
 - ✅ **Venv Package Management** - Admin UI for Python package management
+- ✅ **File-Based Credential Injection** - Temp files with auto-cleanup for Google/file connections
+- ✅ **Connection Duplication** - Clone connections with full secret copying via unmask API
 
 ### UI/UX Improvements
 
@@ -194,6 +222,7 @@ Detailed implementation notes organized by feature area:
 - ✅ Collapsed state persistence (localStorage)
 - ✅ Settings modal with configurable limits
 - ✅ Icon visibility fix (Material Icons compatibility)
+- ✅ BaseModal dark theme support (CSS variables)
 
 ---
 
@@ -206,6 +235,8 @@ Detailed implementation notes organized by feature area:
 - `src/model/verb_config.py` - Verb/subcommand configuration
 - `src/model/parameter_config.py` - Parameter definitions
 - `src/execution/executor.py` - Command building with verb support
+- `src/connections/injection.py` - Credential injection (env vars + temp files)
+- `src/connections/connection_types.py` - Connection type registry with file_templates
 - `src/scheduling/schedule_service.py` - Schedule management & auto-cleanup
 - `src/venv_manager/venv_service.py` - Package management
 
@@ -217,6 +248,8 @@ Detailed implementation notes organized by feature area:
 - `web-src/src/main-app/components/ProjectsModal.vue` - Script Manager (Projects/Import/Configure)
 - `web-src/src/main-app/components/scripts/ExecuteModal.vue` - Execute dialog
 - `web-src/src/main-app/components/schedule/ScheduleModal.vue` - Schedule dialog
+- `web-src/src/main-app/components/ConnectionsModal.vue` - Connection management (CRUD + duplicate)
+- `web-src/src/common/components/BaseModal.vue` - Reusable modal (dark theme aware)
 
 ---
 
@@ -251,6 +284,6 @@ Detailed implementation notes organized by feature area:
 
 ---
 
-**Last Updated:** 2026-02-04
+**Last Updated:** 2026-02-07
 **Session History:** Detailed session notes organized by feature in `docs/features/`
 **Layout Playground:** `verb-parameters-layout-playground.html` - Interactive tool for tweaking dialog UX
