@@ -145,6 +145,39 @@ register_type(ConnectionType(
 ))
 
 # ============================================================================
+# SABnzbd
+# ============================================================================
+
+register_type(ConnectionType(
+    type_id='sabnzbd',
+    display_name='SABnzbd',
+    icon='download',
+    description='Usenet download client',
+    injection_mode='env',
+    env_prefix='SABNZBD',
+    fields=[
+        ConnectionField(
+            name='url',
+            label='Server URL',
+            field_type='url',
+            required=True,
+            secret=False,
+            help_text='Full URL including port',
+            placeholder='http://localhost:8080'
+        ),
+        ConnectionField(
+            name='api_key',
+            label='API Key',
+            field_type='password',
+            required=True,
+            secret=True,
+            help_text='API key from SABnzbd settings',
+            placeholder=''
+        ),
+    ]
+))
+
+# ============================================================================
 # Home Assistant
 # ============================================================================
 

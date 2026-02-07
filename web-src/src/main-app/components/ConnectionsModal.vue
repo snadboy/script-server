@@ -160,20 +160,23 @@
                 v-model="formData.fields[field.name]"
                 :type="secretFieldRevealed[field.name] ? 'text' : 'password'"
                 :placeholder="formMode === 'edit' && !editingField[field.name] ? '********' : field.placeholder"
-                :disabled="formMode === 'edit' && !editingField[field.name]"
+                :readonly="formMode === 'edit' && !editingField[field.name] && secretFieldRevealed[field.name]"
+                :disabled="formMode === 'edit' && !editingField[field.name] && !secretFieldRevealed[field.name]"
                 class="form-input"
+                :class="{'revealed-secret': formMode === 'edit' && !editingField[field.name] && secretFieldRevealed[field.name]}"
                 :required="field.required"
               />
               <button
-                v-if="formMode === 'create' || editingField[field.name]"
+                v-if="formMode === 'create' || editingField[field.name] || (formMode === 'edit' && isAdmin)"
                 class="btn-icon"
                 type="button"
+                :title="secretFieldRevealed[field.name] ? 'Hide' : 'Show'"
                 @click="toggleSecretReveal(field.name)"
               >
                 <i class="material-icons">{{ secretFieldRevealed[field.name] ? 'visibility_off' : 'visibility' }}</i>
               </button>
               <button
-                v-if="formMode === 'edit' && !editingField[field.name]"
+                v-if="formMode === 'edit' && !editingField[field.name] && !secretFieldRevealed[field.name]"
                 class="btn-text"
                 type="button"
                 @click="startEditingField(field.name)"
@@ -845,6 +848,18 @@ export default {
 .secret-field .btn-text:hover {
   background: var(--primary-color);
   color: white;
+}
+
+/* Revealed secret field (admin view only) */
+.form-input.revealed-secret {
+  background: var(--background-color-high-emphasis);
+  border-color: var(--primary-color);
+  color: var(--font-color-main);
+  cursor: text;
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  font-family: 'Courier New', Courier, monospace;
 }
 
 .type-display {
