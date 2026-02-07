@@ -3,6 +3,7 @@ import Vue from 'vue';
 import router from '../router/router';
 import {scriptNameToHash} from '../utils/model_helper';
 import {axiosInstance} from '@/common/utils/axios_utils';
+import {API} from '@/common/api-constants';
 
 export default {
     namespaced: true,
@@ -20,7 +21,7 @@ export default {
                 dispatch('selectScriptByHash');
             });
 
-            axiosInstance.get('scripts')
+            axiosInstance.get(API.SCRIPTS)
                 .then(({data}) => {
                     const {scripts} = data;
                     scripts.sort(function (script1, script2) {

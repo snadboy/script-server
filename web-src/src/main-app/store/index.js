@@ -8,6 +8,7 @@ import scheduleModule from './scriptSchedule';
 import allSchedulesModule from './allSchedules';
 import pageModule from './page';
 import settingsModule from './settings';
+import {POLL_INTERVAL_MS} from '@/common/ui-constants';
 
 import scriptConfigModule from './scriptConfig';
 import scriptExecutionManagerModule from './scriptExecutionManager';
@@ -58,15 +59,13 @@ const store = new Vuex.Store({
             // Poll every 5 seconds for updates from scheduled tasks
             // This catches executions started by the backend scheduler and keeps
             // schedule countdowns, last run times, and execution counts up to date
-            const POLL_INTERVAL = 5000;
-
             setInterval(() => {
                 // Always refresh both history and schedules
                 // - History: catches new running tasks and completed tasks
                 // - Schedules: updates next run countdown, last run time, execution count
                 dispatch('history/refresh');
                 dispatch('allSchedules/refresh');
-            }, POLL_INTERVAL);
+            }, POLL_INTERVAL_MS);
         },
 
         resetScript({dispatch, state}) {

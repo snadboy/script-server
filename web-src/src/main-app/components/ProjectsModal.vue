@@ -370,9 +370,10 @@
     </div>
 
     <!-- Project Configuration Modal -->
-    <ProjectConfigPlaygroundModal
+    <ProjectConfigModal
       :visible="showProjectConfig"
       :project="selectedProject"
+      mode="playground"
       @close="closeProjectConfig"
       @saved="onProjectConfigSaved"
     />
@@ -383,14 +384,14 @@
 <script>
 import {axiosInstance} from '@/common/utils/axios_utils';
 import DirectoryBrowserModal from './common/DirectoryBrowserModal.vue';
-import ProjectConfigPlaygroundModal from '@/admin/components/projects/ProjectConfigPlaygroundModal.vue';
+import ProjectConfigModal from '@/admin/components/projects/ProjectConfigModal.vue';
 
 export default {
   name: 'ProjectsModal',
 
   components: {
     DirectoryBrowserModal,
-    ProjectConfigPlaygroundModal
+    ProjectConfigModal
   },
 
   props: {
@@ -835,7 +836,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: var(--z-index-modal-overlay);
 }
 
 .projects-modal {

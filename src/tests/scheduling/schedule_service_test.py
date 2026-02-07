@@ -70,7 +70,7 @@ class ScheduleServiceTestCase(TestCase):
         self.create_config('unschedulable-script', scheduling_enabled=False)
 
         self.execution_service = MagicMock()
-        self.execution_service.start_script.side_effect = lambda config, user: time.time_ns()
+        self.execution_service.start_script.side_effect = lambda config, user, **kwargs: time.time_ns()
 
         self.schedule_service = ScheduleService(self.config_service, self.execution_service, test_utils.temp_folder)
 

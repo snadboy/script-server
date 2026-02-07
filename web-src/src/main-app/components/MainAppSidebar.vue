@@ -81,6 +81,7 @@ import RequirementsModal from './RequirementsModal';
 import ServerLogsModal from './ServerLogsModal';
 import ConnectionsModal from './ConnectionsModal';
 import ThemeToggle from '@/common/components/ThemeToggle';
+import {COUNTDOWN_TICK_MS} from '@/common/ui-constants';
 
 export default {
   name: 'MainAppSidebar',
@@ -141,7 +142,7 @@ export default {
   mounted() {
     this.timeInterval = setInterval(() => {
       this.currentTime = new Date();
-    }, 1000);
+    }, COUNTDOWN_TICK_MS);
   },
 
   beforeDestroy() {

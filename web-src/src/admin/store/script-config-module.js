@@ -1,6 +1,7 @@
 import {UPLOAD_MODE} from '@/admin/components/scripts-config/script-edit/ScriptEditDialog'
 import {axiosInstance} from '@/common/utils/axios_utils';
 import {contains, forEachKeyValue, isEmptyArray, isEmptyValue} from '@/common/utils/common';
+import {API} from '@/common/api-constants';
 import clone from 'lodash/clone';
 
 const allowedEmptyValuesInParam = ['name'];
@@ -48,7 +49,7 @@ export default {
 
             commit('RESET', scriptName);
 
-            axiosInstance.get('admin/scripts/' + encodeURIComponent(scriptName))
+            axiosInstance.get(`${API.ADMIN.SCRIPTS}/${encodeURIComponent(scriptName)}`)
                 .then(({data}) => {
                     commit('SET_SCRIPT_CONFIG', {config: data.config, filename: data.filename});
                 })
@@ -65,7 +66,7 @@ export default {
 
             const axiosAction = state.new ? axiosInstance.post : axiosInstance.put;
 
-            return axiosAction('admin/scripts', formData)
+            return axiosAction(API.ADMIN.SCRIPTS, formData)
                 .then(() => {
                     commit('MARK_CLEAN');
                     if (oldName === newName) {
@@ -90,7 +91,7 @@ export default {
         deleteScript({state}) {
             const oldName = state.scriptName;
 
-            return axiosInstance.delete(`admin/scripts/${encodeURIComponent(oldName)}`)
+            return axiosInstance.delete(`${API.ADMIN.SCRIPTS}/${encodeURIComponent(oldName)}`)
                 .then(() => {
                     // Return navigation info for component to handle
                     return {navigate: true, path: '/admin/scripts'};

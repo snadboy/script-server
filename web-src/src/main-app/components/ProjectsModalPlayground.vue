@@ -188,9 +188,10 @@
     />
 
     <!-- Project Configuration Modal -->
-    <ProjectConfigPlaygroundModal
+    <ProjectConfigModal
       :visible="showProjectConfig"
       :project="selectedProject"
+      mode="playground"
       @close="closeProjectConfig"
       @saved="onProjectConfigSaved"
     />
@@ -209,7 +210,7 @@
 <script>
 import {axiosInstance} from '@/common/utils/axios_utils';
 import ImportProjectModal from './ImportProjectModal.vue';
-import ProjectConfigPlaygroundModal from '@/admin/components/projects/ProjectConfigPlaygroundModal.vue';
+import ProjectConfigModal from '@/admin/components/projects/ProjectConfigModal.vue';
 import CreateScriptInstanceModal from './CreateScriptInstanceModal.vue';
 
 export default {
@@ -217,7 +218,7 @@ export default {
 
   components: {
     ImportProjectModal,
-    ProjectConfigPlaygroundModal,
+    ProjectConfigModal,
     CreateScriptInstanceModal
   },
 
@@ -492,7 +493,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: var(--z-index-modal-overlay);
 }
 
 .projects-modal {

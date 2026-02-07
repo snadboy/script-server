@@ -1,12 +1,12 @@
 <template>
-  <div v-if="visible" class="modal-overlay" @click.self="close">
-    <div class="import-modal">
-      <div class="modal-header">
-        <h3>Import Project</h3>
-        <button class="btn-close" @click="close">×</button>
-      </div>
-
-      <div class="modal-body">
+  <BaseModal
+    :visible="visible"
+    title="Import Project"
+    modal-class="import-modal"
+    overlay-class="modal-overlay"
+    @close="close"
+  >
+    <template #default>
         <!-- Error Display -->
         <div v-if="error" class="error-message">
           {{ error }}
@@ -216,30 +216,31 @@
           @select="onDirectorySelected"
           @close="showDirBrowser = false"
         />
-      </div>
+    </template>
 
-      <div class="modal-footer">
-        <button class="btn" @click="close">Cancel</button>
-        <button
-          class="btn btn-primary"
-          :disabled="!canImport || importing"
-          @click="handleImport"
-        >
-          {{ importButtonText }}
-        </button>
-      </div>
-    </div>
-  </div>
+    <template #footer>
+      <button class="btn" @click="close">Cancel</button>
+      <button
+        class="btn btn-primary"
+        :disabled="!canImport || importing"
+        @click="handleImport"
+      >
+        {{ importButtonText }}
+      </button>
+    </template>
+  </BaseModal>
 </template>
 
 <script>
 import {axiosInstance} from '@/common/utils/axios_utils';
 import DirectoryBrowserModal from './common/DirectoryBrowserModal.vue';
+import BaseModal from '@/common/components/BaseModal.vue';
 
 export default {
   name: 'ImportProjectModal',
 
   components: {
+    BaseModal,
     DirectoryBrowserModal
   },
 
@@ -501,73 +502,11 @@ export default {
 </script>
 
 <style scoped>
-/* Modal Overlay */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1001;
-}
-
+/* Modal */
 .import-modal {
-  background: #1a1a1a;
-  border-radius: 6px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   width: 90%;
   max-width: 600px;
   max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Header */
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px;
-  border-bottom: 1px solid #333333;
-}
-
-.modal-header h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 500;
-  color: #e0e0e0;
-}
-
-.btn-close {
-  background: transparent;
-  border: none;
-  color: #999999;
-  font-size: 28px;
-  cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: all 0.2s;
-}
-
-.btn-close:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #e0e0e0;
-}
-
-/* Body */
-.modal-body {
-  padding: 20px;
-  overflow-y: auto;
-  flex: 1;
 }
 
 .error-message {
@@ -738,16 +677,7 @@ export default {
   color: #999999;
 }
 
-/* Footer */
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 16px;
-  border-top: 1px solid #333333;
-  background: #222222;
-}
-
+/* Buttons */
 .btn {
   padding: 10px 20px;
   border-radius: 6px;

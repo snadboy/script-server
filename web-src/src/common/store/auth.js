@@ -1,4 +1,5 @@
 import {axiosInstance} from '@/common/utils/axios_utils';
+import {API} from '@/common/api-constants';
 
 export default {
     state: {
@@ -11,7 +12,7 @@ export default {
     namespaced: true,
     actions: {
         init({commit}) {
-            axiosInstance.get('auth/info').then(({data}) => {
+            axiosInstance.get(API.AUTH.INFO).then(({data}) => {
                 commit('SET_CONFIG', data)
             });
         },
@@ -21,7 +22,7 @@ export default {
         },
 
         logout({}) {
-            return axiosInstance.post('logout')
+            return axiosInstance.post(API.AUTH.LOGOUT)
                 .catch(error => {
                     const {status} = error.response;
                     if (status !== 405) {

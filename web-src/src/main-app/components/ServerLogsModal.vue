@@ -1,11 +1,13 @@
 <template>
-  <div v-if="visible" class="server-logs-modal-overlay" @click.self="close">
-    <div class="server-logs-modal">
-      <div class="modal-header">
-        <span class="modal-title">Server Logs</span>
-      </div>
-
-      <div class="modal-body">
+  <BaseModal
+    :visible="visible"
+    title="Server Logs"
+    modal-class="server-logs-modal"
+    overlay-class="server-logs-modal-overlay"
+    :show-close-button="false"
+    @close="close"
+  >
+    <template #default>
         <!-- Filters Section -->
         <div class="filters-section">
           <div class="filter-row">
@@ -49,28 +51,32 @@
           <div v-if="loading" class="loading">Loading logs...</div>
           <pre v-else class="logs-content">{{ logs }}</pre>
         </div>
-      </div>
+    </template>
 
-      <div class="modal-footer">
-        <button class="btn waves-effect" @click="close">Close</button>
-        <button class="btn waves-effect" @click="refreshLogs" :disabled="loading">
-          <i class="material-icons btn-icon">refresh</i>
-          Refresh
-        </button>
-        <button class="btn waves-effect" @click="downloadLogs" :disabled="!logs">
-          <i class="material-icons btn-icon">download</i>
-          Download
-        </button>
-      </div>
-    </div>
-  </div>
+    <template #footer>
+      <button class="btn waves-effect" @click="close">Close</button>
+      <button class="btn waves-effect" @click="refreshLogs" :disabled="loading">
+        <i class="material-icons btn-icon">refresh</i>
+        Refresh
+      </button>
+      <button class="btn waves-effect" @click="downloadLogs" :disabled="!logs">
+        <i class="material-icons btn-icon">download</i>
+        Download
+      </button>
+    </template>
+  </BaseModal>
 </template>
 
 <script>
 import {axiosInstance} from '@/common/utils/axios_utils'
+import BaseModal from '@/common/components/BaseModal.vue';
 
 export default {
   name: 'ServerLogsModal',
+
+  components: {
+    BaseModal
+  },
 
   props: {
     visible: {
@@ -160,49 +166,10 @@ export default {
 </script>
 
 <style scoped>
-.server-logs-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
 .server-logs-modal {
-  background: var(--background-color, white);
-  color: var(--font-color-main, black);
-  border-radius: var(--border-radius, 8px);
-  box-shadow: var(--shadow-large, 0 8px 32px rgba(0,0,0,0.3));
   width: 90%;
   max-width: 1200px;
   max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-header {
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border-color, #ddd);
-  flex-shrink: 0;
-}
-
-.modal-title {
-  font-size: 1.3rem;
-  font-weight: 500;
-}
-
-.modal-body {
-  flex: 1;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  padding: 20px;
-  gap: 16px;
 }
 
 .filters-section {
@@ -277,15 +244,6 @@ export default {
   color: #c62828;
   border-radius: var(--border-radius, 4px);
   border: 1px solid #ef5350;
-  flex-shrink: 0;
-}
-
-.modal-footer {
-  padding: 12px 20px;
-  border-top: 1px solid var(--border-color, #ddd);
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
   flex-shrink: 0;
 }
 

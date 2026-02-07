@@ -396,7 +396,7 @@ table th, table td {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: var(--z-index-modal-overlay);
 }
 
 .modal-content {

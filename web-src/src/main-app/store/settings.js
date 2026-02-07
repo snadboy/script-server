@@ -1,4 +1,5 @@
 import axios from 'axios';
+import {API} from '@/common/api-constants';
 
 const STORAGE_KEY = 'scriptServer.settings';
 
@@ -59,7 +60,7 @@ export default {
 
     async fetchScheduleSettings({commit}) {
       try {
-        const response = await axios.get('schedules/settings');
+        const response = await axios.get(API.SCHEDULE_SETTINGS);
         commit('SET_RETENTION', response.data.onetime_retention_minutes);
       } catch (e) {
         // Silent failure - settings modal will use defaults if fetch fails
@@ -69,7 +70,7 @@ export default {
 
     async updateRetention({commit}, minutes) {
       try {
-        const response = await axios.put('schedules/settings', {
+        const response = await axios.put(API.SCHEDULE_SETTINGS, {
           onetime_retention_minutes: minutes
         });
         commit('SET_RETENTION', response.data.onetime_retention_minutes);

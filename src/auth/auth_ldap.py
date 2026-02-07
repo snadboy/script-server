@@ -9,6 +9,7 @@ from ldap3.utils.conv import escape_filter_chars
 
 from auth import auth_base
 from model import model_helper
+from model.constants import LDAP_CONNECT_TIMEOUT_SECONDS
 from utils import file_utils, custom_json
 from utils.string_utils import strip
 
@@ -229,7 +230,7 @@ class LdapConnector:
             self.version = 3
 
     def connect(self, full_username, password):
-        server = Server(self.url, connect_timeout=10)
+        server = Server(self.url, connect_timeout=LDAP_CONNECT_TIMEOUT_SECONDS)
         connection = Connection(
             server,
             user=full_username,

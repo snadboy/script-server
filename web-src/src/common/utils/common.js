@@ -606,7 +606,8 @@ export function copyToClipboard(elem) {
     try {
         document.execCommand('copy');
     } catch (e) {
-        console.error(e);
+        // Clipboard copy failed - non-critical, no user feedback needed
+        console.error('Clipboard copy failed:', e);
     }
 
     if (currentFocus && typeof currentFocus.focus === 'function') {

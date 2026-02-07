@@ -1,11 +1,13 @@
 <template>
-  <div v-if="visible" class="python-packages-modal-overlay" @click.self="close">
-    <div class="python-packages-modal">
-      <div class="modal-header">
-        <span class="modal-title">Python Packages</span>
-      </div>
-
-      <div class="modal-body">
+  <BaseModal
+    :visible="visible"
+    title="Python Packages"
+    modal-class="python-packages-modal"
+    overlay-class="python-packages-modal-overlay"
+    :show-close-button="false"
+    @close="close"
+  >
+    <template #default>
         <!-- Status Section -->
         <div class="status-section">
           <div class="status-row">
@@ -227,24 +229,29 @@
             </div>
           </div>
         </div>
-      </div>
+    </template>
 
-      <div class="modal-footer">
-        <button class="btn waves-effect" @click="close">Close</button>
-        <button class="btn waves-effect" @click="loadAll" :disabled="loading">
-          <i class="material-icons btn-icon">refresh</i>
-          Refresh
-        </button>
-      </div>
-    </div>
-  </div>
+    <template #footer>
+      <button class="btn waves-effect" @click="close">Close</button>
+      <button class="btn waves-effect" @click="loadAll" :disabled="loading">
+        <i class="material-icons btn-icon">refresh</i>
+        Refresh
+      </button>
+    </template>
+  </BaseModal>
 </template>
 
 <script>
 import {axiosInstance} from '@/common/utils/axios_utils'
+import BaseModal from '@/common/components/BaseModal.vue';
+import {SUCCESS_MESSAGE_TIMEOUT_MS} from '@/common/ui-constants';
 
 export default {
   name: 'PythonPackagesModal',
+
+  components: {
+    BaseModal
+  },
 
   props: {
     visible: {
@@ -423,7 +430,7 @@ export default {
 
       navigator.clipboard.writeText(text).then(() => {
         this.success = 'Copied to clipboard!'
-        setTimeout(() => { this.success = null }, 2000)
+        setTimeout(() => { this.success = null }, SUCCESS_MESSAGE_TIMEOUT_MS)
       }).catch(err => {
         this.error = 'Failed to copy to clipboard'
         console.error('Copy failed:', err)
@@ -454,46 +461,10 @@ export default {
 </script>
 
 <style scoped>
-.python-packages-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
 .python-packages-modal {
-  background: var(--background-color, white);
-  color: var(--font-color-main, black);
-  border-radius: var(--border-radius, 8px);
-  box-shadow: var(--shadow-large, 0 8px 32px rgba(0,0,0,0.3));
   width: 90%;
   max-width: 900px;
   max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-header {
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border-color, #ddd);
-  flex-shrink: 0;
-}
-
-.modal-title {
-  font-size: 1.3rem;
-  font-weight: 500;
-}
-
-.modal-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
 }
 
 /* Status Section */
@@ -910,16 +881,7 @@ export default {
   font-weight: 500;
 }
 
-/* Footer */
-.modal-footer {
-  padding: 12px 20px;
-  border-top: 1px solid var(--border-color, #ddd);
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  flex-shrink: 0;
-}
-
+/* Button Icons */
 .btn-icon {
   font-size: 18px;
   margin-right: 4px;

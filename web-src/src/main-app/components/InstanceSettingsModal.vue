@@ -241,8 +241,7 @@ export default {
         const configResponse = await axiosInstance.get('/admin/scripts/' + this.scriptName);
         this.config = configResponse.data;
 
-        // Load available verbs from project
-        // TODO: Get project ID from config and fetch project verbs
+        // Load available verbs from script config (includes project-level verbs)
         this.availableVerbs = this.config.verbs?.options || [];
 
         // Load available parameters from project
@@ -390,7 +389,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  z-index: var(--z-index-modal-above);
 }
 
 .settings-modal {

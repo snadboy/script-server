@@ -32,6 +32,13 @@ from model.model_helper import is_empty, InvalidFileException, AccessProhibitedE
 from model.parameter_config import WrongParameterUsageException
 from model.script_config import InvalidValueException, ParameterNotFoundException
 from model.server_conf import ServerConfig, XSRF_PROTECTION_TOKEN, XSRF_PROTECTION_DISABLED, XSRF_PROTECTION_HEADER
+from model.constants import (
+    WEBSOCKET_PING_INTERVAL_SECONDS,
+    WEBSOCKET_PING_TIMEOUT_SECONDS,
+    WEBSOCKET_CLOSE_TIMEOUT_SECONDS,
+    WEBSOCKET_NORMAL_CLOSE_CODE,
+    MAX_LOG_LINES
+)
 from scheduling.schedule_service import ScheduleService, UnavailableScriptException, InvalidScheduleException, AccessDeniedException, JobNotFoundException
 from utils import file_utils
 from utils import tornado_utils, os_utils, env_utils, custom_json
@@ -388,8 +395,8 @@ class ScriptStreamSocket(tornado.websocket.WebSocketHandler):
                 # we need to stop callback explicitly and as soon as possible, to avoid sending ping after close
                 connection.ping_callback.stop()
 
-            output_stream.wait_close(timeout=5)
-            web_socket.ioloop.add_callback(web_socket.close, code=1000)
+            output_stream.wait_close(timeout=WEBSOCKET_CLOSE_TIMEOUT_SECONDS)
+            web_socket.ioloop.add_callback(web_socket.close, code=WEBSOCKET_NORMAL_CLOSE_CODE)
 
         file_download_feature.subscribe_on_inline_images(execution_id, self.send_inline_image)
 
@@ -1261,8 +1268,8 @@ class GetServerLogsHandler(BaseRequestHandler):
         search = self.get_argument('search', None)
 
         # Limit lines to prevent excessive memory usage
-        if lines > 10000:
-            lines = 10000
+        if lines > MAX_LOG_LINES:
+            lines = MAX_LOG_LINES
 
         try:
             # Determine log file path based on environment
@@ -2162,8 +2169,8 @@ def init(server_config: ServerConfig,
     settings = {
         'cookie_secret': secret,
         "login_url": "/login.html",
-        'websocket_ping_interval': 30,
-        'websocket_ping_timeout': 300,
+        'websocket_ping_interval': WEBSOCKET_PING_INTERVAL_SECONDS,
+        'websocket_ping_timeout': WEBSOCKET_PING_TIMEOUT_SECONDS,
         'compress_response': True,
         'xsrf_cookies': server_config.xsrf_protection != XSRF_PROTECTION_DISABLED,
     }

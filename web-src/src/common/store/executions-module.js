@@ -1,5 +1,6 @@
 import {isEmptyString, isNull, logError} from '@/common/utils/common';
 import {axiosInstance} from '@/common/utils/axios_utils';
+import {API} from '@/common/api-constants';
 
 const store = () => ({
     state: {
@@ -15,7 +16,7 @@ const store = () => ({
             commit('SET_LOADING', true);
             commit('SET_EXECUTION_DETAILS', {execution: null, id: null});
 
-            axiosInstance.get('history/execution_log/short').then(({data}) => {
+            axiosInstance.get(API.HISTORY.SHORT).then(({data}) => {
                 sortExecutionLogs(data);
 
                 // Apply log size limit from settings
@@ -33,7 +34,7 @@ const store = () => ({
         refresh({commit, state, rootState}) {
             // Silently refresh executions list without loading indicator
             // to avoid disrupting the UI (e.g., closing modals)
-            axiosInstance.get('history/execution_log/short').then(({data}) => {
+            axiosInstance.get(API.HISTORY.SHORT).then(({data}) => {
                 sortExecutionLogs(data);
 
                 // Apply log size limit from settings
@@ -65,7 +66,7 @@ const store = () => ({
             commit('SET_EXECUTION_DETAILS', {id: executionId, execution});
             commit('SET_DETAILS_LOADING', true);
 
-            axiosInstance.get('history/execution_log/long/' + executionId).then(({data: incomingLog}) => {
+            axiosInstance.get(`${API.HISTORY.LONG}/${executionId}`).then(({data: incomingLog}) => {
                 if (executionId !== state.selectedExecutionId) {
                     return;
                 }

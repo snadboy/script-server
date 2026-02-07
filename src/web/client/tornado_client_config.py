@@ -4,6 +4,8 @@ from urllib.parse import urlparse
 
 from tornado import httpclient
 
+from model.constants import DEFAULT_PROXY_PORT
+
 LOGGER = logging.getLogger('tornado_proxy_config')
 
 
@@ -40,7 +42,7 @@ def _read_proxy_defaults(proxy):
         'proxy_port': parsed.port}
 
     if not defaults['proxy_port']:
-        defaults['proxy_port'] = 3128
+        defaults['proxy_port'] = DEFAULT_PROXY_PORT
 
     if parsed.username:
         defaults['proxy_username'] = parsed.username

@@ -8,6 +8,7 @@ import utils.os_utils as os_utils
 import utils.string_utils as string_utils
 from auth.user import User
 from execution.execution_service import ExecutionService
+from model.constants import FILE_RETENTION_MS
 from model.model_helper import is_empty, fill_parameter_values, replace_auth_vars
 from react.observable import read_until_closed
 from utils import audit_utils
@@ -25,7 +26,7 @@ class FileDownloadFeature:
         self.user_file_storage = user_file_storage
         self.result_folder = os.path.join(temp_folder, RESULT_FILES_FOLDER)
 
-        user_file_storage.start_autoclean(self.result_folder, 1000 * 60 * 60 * 24)
+        user_file_storage.start_autoclean(self.result_folder, FILE_RETENTION_MS)
         self._execution_handlers = {}
 
     def subscribe(self, execution_service: ExecutionService):

@@ -1,4 +1,5 @@
 import {axiosInstance} from '@/common/utils/axios_utils';
+import {API} from '@/common/api-constants';
 
 export default {
     state: {
@@ -36,7 +37,7 @@ export default {
             commit('SET_ERROR', null);
 
             // Fetch all schedules (no script filter)
-            return axiosInstance.get('schedules')
+            return axiosInstance.get(API.SCHEDULES)
                 .then(response => {
                     commit('SET_SCHEDULES', response.data.schedules || []);
                     return response.data.schedules;
@@ -53,7 +54,7 @@ export default {
         refresh({commit}) {
             // Silently refresh schedules list without loading indicator
             // to avoid disrupting the UI (e.g., closing modals)
-            return axiosInstance.get('schedules')
+            return axiosInstance.get(API.SCHEDULES)
                 .then(response => {
                     commit('SET_SCHEDULES', response.data.schedules || []);
                     return response.data.schedules;
@@ -65,7 +66,7 @@ export default {
         },
 
         deleteSchedule({commit, dispatch, rootState}, {scheduleId}) {
-            return axiosInstance.delete(`schedules/${scheduleId}`)
+            return axiosInstance.delete(`${API.SCHEDULES}/${scheduleId}`)
                 .then(response => {
                     commit('REMOVE_SCHEDULE', scheduleId);
                     // Also refresh scriptSchedule store for the current script view
@@ -86,7 +87,7 @@ export default {
         },
 
         toggleScheduleEnabled({commit}, {scheduleId, enabled}) {
-            return axiosInstance.post(`schedules/${scheduleId}/enabled`, {enabled})
+            return axiosInstance.post(`${API.SCHEDULES}/${scheduleId}/enabled`, {enabled})
                 .then(response => {
                     commit('UPDATE_SCHEDULE_ENABLED', {
                         scheduleId,
@@ -106,7 +107,7 @@ export default {
         },
 
         updateSchedule({dispatch}, {scheduleId, scheduleConfig}) {
-            return axiosInstance.put(`schedules/${scheduleId}`, {schedule_config: scheduleConfig})
+            return axiosInstance.put(`${API.SCHEDULES}/${scheduleId}`, {schedule_config: scheduleConfig})
                 .then(response => {
                     // Refresh the full schedules list to get updated data
                     dispatch('refresh');

@@ -4,7 +4,8 @@ import '@/common/materializecss/imports/input-fields';
 import '@/common/style_imports';
 import '@/common/style_imports.js';
 import {initTheme, cycleTheme, getThemePreference, getThemeIcon} from '@/common/utils/theme';
-import {axiosInstance} from '@/common/utils/axios_utils'
+import {axiosInstance} from '@/common/utils/axios_utils';
+import {API} from '@/common/api-constants';
 
 // Initialize theme early
 initTheme();
@@ -65,7 +66,7 @@ function validateURL(url) {
 }
 
 function onLoad() {
-    axiosInstance.get('auth/config').then(({data: config}) => {
+    axiosInstance.get(API.AUTH.CONFIG).then(({data: config}) => {
         const loginContainer = document.getElementById('login-content-container');
 
         if (config['type'] === 'google_oauth') {

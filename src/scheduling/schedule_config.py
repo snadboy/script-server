@@ -2,6 +2,7 @@ from datetime import timezone, timedelta, datetime
 from typing import Any, Optional
 
 from model import model_helper
+from model.constants import MAX_SCHEDULE_ITERATIONS
 from utils import date_utils
 from utils.string_utils import is_blank
 
@@ -191,7 +192,7 @@ class ScheduleConfig:
             raise Exception('Unknown unit: ' + repr(self.repeat_unit))
 
         now = date_utils.now(tz=timezone.utc)
-        max_iterations = 10000
+        max_iterations = MAX_SCHEDULE_ITERATIONS
         initial_multiplier = max(0, get_initial_multiplier(self.start_datetime))
         i = 0
         while True:

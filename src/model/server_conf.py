@@ -5,6 +5,7 @@ import utils.custom_json as custom_json
 import utils.file_utils as file_utils
 from auth.authorization import ANY_USER
 from model import model_helper
+from model.constants import DEFAULT_HTTP_PORT, DEFAULT_HTTPS_PORT
 from model.model_helper import read_list, read_int_from_config, read_bool_from_config, ENV_VAR_PREFIX
 from model.trusted_ips import TrustedIpValidator
 from utils.env_utils import EnvVariables
@@ -137,7 +138,7 @@ def from_json(conf_path, temp_folder):
     json_object = custom_json.loads(file_content)
 
     address = "0.0.0.0"
-    port = 5000
+    port = DEFAULT_HTTP_PORT
 
     ssl = json_object.get("ssl")
     if ssl is not None:
@@ -147,7 +148,7 @@ def from_json(conf_path, temp_folder):
         config.ssl = True
         config.ssl_key_path = key_path
         config.ssl_cert_path = cert_path
-        port = 5443
+        port = DEFAULT_HTTPS_PORT
 
     if json_object.get("address"):
         address = json_object.get("address")

@@ -1,28 +1,35 @@
 <template>
-  <div v-if="visible" class="requirements-modal-overlay" @click.self="close">
-    <div class="requirements-modal">
-      <div class="modal-header">
+  <BaseModal
+    :visible="visible"
+    modal-class="requirements-modal"
+    overlay-class="requirements-modal-overlay"
+    :show-close-button="false"
+    :close-on-overlay-click="false"
+    @close="close"
+  >
+    <template #header>
+      <div class="custom-header">
         <span class="modal-title">Requirements Editor</span>
+        <div class="modal-tabs">
+          <button
+            :class="['tab-button', { active: activeTab === 'editor' }]"
+            @click="activeTab = 'editor'"
+          >
+            <i class="material-icons">edit</i>
+            Editor
+          </button>
+          <button
+            :class="['tab-button', { active: activeTab === 'status' }]"
+            @click="activeTab = 'status'; loadStatus()"
+          >
+            <i class="material-icons">checklist</i>
+            Status
+          </button>
+        </div>
       </div>
+    </template>
 
-      <div class="modal-tabs">
-        <button
-          :class="['tab-button', { active: activeTab === 'editor' }]"
-          @click="activeTab = 'editor'"
-        >
-          <i class="material-icons">edit</i>
-          Editor
-        </button>
-        <button
-          :class="['tab-button', { active: activeTab === 'status' }]"
-          @click="activeTab = 'status'; loadStatus()"
-        >
-          <i class="material-icons">checklist</i>
-          Status
-        </button>
-      </div>
-
-      <div class="modal-body">
+    <template #default>
         <!-- Editor Tab -->
         <div v-if="activeTab === 'editor'" class="editor-tab">
           <div class="editor-header">
@@ -122,20 +129,24 @@
         <div v-if="success" class="success-message">
           {{ success }}
         </div>
-      </div>
+    </template>
 
-      <div class="modal-footer">
-        <button class="btn waves-effect" @click="close">Close</button>
-      </div>
-    </div>
-  </div>
+    <template #footer>
+      <button class="btn waves-effect" @click="close">Close</button>
+    </template>
+  </BaseModal>
 </template>
 
 <script>
 import {axiosInstance} from '@/common/utils/axios_utils'
+import BaseModal from '@/common/components/BaseModal.vue';
 
 export default {
   name: 'RequirementsModal',
+
+  components: {
+    BaseModal
+  },
 
   props: {
     visible: {
@@ -289,46 +300,28 @@ export default {
 </script>
 
 <style scoped>
-.requirements-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
 .requirements-modal {
-  background: var(--background-color, white);
-  color: var(--font-color-main, black);
-  border-radius: var(--border-radius, 8px);
-  box-shadow: var(--shadow-large, 0 8px 32px rgba(0,0,0,0.3));
   width: 90%;
   max-width: 1000px;
   max-height: 90vh;
-  display: flex;
-  flex-direction: column;
 }
 
-.modal-header {
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border-color, #ddd);
-  flex-shrink: 0;
+.custom-header {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
 
 .modal-title {
   font-size: 1.3rem;
   font-weight: 500;
+  padding-bottom: 16px;
 }
 
 .modal-tabs {
   display: flex;
-  border-bottom: 1px solid var(--border-color, #ddd);
-  flex-shrink: 0;
+  border-top: 1px solid var(--border-color, #ddd);
+  margin: 0 -1.5rem;
 }
 
 .tab-button {
@@ -357,13 +350,6 @@ export default {
 
 .tab-button .material-icons {
   font-size: 20px;
-}
-
-.modal-body {
-  flex: 1;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
 .editor-tab,
@@ -554,15 +540,6 @@ export default {
   border-radius: var(--border-radius, 4px);
   border: 1px solid #66bb6a;
   margin: 0 20px 20px 20px;
-  flex-shrink: 0;
-}
-
-.modal-footer {
-  padding: 12px 20px;
-  border-top: 1px solid var(--border-color, #ddd);
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
   flex-shrink: 0;
 }
 

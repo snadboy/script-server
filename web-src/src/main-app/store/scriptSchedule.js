@@ -1,4 +1,5 @@
 import {axiosInstance} from '@/common/utils/axios_utils';
+import {API} from '@/common/api-constants';
 import clone from 'lodash/clone';
 import {parametersToFormData} from '@/main-app/store/mainStoreHelper';
 
@@ -32,7 +33,7 @@ export default {
             formData.append('__script_name', scriptName);
             formData.append('__schedule_config', JSON.stringify(scheduleSetup))
 
-            return axiosInstance.post('schedule', formData)
+            return axiosInstance.post(API.SCHEDULE, formData)
                 .then(response => {
                     // Refresh schedules after creating a new one
                     dispatch('fetchSchedules', {scriptName});
@@ -53,7 +54,7 @@ export default {
             commit('SET_ERROR', null);
 
             const script = scriptName || (rootState.scriptConfig.scriptConfig && rootState.scriptConfig.scriptConfig.name);
-            const url = script ? `schedules?script=${encodeURIComponent(script)}` : 'schedules';
+            const url = script ? `${API.SCHEDULES}?script=${encodeURIComponent(script)}` : API.SCHEDULES;
 
             return axiosInstance.get(url)
                 .then(response => {
@@ -70,7 +71,7 @@ export default {
         },
 
         deleteSchedule({commit, dispatch}, {scheduleId}) {
-            return axiosInstance.delete(`schedules/${scheduleId}`)
+            return axiosInstance.delete(`${API.SCHEDULES}/${scheduleId}`)
                 .then(response => {
                     commit('REMOVE_SCHEDULE', scheduleId);
                     // Also refresh allSchedules store for Activity page and other views

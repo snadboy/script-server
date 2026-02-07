@@ -10,6 +10,8 @@
 
 <script>
 import {axiosInstance} from '@/common/utils/axios_utils';
+import {API} from '@/common/api-constants';
+import {COUNTDOWN_TICK_MS} from '@/common/ui-constants';
 
 export default {
   name: 'StopButton',
@@ -50,7 +52,7 @@ export default {
     },
 
     stopExecution() {
-      axiosInstance.post('executions/stop/' + this.executionId)
+      axiosInstance.post(`${API.EXECUTIONS.STOP}/${this.executionId}`)
         .then(() => {
           M.toast({html: 'Stop signal sent'});
           this.startKillCountdown();
@@ -61,7 +63,7 @@ export default {
     },
 
     killExecution() {
-      axiosInstance.post('executions/kill/' + this.executionId)
+      axiosInstance.post(`${API.EXECUTIONS.KILL}/${this.executionId}`)
         .then(() => {
           M.toast({html: 'Script killed'});
           this.clearState();
@@ -77,7 +79,7 @@ export default {
       this.killTimeout = 5;
       this.intervalId = setInterval(() => {
         this.tickCountdown();
-      }, 1000);
+      }, COUNTDOWN_TICK_MS);
     },
 
     tickCountdown() {

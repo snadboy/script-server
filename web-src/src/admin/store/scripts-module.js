@@ -1,4 +1,5 @@
 import {axiosInstance} from '@/common/utils/axios_utils';
+import {API} from '@/common/api-constants';
 
 export default {
     state: {
@@ -10,7 +11,7 @@ export default {
         init({commit}) {
             commit('SET_LOADING', true);
 
-            axiosInstance.get('scripts', {params: {mode: 'edit'}}).then(({data}) => {
+            axiosInstance.get(API.SCRIPTS, {params: {mode: 'edit'}}).then(({data}) => {
                 const {scripts} = data;
                 let scriptConfigs = scripts.map(s => ({name: s.name, parsingFailed: s.parsing_failed}));
                 scriptConfigs.sort(function (e1, e2) {

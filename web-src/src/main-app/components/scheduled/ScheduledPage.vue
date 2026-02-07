@@ -141,6 +141,7 @@
 <script>
 import {mapState, mapActions} from 'vuex';
 import {axiosInstance} from '@/common/utils/axios_utils';
+import {API} from '@/common/api-constants';
 import Vue from 'vue';
 import ClearIcon from '@/assets/clear.png';
 import SearchIcon from '@/assets/search.png';
@@ -319,7 +320,7 @@ export default {
 
       if (stopState && stopState.killEnabled) {
         // Kill mode - send kill request
-        axiosInstance.post('executions/kill/' + id)
+        axiosInstance.post(`${API.EXECUTIONS.KILL}/${id}`)
           .then(() => {
             M.toast({html: 'Script killed'});
             this.clearStopState(id);
@@ -329,7 +330,7 @@ export default {
           });
       } else {
         // Stop mode - send stop request and start kill countdown
-        axiosInstance.post('executions/stop/' + id)
+        axiosInstance.post(`${API.EXECUTIONS.STOP}/${id}`)
           .then(() => {
             M.toast({html: 'Stop signal sent'});
             this.startKillCountdown(id);

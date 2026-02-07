@@ -1,13 +1,14 @@
 <template>
-  <div v-if="visible" class="connections-modal-overlay" @click.self="close">
-    <div class="connections-modal">
-      <div class="modal-header">
-        <span class="modal-title">Connections</span>
-        <button class="modal-close" @click="close">×</button>
-      </div>
-
+  <BaseModal
+    :visible="visible"
+    title="Connections"
+    modal-class="connections-modal"
+    overlay-class="connections-modal-overlay"
+    @close="close"
+  >
+    <template #default>
       <!-- Connection List View -->
-      <div v-if="view === 'list'" class="modal-body">
+      <div v-if="view === 'list'">
         <div class="connections-header">
           <h6>Manage API Credentials</h6>
           <button class="btn waves-effect btn-primary" @click="showCreateSelector">
@@ -72,7 +73,7 @@
       </div>
 
       <!-- Connection Type Selector View -->
-      <div v-if="view === 'type-selector'" class="modal-body">
+      <div v-if="view === 'type-selector'">
         <div class="type-selector-header">
           <button class="btn-text waves-effect" @click="view = 'list'">
             <i class="material-icons left">arrow_back</i>
@@ -96,7 +97,7 @@
       </div>
 
       <!-- Add/Edit Connection Form View -->
-      <div v-if="view === 'form'" class="modal-body">
+      <div v-if="view === 'form'">
         <div class="form-header">
           <button class="btn-text waves-effect" @click="cancelForm">
             <i class="material-icons left">arrow_back</i>
@@ -222,28 +223,34 @@
           </div>
         </div>
       </div>
+    </template>
 
-      <!-- Modal Footer (for form view) -->
-      <div v-if="view === 'form'" class="modal-footer">
-        <button class="btn waves-effect" @click="cancelForm">Cancel</button>
-        <button
-          class="btn waves-effect btn-primary"
-          :disabled="saving"
-          @click="saveConnection"
-        >
-          {{ saving ? 'Saving...' : 'Save' }}
-        </button>
-      </div>
-    </div>
-  </div>
+    <!-- Modal Footer (for form view) -->
+    <template v-if="view === 'form'" #footer>
+      <button class="btn waves-effect" @click="cancelForm">Cancel</button>
+      <button
+        class="btn waves-effect btn-primary"
+        :disabled="saving"
+        @click="saveConnection"
+      >
+        {{ saving ? 'Saving...' : 'Save' }}
+      </button>
+    </template>
+  </BaseModal>
 </template>
 
 <script>
 import {mapState} from 'vuex';
 import {axiosInstance} from '@/common/utils/axios_utils';
+import {API} from '@/common/api-constants';
+import BaseModal from '@/common/components/BaseModal.vue';
 
 export default {
   name: 'ConnectionsModal',
+
+  components: {
+    BaseModal
+  },
 
   props: {
     visible: {
@@ -293,11 +300,11 @@ export default {
       this.loading = true;
       try {
         // Load connection types
-        const typesResp = await axiosInstance.get('/admin/connections/types');
+        const typesResp = await axiosInstance.get(API.ADMIN.CONNECTION_TYPES);
         this.connectionTypes = typesResp.data.types || [];
 
         // Load connections list
-        const connsResp = await axiosInstance.get('/admin/connections');
+        const connsResp = await axiosInstance.get(API.ADMIN.CONNECTIONS);
         this.connections = connsResp.data.connections || [];
       } catch (error) {
         console.error('Failed to load connections:', error);
@@ -375,7 +382,7 @@ export default {
       }
 
       try {
-        await axiosInstance.delete(`/admin/connections/${conn.id}`);
+        await axiosInstance.delete(`${API.ADMIN.CONNECTIONS}/${conn.id}`);
         await this.loadData();
         this.showSuccess('Connection deleted');
       } catch (error) {
@@ -396,7 +403,7 @@ export default {
           try {
             // Fetch actual decrypted value from backend
             const response = await axiosInstance.get(
-              `/admin/connections/${this.formData.id}/field/${fieldName}`
+              `${API.ADMIN.CONNECTIONS}/${this.formData.id}/field/${fieldName}`
             );
 
             if (response.data && response.data.value) {
@@ -452,7 +459,7 @@ export default {
             return;
           }
 
-          await axiosInstance.post('/admin/connections', this.formData);
+          await axiosInstance.post(API.ADMIN.CONNECTIONS, this.formData);
           this.showSuccess('Connection created');
         } else {
           // In edit mode, remove fields that weren't being edited (still have ******** value)
@@ -472,7 +479,7 @@ export default {
             }
           }
 
-          await axiosInstance.put(`/admin/connections/${this.formData.id}`, updates);
+          await axiosInstance.put(`${API.ADMIN.CONNECTIONS}/${this.formData.id}`, updates);
           this.showSuccess('Connection updated');
         }
 
@@ -527,70 +534,11 @@ export default {
 </script>
 
 <style scoped>
-/* Modal Overlay */
-.connections-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
 /* Modal Container */
 .connections-modal {
-  background: var(--background-color);
-  border-radius: 4px;
   width: 90%;
   max-width: 800px;
   max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 24px 38px 3px rgba(0,0,0,0.14), 0 9px 46px 8px rgba(0,0,0,0.12);
-}
-
-/* Modal Header */
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 24px;
-  border-bottom: 1px solid var(--separator-color);
-}
-
-.modal-title {
-  font-size: 1.5rem;
-  font-weight: 400;
-  color: var(--font-color-main);
-}
-
-.modal-close {
-  background: none;
-  border: none;
-  font-size: 2rem;
-  cursor: pointer;
-  color: var(--font-color-medium);
-  padding: 0;
-  width: 36px;
-  height: 36px;
-  line-height: 36px;
-  text-align: center;
-  border-radius: 50%;
-}
-
-.modal-close:hover {
-  background: var(--background-color-high-emphasis);
-}
-
-/* Modal Body */
-.modal-body {
-  padding: 24px;
-  overflow-y: auto;
-  flex: 1;
 }
 
 /* Connections List View */
@@ -902,15 +850,7 @@ export default {
   color: var(--primary-color);
 }
 
-/* Modal Footer */
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 16px 24px;
-  border-top: 1px solid var(--separator-color);
-}
-
+/* Buttons */
 .btn {
   padding: 8px 16px;
   border: none;

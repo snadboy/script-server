@@ -8,6 +8,7 @@ from auth.user import User
 from config.config_service import ConfigService
 from execution.execution_service import ExecutionService
 from execution.id_generator import IdGenerator
+from model.constants import SCHEDULE_CLEANUP_INTERVAL_SECONDS
 from scheduling import scheduling_job
 from scheduling.schedule_config import read_schedule_config, InvalidScheduleException
 from scheduling.scheduler import Scheduler
@@ -399,7 +400,7 @@ class ScheduleService:
             return
 
         def cleanup_loop():
-            while not self._cleanup_stop_event.wait(timeout=300):  # Run every 5 minutes
+            while not self._cleanup_stop_event.wait(timeout=SCHEDULE_CLEANUP_INTERVAL_SECONDS):  # Run every 5 minutes
                 try:
                     self._cleanup_expired_schedules()
                 except Exception:

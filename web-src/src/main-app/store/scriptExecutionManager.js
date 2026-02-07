@@ -1,5 +1,6 @@
 import {isEmptyArray, isEmptyString, isNull} from '@/common/utils/common';
 import {axiosInstance} from '@/common/utils/axios_utils';
+import {API} from '@/common/api-constants';
 import clone from 'lodash/clone';
 import get from 'lodash/get';
 import scriptExecutor, {
@@ -56,7 +57,7 @@ export default {
         init({state, commit, dispatch}) {
             const store = this;
 
-            axiosInstance.get('executions/active')
+            axiosInstance.get(API.EXECUTIONS.ACTIVE)
                 .then(({data: activeExecutionIds}) => {
                     activeExecutionIds.sort((a, b) => parseInt(a) - parseInt(b));
 
@@ -65,7 +66,7 @@ export default {
                     for (let i = 0; i < activeExecutionIds.length; i++) {
                         const executionId = activeExecutionIds[i];
 
-                        requests.push(axiosInstance.get('executions/config/' + executionId)
+                        requests.push(axiosInstance.get(`${API.EXECUTIONS.CONFIG}/${executionId}`)
                             .then((({data: executionConfig}) => {
                                 const executor = scriptExecutor(executionId, executionConfig.scriptName, executionConfig.parameterValues);
 
@@ -145,7 +146,7 @@ export default {
 
             dispatch('selectExecutor', executor);
 
-            axiosInstance.post('executions/start', formData)
+            axiosInstance.post(API.EXECUTIONS.START, formData)
                 .then(({data: executionId}) => {
                     store.unregisterModule(['executions', 'temp']);
                     store.registerModule(['executions', executionId], executor);

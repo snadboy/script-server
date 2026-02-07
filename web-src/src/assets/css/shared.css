@@ -119,6 +119,11 @@
     --dialog-border: #e0e0e0;
     --dialog-input-bg: #ffffff;
     --dialog-input-border: #ddd;
+
+    /* Z-index layers */
+    --z-index-modal-overlay: 1000;
+    --z-index-modal-above: 1001;
+    --z-index-toast: 1100;
 }
 
 /* Dark theme */

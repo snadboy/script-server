@@ -1,11 +1,13 @@
 <template>
-  <div v-if="visible" class="packages-modal-overlay" @click.self="close">
-    <div class="packages-modal">
-      <div class="modal-header">
-        <span class="modal-title">Package Manager</span>
-      </div>
-
-      <div class="modal-body">
+  <BaseModal
+    :visible="visible"
+    title="Package Manager"
+    modal-class="packages-modal"
+    overlay-class="packages-modal-overlay"
+    :show-close-button="false"
+    @close="close"
+  >
+    <template #default>
         <!-- Status Section -->
         <div class="status-section">
           <div class="status-row">
@@ -92,24 +94,28 @@
             </div>
           </div>
         </div>
-      </div>
+    </template>
 
-      <div class="modal-footer">
-        <button class="btn waves-effect" @click="close">Close</button>
-        <button class="btn waves-effect" @click="refreshPackages" :disabled="loading">
-          <i class="material-icons btn-icon">refresh</i>
-          Refresh
-        </button>
-      </div>
-    </div>
-  </div>
+    <template #footer>
+      <button class="btn waves-effect" @click="close">Close</button>
+      <button class="btn waves-effect" @click="refreshPackages" :disabled="loading">
+        <i class="material-icons btn-icon">refresh</i>
+        Refresh
+      </button>
+    </template>
+  </BaseModal>
 </template>
 
 <script>
 import {axiosInstance} from '@/common/utils/axios_utils';
+import BaseModal from '@/common/components/BaseModal.vue';
 
 export default {
   name: 'PackagesModal',
+
+  components: {
+    BaseModal
+  },
 
   props: {
     visible: {
@@ -229,49 +235,10 @@ export default {
 </script>
 
 <style scoped>
-.packages-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
 .packages-modal {
-  background: var(--background-color);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
   width: 90%;
   max-width: 550px;
   max-height: 85vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--separator-color);
-  flex-shrink: 0;
-}
-
-.modal-title {
-  font-size: 1.4em;
-  font-weight: 500;
-  color: var(--font-color-main);
-}
-
-.modal-body {
-  padding: 16px 24px;
-  overflow-y: auto;
-  flex: 1;
 }
 
 .status-section {
@@ -471,16 +438,6 @@ export default {
 
 .btn-delete i {
   font-size: 20px;
-}
-
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 16px 24px;
-  border-top: 1px solid var(--separator-color);
-  flex-shrink: 0;
-  background: var(--background-color-level-16dp);
 }
 
 .btn {

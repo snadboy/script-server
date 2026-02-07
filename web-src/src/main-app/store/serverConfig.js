@@ -1,4 +1,5 @@
 import {axiosInstance} from '@/common/utils/axios_utils';
+import {API} from '@/common/api-constants';
 
 export default {
     namespaced: true,
@@ -19,7 +20,7 @@ export default {
 
     actions: {
         init({commit}) {
-            axiosInstance.get('conf').then(({data: config}) => {
+            axiosInstance.get(API.CONF).then(({data: config}) => {
                 commit('SET_CONFIG', config);
             });
         }
