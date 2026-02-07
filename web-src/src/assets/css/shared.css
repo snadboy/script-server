@@ -393,19 +393,27 @@ textarea.materialize-textarea:focus:not([readonly]) {
     border-bottom-color: var(--separator-color);
 }
 
-/* Checkboxes */
-[type="checkbox"]:not(:checked) + span:not(.lever):before,
-[type="checkbox"]:checked + span:not(.lever):before {
-    border-color: var(--font-color-medium);
-}
-
-[type="checkbox"]:checked + span:not(.lever):before {
-    border-right-color: var(--primary-color);
-    border-bottom-color: var(--primary-color);
+/* Checkboxes - Kill ALL Materialize checkbox pseudo-elements globally.
+   Materialize draws tilted rectangles via ::before/::after on spans after checkboxes.
+   We use styled input[type="checkbox"] as the only visual checkbox instead. */
+[type="checkbox"] + span:not(.lever)::before,
+[type="checkbox"] + span:not(.lever)::after,
+[type="checkbox"]:checked + span:not(.lever)::before,
+[type="checkbox"]:checked + span:not(.lever)::after,
+[type="checkbox"].filled-in + span:not(.lever)::before,
+[type="checkbox"].filled-in + span:not(.lever)::after,
+[type="checkbox"].filled-in:checked + span:not(.lever)::before,
+[type="checkbox"].filled-in:checked + span:not(.lever)::after {
+    display: none !important;
+    content: none !important;
+    border: none !important;
+    width: 0 !important;
+    height: 0 !important;
 }
 
 [type="checkbox"] + span:not(.lever) {
     color: var(--font-color-main);
+    padding-left: 0 !important; /* Remove Materialize's padding for checkbox space */
 }
 
 /* Radio buttons */
@@ -740,8 +748,7 @@ body {
         padding-bottom: 12px;
     }
 
-    /* Checkbox and radio button labels need larger touch area */
-    [type="checkbox"] + span:not(.lever),
+    /* Radio button labels need larger touch area */
     [type="radio"] + span {
         padding-left: 35px;
         min-height: 44px;
@@ -1189,71 +1196,64 @@ label.checkbox-label,
   user-select: none;
 }
 
-/* Hide ALL native checkboxes globally */
+/* GLOBAL: Custom checkbox appearance - override Materialize tilted rectangles.
+   Uses appearance:none + pseudo-elements directly on the input element.
+   No .checkbox-custom span required (but still supported for backwards compat). */
 input[type="checkbox"] {
-  position: absolute;
-  opacity: 0;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  position: relative !important;
+  display: inline-block !important;
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  opacity: 1 !important;
+  background: #2a2a2a !important;
+  border: 2px solid #555 !important;
+  border-radius: 3px !important;
   cursor: pointer;
-  height: 0;
-  width: 0;
   margin: 0;
-}
-
-/* Custom checkbox - requires a sibling span after input */
-input[type="checkbox"] + .checkbox-custom,
-input[type="checkbox"] + span.checkbox-custom {
-  position: relative;
-  display: inline-block;
-  width: 18px;
-  height: 18px;
-  background: #2a2a2a;
-  border: 2px solid #555;
-  border-radius: 3px;
+  vertical-align: middle;
   transition: all 0.2s ease;
   flex-shrink: 0;
 }
 
-/* Hover state */
-label:hover input[type="checkbox"] + .checkbox-custom,
-label:hover input[type="checkbox"] + span.checkbox-custom {
-  border-color: var(--primary-color, #5dade2);
+input[type="checkbox"]:hover {
+  border-color: var(--primary-color, #5dade2) !important;
 }
 
-/* Checked state */
-input[type="checkbox"]:checked + .checkbox-custom,
-input[type="checkbox"]:checked + span.checkbox-custom {
-  background: var(--primary-color, #5dade2);
-  border-color: var(--primary-color, #5dade2);
+input[type="checkbox"]:checked {
+  background: var(--primary-color, #5dade2) !important;
+  border-color: var(--primary-color, #5dade2) !important;
 }
 
-/* Checkmark */
-input[type="checkbox"]:checked + .checkbox-custom::after,
-input[type="checkbox"]:checked + span.checkbox-custom::after {
-  content: '';
-  position: absolute;
-  left: 5px;
-  top: 2px;
-  width: 4px;
-  height: 8px;
-  border: solid #000;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
+input[type="checkbox"]:checked::after {
+  content: '' !important;
+  position: absolute !important;
+  left: 4px !important;
+  top: 0px !important;
+  width: 5px !important;
+  height: 10px !important;
+  border: solid #000 !important;
+  border-width: 0 2px 2px 0 !important;
+  transform: rotate(45deg) !important;
 }
 
-/* Focus state for accessibility */
-input[type="checkbox"]:focus + .checkbox-custom,
-input[type="checkbox"]:focus + span.checkbox-custom {
-  outline: 2px solid var(--primary-color, #5dade2);
-  outline-offset: 2px;
-}
-
-/* Disabled state */
-input[type="checkbox"]:disabled + .checkbox-custom,
-input[type="checkbox"]:disabled + span.checkbox-custom {
-  opacity: 0.5;
+input[type="checkbox"]:disabled {
+  opacity: 0.5 !important;
   cursor: not-allowed;
 }
 
+/* Hide .checkbox-custom spans - no longer needed since input is styled directly */
+.checkbox-custom,
+span.checkbox-custom {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Disabled checkbox label */
 label:has(input[type="checkbox"]:disabled) {
   opacity: 0.5;
   cursor: not-allowed;

@@ -538,10 +538,7 @@ export default {
   cursor: pointer;
 }
 
-.checkbox-label input[type="checkbox"] {
-  cursor: pointer;
-}
-
+/* Checkbox styling handled globally in shared.css */
 .checkbox-label span {
   user-select: none;
 }
