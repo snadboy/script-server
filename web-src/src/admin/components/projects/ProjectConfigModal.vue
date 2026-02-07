@@ -155,6 +155,7 @@ export default {
         { value: 'plex', label: 'Plex Media Server', icon: 'play_circle' },
         { value: 'sonarr', label: 'Sonarr', icon: 'tv' },
         { value: 'radarr', label: 'Radarr', icon: 'movie' },
+        { value: 'sabnzbd', label: 'SABnzbd', icon: 'download' },
         { value: 'home-assistant', label: 'Home Assistant', icon: 'home' },
         { value: 'google', label: 'Google', icon: 'cloud' },
         { value: 'generic', label: 'Generic', icon: 'vpn_key' }

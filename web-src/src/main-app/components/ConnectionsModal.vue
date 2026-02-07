@@ -384,8 +384,34 @@ export default {
       }
     },
 
-    toggleSecretReveal(fieldName) {
-      this.secretFieldRevealed[fieldName] = !this.secretFieldRevealed[fieldName];
+    async toggleSecretReveal(fieldName) {
+      const isRevealing = !this.secretFieldRevealed[fieldName];
+
+      // If revealing in edit mode and field is masked, fetch actual value from backend
+      if (isRevealing && this.formMode === 'edit' && !this.editingField[fieldName]) {
+        const currentValue = this.formData.fields[fieldName];
+
+        // Check if value is masked (multiple asterisks)
+        if (currentValue && /^\*{5,}$/.test(currentValue)) {
+          try {
+            // Fetch actual decrypted value from backend
+            const response = await axiosInstance.get(
+              `/admin/connections/${this.formData.id}/field/${fieldName}`
+            );
+
+            if (response.data && response.data.value) {
+              // Store the actual decrypted value
+              this.formData.fields[fieldName] = response.data.value;
+            }
+          } catch (error) {
+            console.error('Failed to fetch decrypted field value:', error);
+            this.showError('Failed to reveal field value');
+            return;
+          }
+        }
+      }
+
+      this.secretFieldRevealed[fieldName] = isRevealing;
       this.$forceUpdate();
     },
 

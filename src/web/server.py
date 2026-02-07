@@ -1973,6 +1973,36 @@ class ConnectionHandler(BaseRequestHandler):
             raise tornado.web.HTTPError(500, reason=str(e))
 
 
+class ConnectionFieldHandler(BaseRequestHandler):
+    """Handle operations on specific connection fields (e.g., reveal decrypted values)."""
+
+    @requires_admin_rights
+    def get(self, connection_id, field_name):
+        """Get decrypted value for a specific field (admin only)."""
+        from connections.connection_service import get_connection_service
+
+        try:
+            connection_service = get_connection_service()
+            # Get connection with unmasked secrets (admin only)
+            connection = connection_service.get_connection(connection_id, mask_secrets=False)
+
+            if connection is None:
+                raise tornado.web.HTTPError(404, reason=f"Connection {connection_id} not found")
+
+            # Check if field exists in connection
+            if 'fields' not in connection or field_name not in connection['fields']:
+                raise tornado.web.HTTPError(404, reason=f"Field {field_name} not found")
+
+            # Return the decrypted field value
+            field_value = connection['fields'][field_name]
+            self.write(json.dumps({'value': field_value}))
+        except tornado.web.HTTPError:
+            raise
+        except Exception as e:
+            LOGGER.error(f"Failed to get field {field_name} for connection {connection_id}: {e}")
+            raise tornado.web.HTTPError(500, reason=str(e))
+
+
 def pipe_output_to_http(output_stream, write_callback):
     class OutputToHttpListener:
         def on_next(self, output):
@@ -2117,6 +2147,7 @@ def init(server_config: ServerConfig,
                 (r'/admin/github/repos', GitHubReposHandler),
                 # Connection management endpoints
                 (r'/admin/connections/types', ConnectionTypesHandler),
+                (r'/admin/connections/([^/]+)/field/([^/]+)', ConnectionFieldHandler),
                 (r'/admin/connections/([^/]+)', ConnectionHandler),
                 (r'/admin/connections', ConnectionsHandler),
                 (r"/", ProxiedRedirectHandler, {"url": "/index.html"})]
