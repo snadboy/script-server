@@ -562,15 +562,8 @@ export default {
 
       // Connections
       supportedConnections: [],
-      availableConnectionTypes: [
-        { value: 'plex', label: 'Plex Media Server', icon: 'theaters' },
-        { value: 'sonarr', label: 'Sonarr', icon: 'tv' },
-        { value: 'radarr', label: 'Radarr', icon: 'movie' },
-        { value: 'sabnzbd', label: 'SABnzbd', icon: 'download' },
-        { value: 'home-assistant', label: 'Home Assistant', icon: 'home' },
-        { value: 'google', label: 'Google', icon: 'cloud' },
-        { value: 'generic', label: 'Generic', icon: 'vpn_key' }
-      ]
+      // Available connection types (loaded from backend)
+      availableConnectionTypes: []
     };
   },
 
@@ -592,6 +585,7 @@ export default {
     visible(newVal) {
       if (newVal && this.project) {
         this.loadConfiguration();
+        this.loadConnectionTypes();
       } else {
         this.reset();
       }
@@ -639,6 +633,26 @@ export default {
         this.error = err.response?.data?.message || 'Failed to load configuration';
       } finally {
         this.loading = false;
+      }
+    },
+
+    async loadConnectionTypes() {
+      // Skip if already loaded
+      if (this.availableConnectionTypes.length > 0) return;
+
+      try {
+        const response = await axiosInstance.get('/admin/connections/types');
+        const types = response.data.types || [];
+
+        // Transform backend format to UI format
+        this.availableConnectionTypes = types.map(type => ({
+          value: type.type_id,
+          label: type.display_name,
+          icon: type.icon
+        }));
+      } catch (err) {
+        console.error('Failed to load connection types:', err);
+        // Fallback to empty array - UI will still work, just no connection options
       }
     },
 
